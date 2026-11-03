@@ -54,10 +54,15 @@ Con energía y radio en ambas rutas, el rescate deja **6 UE**, cultivos en pausa
 | --- | --- |
 | 2 | Usa la reserva de hielo para obtener agua o dedica turnos a estabilizar a Teo y recuperar el banco auxiliar. |
 | 3 | Repite el procesamiento si hace falta agua. Comunica el experimento a Tierra y recibe la respuesta en el siguiente sol. |
-| 4 | Durante la alerta solar, el robot accede al banco exterior. Si se omite la intervención, el blindaje auxiliar consume 2 UE al cierre. La cosecha vuelve a estar disponible. |
+| 4 | Durante la alerta solar, Nora pilota a NIDO desde Energía. Activa tres relés exteriores en orden y vuelve a la esclusa para conectar el blindaje. La cosecha vuelve a estar disponible. |
 | 5 | Asegura la última noche y transmite el informe. Completar la misión exige soporte vital y al menos tres datos además de ese informe. |
 
-El relevo añade agua, soporte vital, datos acumulados e informe del día. Los déficits de agua, comida o batería reducen el soporte vital. Dos sesiones médicas devuelven un turno a la tripulación a partir del siguiente sol. Las expediciones fuera del refugio, la electrólisis, la construcción con regolito, el escenario lunar y el guardado quedan como candidatos de desarrollo.
+El relevo añade agua, soporte vital, datos acumulados e informe del día. Los déficits de agua, comida o batería reducen el soporte vital. Dos sesiones médicas devuelven un turno a la tripulación a partir del siguiente sol. La misión completa exige recuperar a Teo, conservar al menos 80% de soporte vital y enviar el último informe con tres datos acumulados. La electrólisis, la construcción con regolito, el escenario lunar y el guardado quedan como candidatos de desarrollo.
+
+### Clima y referencias de juego
+
+- En superficie las rachas alternan con treguas. El frente de polvo, las partículas, el sonido y el indicador avisan de la intensidad. Los círculos señalan dónde baja el empuje y Shift permite anclarse. El retroceso fuerte está exagerado para el entrenamiento. En Marte, la atmósfera tenue limita la fuerza del viento y el polvo que bloquea la luz sí amenaza la generación solar. [NASA, Helio and You](https://science.nasa.gov/helio-and-you-seasons-on-earth-mars-and-beyond/)
+- La alternancia entre exposición y refugio toma como referencia el papel del clima en [The Long Dark](https://store.steampowered.com/app/305620/The_Long_Dark/). El circuito de agua y las reservas compartidas se inspiran en las dependencias de tuberías, energía y soporte vital de [Oxygen Not Included](https://store.steampowered.com/app/457140/Oxygen_Not_Included/).
 
 ## Ciencia y reto
 

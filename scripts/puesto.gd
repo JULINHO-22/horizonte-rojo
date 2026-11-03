@@ -4,7 +4,10 @@ extends Node2D
 const EXTERIOR := preload("res://assets/exterior.jpg")
 const MAPA := preload("res://assets/base.jpg")
 const TORMENTA := preload("res://assets/tormenta.png")
+const FRENTE := preload("res://assets/frente_polvo.png")
 const CLINICA := preload("res://assets/enfermeria.png")
+const ENERGIA := preload("res://assets/energia_interior.png")
+const REFUGIO := preload("res://assets/esclusa_interior.png")
 const NORA := preload("res://assets/nora_reposo.png")
 const NORA_PASOS := preload("res://assets/nora_caminar.png")
 const NOMBRES := {"energia": "ENERGÍA", "cultivos": "INVERNADERO", "medicina": "ENFERMERÍA", "radio": "CONTROL", "cierre": "ESCLUSA"}
@@ -39,15 +42,22 @@ const TERMINALES := {
 	"cierre": Vector2(400, 382),
 }
 const EQUIPOS := [
-	Rect2(50, 168, 94, 63), Rect2(69, 259, 79, 43),
+	Rect2(41, 163, 113, 68), Rect2(49, 256, 93, 47),
 	Rect2(348, 172, 109, 15), Rect2(375, 233, 53, 47),
 	Rect2(580, 161, 175, 47), Rect2(732, 209, 35, 81),
+	Rect2(356, 372, 19, 29), Rect2(431, 351, 18, 57),
 ]
 const ROVER := Vector2(493, 337)
 const ESCLUSA := Vector2(750, 329)
+const RELES := [Vector2(633, 345), Vector2(490, 364), Vector2(312, 330)]
+const ABRIGOS := [Vector2(482, 352), Vector2(645, 315), Vector2(733, 320)]
 
 var interior := false
 var chequeo := false
+var mando_nido := false
+var rele_actual := 0
+var anclado := false
+var plano := false
 var objetivo_mision := ""
 var ancho_visible := 804.0
 var escala_visual := 1.0
@@ -77,18 +87,45 @@ func avanzar(direccion: Vector2, delta: float) -> void:
 	var rapidez := 112.0 if interior else 176.0
 	if evacuacion:
 		rapidez = 135.0
+	elif mando_nido:
+		rapidez = 161.0
+	if anclado:
+		rapidez *= 0.18
 	velocidad = velocidad.move_toward(direccion * rapidez, delta * 1100.0)
 	if absf(direccion.x) > 0.1:
 		direccion_izquierda = direccion.x < 0
 	var antes := punto
-	var avance := velocidad * delta
+	var avance := (velocidad + Vector2(-empuje_viento(), 0)) * delta
 	for eje in [Vector2(avance.x, 0), Vector2(0, avance.y)]:
 		if transitable(punto + eje):
 			punto += eje
 	var distancia := punto.distance_to(antes)
-	caminando = distancia > 0.14
+	caminando = distancia > 0.14 and direccion != Vector2.ZERO and not anclado
 	if caminando:
 		paso = fposmod(paso + distancia / (42.0 if interior else 67.0), 1.0)
+
+
+func intensidad_viento() -> float:
+	if interior or chequeo:
+		return 0.0
+	var pulso := pow(maxf(0, cos((tiempo - 20.0) * TAU / 6.5)), 6.0)
+	return (0.18 + 0.82 * pulso) * smoothstep(6.0, 13.0, tiempo)
+
+
+func bajo_abrigo() -> bool:
+	for refugio: Vector2 in ABRIGOS:
+		if punto.distance_to(refugio) < 29:
+			return true
+	return false
+
+
+func empuje_viento() -> float:
+	var fuerza := intensidad_viento() * (93.0 if mando_nido else 226.0)
+	if bajo_abrigo():
+		fuerza *= 0.18
+	if anclado:
+		fuerza *= 0.06
+	return fuerza
 
 
 func actualizar_camara(delta: float) -> void:
@@ -98,7 +135,7 @@ func actualizar_camara(delta: float) -> void:
 	var escala := 1.0
 	for zona: String in ROOMS:
 		var sala: Rect2 = ROOMS[zona]
-		if sala.has_point(punto):
+		if sala.has_point(punto) and not plano:
 			escala = 3.2 if zona != "cierre" else 2.5
 			objetivo = sala.get_center().lerp(punto, 0.24) + Vector2(0, -16)
 			break
@@ -148,7 +185,9 @@ func _dibujar_exterior() -> void:
 	var fondo := Rect2(-ancho_fondo * 0.04, -25, ancho_fondo * 1.08, lienzo.y)
 	draw_texture_rect(EXTERIOR, fondo, false)
 	var polvo := 0.0 if chequeo else smoothstep(3.5, 10.5, tiempo)
+	var rafaga := intensidad_viento()
 	draw_texture_rect(TORMENTA, fondo, false, Color(1, 1, 1, polvo))
+	draw_texture_rect(FRENTE, fondo, false, Color(1, 1, 1, polvo * (0.35 + rafaga * 0.65)))
 	draw_set_transform(origen)
 	draw_rect(Rect2(-42, 302, 888, 182), Color(0.17, 0.07, 0.04, polvo * 0.21))
 	_sprite(VEHICULO, ROVER + Vector2(15, 6), 62)
@@ -175,26 +214,44 @@ func _dibujar_exterior() -> void:
 		teo.x = 443
 	var iris_camina := carrera and tiempo < 9.0
 	var iris_paso := int(fposmod((iris.x - 618) / 30.0, 1.0) * 8)
-	_sprite(IRIS_PASOS if iris_camina else IRIS, iris, 49, 0.0, false, iris_paso if iris_camina else -1)
-	if accidente:
+	if not mando_nido:
+		_sprite(IRIS_PASOS if iris_camina else IRIS, iris, 49, 0.0, false, iris_paso if iris_camina else -1)
+	if accidente and not mando_nido:
 		if evacuacion or extraccion:
 			draw_line(teo + Vector2(-24, -5), teo + Vector2(24, -5), Color("#b9b6b1"), 4, true)
 			draw_circle(teo + Vector2(-16, 0), 3, OSCURO)
 			draw_circle(teo + Vector2(17, 0), 3, OSCURO)
 		_sprite(TEO, teo, 18)
-	else:
+	elif not mando_nido:
 		var teo_paso := int(fposmod((teo.x - 443) / 28.0, 1.0) * 8)
 		_sprite(TEO_PASOS if carrera else TEO_NORMAL, teo, 48, 0.0, false, teo_paso if carrera else -1)
 	var ciclo := fposmod(absf(nora.x - punto.x) / 61.0, 1.0) if cinematica else paso
-	_sprite(NORA_PASOS if caminando or (carrera and tiempo < 12) else NORA,
-		nora, 51, 0.0, carrera or direccion_izquierda, int(ciclo * 8) if caminando or (carrera and tiempo < 12) else -1)
-	for indice in range(74):
-		var x := fposmod(indice * 83.7 - tiempo * (180 + indice % 8 * 22), 886) - 42
+	if mando_nido:
+		_sprite(DRON, punto, 39, sin(tiempo * 10.0) * 1.0, direccion_izquierda)
+	else:
+		_sprite(NORA_PASOS if caminando or (carrera and tiempo < 12) else NORA,
+			nora, 51, 3.0 if anclado else rafaga, carrera or direccion_izquierda,
+			int(ciclo * 8) if caminando or (carrera and tiempo < 12) else -1)
+	for indice in range(132):
+		var x := fposmod(indice * 83.7 - tiempo * (185 + indice % 8 * 42), 886) - 42
 		var y := fposmod(indice * 51.9 + tiempo * 16, 480)
-		draw_line(Vector2(x, y), Vector2(x - 20 - indice % 23, y + 5), Color(1, 0.70, 0.45, polvo * 0.25), 2)
-	if not cinematica and not extraccion and not decision:
+		var estela := 12.0 + rafaga * 46.0 + indice % 23
+		draw_line(Vector2(x, y), Vector2(x - estela, y + 6), Color(1, 0.73, 0.49, polvo * (0.18 + rafaga * 0.4)), 2)
+	if polvo > 0.0:
+		draw_rect(Rect2(-44, 42, ancho_visible + 88, 440), Color(0.73, 0.36, 0.13, rafaga * 0.24))
+	if mando_nido:
+		for i in range(RELES.size()):
+			var torre: Vector2 = RELES[i]
+			draw_line(torre, torre + Vector2(0, -34), OSCURO, 5, true)
+			draw_circle(torre + Vector2(0, -35), 5, LUZ if i <= rele_actual else OCRE)
+		var objetivo: Vector2 = RELES[rele_actual] if rele_actual < RELES.size() else ESCLUSA
+		_baliza(objetivo + Vector2(0, -58), "RELÉ %d" % (rele_actual + 1) if rele_actual < RELES.size() else "REGRESO", LUZ)
+	elif not cinematica and not extraccion and not decision:
 		_baliza((ESCLUSA if evacuacion else ROVER) + Vector2(0, -83),
 			"ESCLUSA" if evacuacion else "TEO", LUZ)
+		if not chequeo:
+			for refugio: Vector2 in ABRIGOS:
+				draw_arc(refugio, 21, 0.0, TAU, 28, Color(0.68, 0.94, 0.82, 0.52), 1.5, true)
 	draw_set_transform(Vector2.ZERO)
 
 
@@ -203,6 +260,8 @@ func _dibujar_interior() -> void:
 	draw_rect(Rect2(0, 0, ancho_visible, marco.y), Color("#171c22"))
 	draw_set_transform(_origen_mundo(), 0, Vector2.ONE * escala_camara)
 	draw_texture_rect(MAPA, Rect2(Vector2.ZERO, marco), false)
+	draw_texture_rect(ENERGIA, Rect2(10, 130, 236, 211), false)
+	draw_texture_rect(REFUGIO, Rect2(331, 321, 142, 137), false)
 	draw_texture_rect(CLINICA, Rect2(554, 132, 245, 209), false)
 	if not cultivo_activo:
 		draw_rect(Rect2(259, 33, 282, 88), Color(0.14, 0.19, 0.26, 0.52))

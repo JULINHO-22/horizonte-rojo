@@ -1,5 +1,12 @@
 # Cambios
 
+## 2026-11-03 | Tormenta, refugio y salida de NIDO
+
+- Ráfagas con empuje, refugios de superficie, anclaje manual, reducción de visibilidad y sonido variable.
+- Arte nuevo para el frente de polvo, la esclusa y el módulo de Energía. Transición de entrada y plano general con M.
+- Circuito de válvulas para procesar hielo y salida pilotable de NIDO para activar tres relés en el Sol 4.
+- El desenlace diferencia entre enviar el informe con margen de operación y sobrevivir con cuidados o soporte vital pendientes.
+
 ## 2026-11-03 | Chequeo inicial y misiones guiadas
 
 - Chequeo jugable con Teo antes de la tormenta, y estados de salud diferenciados.

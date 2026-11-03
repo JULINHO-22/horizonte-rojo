@@ -10,6 +10,8 @@
 4. Pulsa **Iniciar misión** y sigue a NIDO. Mueve a Nora con **WASD o flechas** y pulsa **E** cerca de Teo para empezar el chequeo. En los menús, elige con el ratón o usa **Tab** y **Enter**. Pulsa **Esc** para salir del terminal.
 5. Cada sol tiene una misión. Sigue el marcador turquesa y usa el terminal de ese módulo. Puedes gastar los turnos sobrantes en cuidados y reservas. Regresa a la esclusa y elige **Cerrar el sol** para revisar las reservas y continuar.
 
+En superficie, mira la carga de viento. Las rachas pueden hacerte retroceder. Mantén **Shift** para anclarte y aprovecha la tregua para avanzar. Los círculos del terreno indican abrigo. Dentro del refugio, **M** alterna entre el plano general y el acercamiento por sala. En el Sol 4, **E** activa los relés mientras controlas a NIDO.
+
 ## Jugar en navegador
 
 Instala las plantillas de exportación de **Godot 4.7.2** y elige **Proyecto → Exportar → Web**. El destino configurado es `build/web/index.html`. Sirve el directorio completo por HTTP. Para probarlo desde PowerShell, ejecuta `python -m http.server 8065 --bind 127.0.0.1 --directory build/web` y abre [UMBRA en el navegador](http://127.0.0.1:8065/).
