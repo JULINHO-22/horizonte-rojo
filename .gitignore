@@ -1,0 +1,4 @@
+.godot/
+/Godot_*_win64.exe/
+/build/
+*.tmp
