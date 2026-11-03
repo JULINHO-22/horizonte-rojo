@@ -7,10 +7,10 @@
 1. Abre Godot 4.7.2. En esta carpeta hay una copia local para Windows.
 2. En el gestor de proyectos, elige **Importar** y selecciona `project.godot`.
 3. Pulsa **F6** con `scenes/umbra.tscn` abierta o **F5** desde cualquier escena.
-4. Pulsa **Iniciar misión** y mira el aterrizaje. En el camino de afuera usa **A/D o izquierda/derecha**. Reúnete con Iris en la puerta y pulsa **E**. Ya en el campo de hielo, pulsa **E** para recoger primero la piedra y luego el hielo. Dentro de la base, usa **WASD o flechas** en las cuatro direcciones. Pulsa **Esc** para salir de un terminal.
-5. Cada día tiene una misión. Sigue el marcador turquesa y usa el terminal de ese módulo. Puedes gastar los turnos sobrantes en cuidados y reservas. Regresa a la puerta y elige **Terminar el día** para revisar las reservas y continuar.
+4. Pulsa **Iniciar misión** y mira el aterrizaje. En el camino de afuera usa **A/D o izquierda/derecha**. Reúnete con Iris en la puerta y pulsa **E**. Ya en el campo de hielo, pulsa **E** para recoger la piedra, taladrar la veta al ritmo de la marca verde y guardar el hielo en la caja. Dentro de la base, usa **WASD o flechas** en las cuatro direcciones. Pulsa **Esc** para salir de un terminal.
+5. Cada día tiene una misión. Sigue el marcador turquesa y usa el terminal de ese módulo. Puedes gastar los turnos sobrantes en cuidados y reservas. Ve al dormitorio y elige **Descansar y terminar el día** para revisar las reservas y continuar.
 
-En superficie, mira la carga de viento. Las rachas pueden hacerte retroceder. Mantén **Shift** para anclarte y aprovecha la tregua para avanzar. Los círculos del terreno indican abrigo. Dentro del refugio, **M** alterna entre el plano general y el acercamiento por sala. En el Sol 4, **E** activa los relés mientras controlas a Pluto.
+En superficie, pulsa **Espacio** para dar un salto corto y mira la fuerza del viento. Las rachas pueden hacerte retroceder. Mantén **Shift** para anclarte y aprovecha la tregua para avanzar. Los círculos del terreno indican abrigo. Dentro del refugio, **M** alterna entre el plano general y el acercamiento por sala. En el Sol 4, **E** activa los relés mientras controlas a Pluto.
 
 ## Jugar en navegador
 

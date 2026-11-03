@@ -32,6 +32,10 @@ var aviso: Label
 var posicion := Vector2(339, 352)
 var reloj := 0.0
 var muestra_roca := false
+var muestra_preparada := false
+var perforaciones := 0
+var pulso_taladro: ProgressBar
+var aviso_taladro: Label
 var regreso_distante := false
 var ambiente: AudioStreamPlayer
 var operacion := ""
@@ -52,8 +56,22 @@ const CONDUCTOS := [
 	["Filtro", "Cerrado", "Al tanque", "A retorno"],
 ]
 const RUTA_AGUA: Array[int] = [1, 2, 1]
+const NOCHES := [
+	"El aire y el calor vuelven a funcionar. Mañana probaremos el hielo.",
+	"La muestra ya es agua. Mañana le contaremos a Tierra cómo salió la prueba.",
+	"El informe viaja a Tierra. Pluto revisará la radio mientras dormimos.",
+	"Pluto volvió y el refugio está protegido. Mañana enviaremos los resultados.",
+	"El informe final salió. Por primera vez en cinco días, podemos bajar la guardia.",
+]
 const AREA := Rect2(0, 0, 1280, 720)
-const NOMBRES := {"energia": "Energía", "cultivos": "Sala de plantas", "medicina": "Enfermería", "radio": "Control", "cierre": "Puerta del refugio"}
+const NOMBRES := {"energia": "Energía", "cultivos": "Sala de plantas", "medicina": "Enfermería", "radio": "Control", "cierre": "Puerta del refugio", "dormitorio": "Dormitorio"}
+const DETALLES := {
+	"aire": ["Reciclador de aire", "Este equipo retira del aire lo que soltamos al respirar. Afuera usamos el aire del traje. Con la puerta sellada, el refugio mantiene aire respirable."],
+	"mapa": ["Mapa de la expedición", "El barranco queda lejos del refugio. La piedra seca sirve para comparar la muestra de hielo con el suelo que la cubría."],
+	"plantas": ["Jardineras", "Las hojas necesitan luz y agua. Si ahorramos batería apagando las luces, mañana tendremos menos comida."],
+	"teo": ["Cuidados de Teo", "Teo necesita dos sesiones de cuidado. Cuando pueda volver a trabajar, habrá tiempo para una tarea más a partir del día siguiente."],
+	"literas": ["Las literas", "Nora dibujó el barranco en la pared. Iris dejó marcada la hora del próximo mensaje. La manta de Teo está lista para cuando pueda volver."],
+}
 const PLANES := {
 	"energia": [["Apagar luces extra", "Conectar la batería", "Comprobar el aire"], [2, 0, 1]],
 	"cultivos": [["Abrir retorno de agua", "Ajustar la luz", "Revisar bandejas"], [1, 2, 0]],
@@ -82,6 +100,15 @@ func _process(delta: float) -> void:
 		subtitulo.text = ATERRIZAJE[0 if reloj < 4.0 else 1 if reloj < 9.5 else 2]
 		if reloj >= 14.0:
 			_fin_aterrizaje()
+			return
+	elif fase == "taladro":
+		reloj += delta
+		pulso_taladro.value = 1.0 - absf(fposmod(reloj * 1.13, 2.0) - 1.0)
+	elif fase == "noche":
+		reloj += delta
+		if reloj >= 3.5:
+			fase = "relevo"
+			_render()
 			return
 	elif fase == "hallazgo":
 		reloj += delta
@@ -163,9 +190,18 @@ func _unhandled_key_input(evento: InputEvent) -> void:
 	if fase == "nido" and evento.physical_keycode == KEY_ESCAPE:
 		_volver_nido(false)
 		return
+	if fase == "taladro" and evento.physical_keycode == KEY_ESCAPE:
+		fase = "sondeo"
+		_render()
+		return
+	if evento.physical_keycode == KEY_SPACE and fase in ["chequeo", "salida", "sondeo", "exterior"]:
+		puesto.saltar()
+		return
 	if evento.physical_keycode != KEY_E:
 		return
 	match fase:
+		"taladro":
+			_perforar()
 		"nido":
 			var destino: Vector2 = PuestoUmbra.RELES[rele_nido] if rele_nido < PuestoUmbra.RELES.size() else PuestoUmbra.ESCLUSA
 			if posicion.distance_to(destino) <= 31.0:
@@ -183,9 +219,14 @@ func _unhandled_key_input(evento: InputEvent) -> void:
 				muestra_roca = true
 				puesto.muestra_roca = true
 				subtitulo.text = "Ya tenemos una piedra para estudiar. El cielo se oscurece al este. Toma el hielo y volvemos."
-			elif muestra_roca and posicion.distance_to(PuestoUmbra.MUESTRA) <= 36:
+			elif muestra_preparada and posicion.distance_to(PuestoUmbra.MUESTRA + Vector2(44, 0)) <= 23:
 				fase = "hallazgo"
 				reloj = 0.0
+				_render()
+			elif muestra_roca and not muestra_preparada and posicion.distance_to(PuestoUmbra.MUESTRA) <= 30:
+				fase = "taladro"
+				reloj = 0.0
+				perforaciones = 0
 				_render()
 		"evacuacion":
 			if not regreso_distante and posicion.distance_to(PuestoUmbra.ESCLUSA) <= 42:
@@ -194,6 +235,8 @@ func _unhandled_key_input(evento: InputEvent) -> void:
 				_render()
 		"base":
 			var cerca := puesto.terminal_cercana()
+			if cerca.is_empty():
+				cerca = puesto.inspeccion_cercana()
 			if not cerca.is_empty() and modulo.is_empty():
 				modulo = cerca
 				operacion = ""
@@ -206,15 +249,20 @@ func _actualizar_aviso() -> void:
 		return
 	if fase == "base":
 		var cerca := puesto.terminal_cercana()
-		aviso.text = "WASD / flechas · M: plano general" if cerca.is_empty() else "E   /   " + NOMBRES[cerca] + "   ·   M: plano general"
+		var detalle := puesto.inspeccion_cercana()
+		aviso.text = "WASD / flechas · M: plano general"
+		if not cerca.is_empty():
+			aviso.text = "E · " + NOMBRES[cerca] + "   ·   M: plano general"
+		elif not detalle.is_empty():
+			aviso.text = "E · Examinar " + str(DETALLES[detalle][0])
 	elif fase == "chequeo":
 		aviso.text = "E · Reunirse en la puerta" if posicion.distance_to(PuestoUmbra.ESCLUSA) <= 42 else "A / D o flechas izquierda y derecha · Ve al refugio"
 	elif fase == "salida":
 		aviso.text = "Derecha · Sal del puesto para llegar al campo de hielo"
 	elif fase == "sondeo":
-		var destino := PuestoUmbra.MUESTRA if muestra_roca else PuestoUmbra.ROCA
-		var objetivo := "Recoger hielo" if muestra_roca else "Recoger una piedra"
-		aviso.text = ("E · " if posicion.distance_to(destino) <= 36 else "Sigue la marca · ") + objetivo
+		var destino := PuestoUmbra.MUESTRA + Vector2(44, 0) if muestra_preparada else PuestoUmbra.MUESTRA if muestra_roca else PuestoUmbra.ROCA
+		var objetivo := "Guardar la muestra" if muestra_preparada else "Perforar la veta" if muestra_roca else "Recoger una piedra"
+		aviso.text = ("E · " if posicion.distance_to(destino) <= 23 else "Sigue la marca · ") + objetivo + "   ·   Espacio: salto corto"
 	elif fase == "exterior":
 		aviso.text = "Izquierda · Corre hacia el refugio"
 	elif fase == "evacuacion":
@@ -260,10 +308,18 @@ func _render() -> void:
 			_boton("Salir a buscar hielo", Rect2(308, 420, 660, 48), _salir_expedicion, CIAN)
 		"averia", "apagado":
 			_corte_energia()
+		"taladro":
+			_mostrar_taladro()
 		"decision":
 			_apertura()
 		"base":
 			_base()
+		"noche":
+			_crear_puesto(true, AREA)
+			_panel(AREA, Color(0.09, 0.06, 0.18, 0.69), Color.TRANSPARENT)
+			_panel(Rect2(345, 298, 590, 125), FONDO)
+			_texto("Fin del día %d" % estado.sol, Rect2(372, 320, 535, 45), 30, CIAN)
+			_texto(NOCHES[estado.sol - 1], Rect2(373, 371, 529, 44), 17)
 		"relevo":
 			_relevo()
 	if cambio_de_fase and is_instance_valid(puesto):
@@ -318,6 +374,7 @@ func _fin_aterrizaje() -> void:
 
 func _salir_expedicion() -> void:
 	muestra_roca = false
+	muestra_preparada = false
 	fase = "salida"
 	_render()
 
@@ -347,14 +404,15 @@ func _crear_puesto(es_interior: bool, area: Rect2) -> void:
 	puesto.hallazgo = fase == "hallazgo"
 	puesto.caida = fase == "caida"
 	puesto.carrera = fase == "exterior"
-	puesto.chequeo = fase in ["chequeo", "briefing", "salida", "sondeo"]
-	puesto.campo = fase in ["sondeo", "hallazgo", "exterior", "caida", "decision", "extraccion"] or (fase == "evacuacion" and regreso_distante)
+	puesto.chequeo = fase in ["chequeo", "briefing", "salida", "sondeo", "taladro"]
+	puesto.campo = fase in ["sondeo", "taladro", "hallazgo", "exterior", "caida", "decision", "extraccion"] or (fase == "evacuacion" and regreso_distante)
 	puesto.sondeo = fase == "sondeo"
 	puesto.muestra_roca = muestra_roca
+	puesto.muestra_preparada = muestra_preparada
 	puesto.mando_nido = fase == "nido"
 	puesto.rele_actual = rele_nido
 	puesto.plano = ver_plano
-	puesto.objetivo_mision = "cierre" if estado.mision_cumplida() else SolUno.MISIONES[estado.sol - 1]
+	puesto.objetivo_mision = "dormitorio" if estado.mision_cumplida() else SolUno.MISIONES[estado.sol - 1]
 	puesto.escala_visual = area.size.y / (527.0 if es_interior else 385.0)
 	puesto.ancho_visible = area.size.x / puesto.escala_visual
 	puesto.scale = Vector2.ONE * puesto.escala_visual
@@ -421,6 +479,38 @@ func _superficie() -> void:
 	_actualizar_aviso()
 
 
+func _mostrar_taladro() -> void:
+	_crear_puesto(false, AREA)
+	_modal("Pluto · Extraer el hielo", "Sujeta el taladro y pulsa E cuando la barra pase por la marca verde. Dos cortes bastan para soltar un trozo sin pulverizarlo.")
+	pulso_taladro = ProgressBar.new()
+	pulso_taladro.max_value = 1.0
+	pulso_taladro.step = 0
+	pulso_taladro.show_percentage = false
+	pulso_taladro.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_colocar(pulso_taladro, Rect2(310, 377, 657, 18))
+	_panel(Rect2(310 + 657 * 0.61, 373, 657 * 0.23, 26), Color(0.24, 0.85, 0.60, 0.33), CIAN)
+	aviso_taladro = _texto("Cortes hechos: 0 de 2", Rect2(310, 407, 658, 30), 17, CIAN)
+	_boton("Hacer un corte · E", Rect2(310, 447, 658, 46), _perforar, CIAN)
+
+
+func _perforar() -> void:
+	if fase != "taladro":
+		return
+	if pulso_taladro.value < 0.61 or pulso_taladro.value > 0.84:
+		aviso_taladro.text = "Espera a que la barra entre en verde. Ya van %d de 2." % perforaciones
+		return
+	reloj = 0.0
+	pulso_taladro.value = 0.0
+	perforaciones += 1
+	if perforaciones < 2:
+		aviso_taladro.text = "Primer corte hecho. Falta soltar el otro lado."
+		return
+	muestra_preparada = true
+	fase = "sondeo"
+	_render()
+	subtitulo.text = "La pieza salió entera. Camina a la caja marcada y guarda el hielo para llevarlo a la base."
+
+
 func _apertura() -> void:
 	_crear_puesto(false, AREA)
 	_modal("Pluto   /   ¿CÓMO AYUDAMOS A TEO?", "El refugio perdió la energía del Sol. Si usamos la cuerda con motor, tendremos que apagar las luces de las plantas.")
@@ -450,14 +540,14 @@ func _base() -> void:
 		return
 	_panel(Rect2(213, 541, 854, 108), FONDO)
 	_imagen(PuestoUmbra.DRON, Rect2(224, 550, 72, 80), TextureRect.STRETCH_KEEP_ASPECT_CENTERED)
-	var objetivo: String = "Vuelve a la puerta para terminar el día" if estado.mision_cumplida() else SolUno.OBJETIVOS[estado.sol - 1]
+	var objetivo: String = "Ve al dormitorio para descansar" if estado.mision_cumplida() else SolUno.OBJETIVOS[estado.sol - 1]
 	_texto("Pluto   /   " + objetivo, Rect2(306, 550, 740, 27), 20, CIAN)
 	var pista: String = mensaje if not mensaje.is_empty() else estado.EVENTOS[estado.sol - 1]
 	if estado.mision_cumplida() and estado.acciones.size() < estado.operativos:
 		if estado.recuperacion < 2 and estado.disponible("medicina"):
-			pista = "Te queda un turno. Puedes visitar Enfermería antes de volver a la puerta."
+			pista = "Puedes usar un turno en Enfermería antes de descansar."
 		elif estado.disponible("cultivos"):
-			pista = "Te queda un turno. Si faltan reservas, revisa el Sala de plantas antes de cerrar."
+			pista = "Si faltan reservas, puedes visitar la sala de plantas antes de descansar."
 	if mensaje.is_empty() and estado.respuesta:
 		pista += " Tierra confirmó el informe anterior."
 	_texto(pista, Rect2(306, 580, 740, 44), 16)
@@ -474,13 +564,18 @@ func _modal(titulo: String, descripcion: String) -> void:
 
 
 func _terminal() -> void:
-	if modulo == "cierre":
+	if modulo == "dormitorio":
 		var listo := estado.mision_cumplida()
-		var texto := "Al cerrar se consumen 4 puntos de batería, 3 porciones de comida y 2 de agua. Puedes usar los turnos restantes antes de dormir."
+		var texto := "Por hoy terminamos. Durante la noche usamos 4 puntos de batería, 3 porciones de comida y 2 de agua. Puedes gastar tus turnos restantes antes de descansar."
 		if not listo:
 			texto = "Primero completa la misión del día. " + SolUno.OBJETIVOS[estado.sol - 1] + ". El marcador indica el módulo."
-		_modal("Pluto   /   REGISTRO DE ESCLUSA", texto)
-		_boton("Terminar el día", Rect2(308, 389, 660, 48), _cerrar, AMBAR, not listo)
+		_modal("Pluto · Dormitorio", texto)
+		_boton("Descansar y terminar el día", Rect2(308, 389, 660, 48), _cerrar, AMBAR, not listo)
+	elif modulo == "cierre":
+		_modal("Pluto · Puerta del refugio", "La puerta quedó sellada. Aquí dentro tenemos aire para respirar. Para dormir, sigue el pasillo que sale hacia el dormitorio.")
+	elif DETALLES.has(modulo):
+		var ficha: Array = DETALLES[modulo]
+		_modal(str(ficha[0]), str(ficha[1]))
 	else:
 		_operar_terminal()
 	_boton("Volver al mapa  ·  Esc", Rect2(308, 480, 660, 36), _salir_terminal, MUTED)
@@ -653,9 +748,11 @@ func _salir_terminal() -> void:
 
 
 func _cerrar() -> void:
-	if puesto.terminal_cercana() != "cierre" or not estado.mision_cumplida():
+	if puesto.terminal_cercana() != "dormitorio" or not estado.mision_cumplida():
 		return
-	fase = "relevo"
+	fase = "noche"
+	reloj = 0.0
+	modulo = ""
 	_render()
 
 
@@ -691,7 +788,7 @@ Datos de misión: %d. Teo: %s." % [
 func _siguiente_sol() -> void:
 	estado.siguiente_sol()
 	mensaje = ""
-	posicion = PuestoUmbra.ENTRADA
+	posicion = PuestoUmbra.TERMINALES.dormitorio
 	modulo = ""
 	operacion = ""
 	fase = "base"

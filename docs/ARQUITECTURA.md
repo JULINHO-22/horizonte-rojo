@@ -14,7 +14,7 @@ Los nombres internos `umbra`, `SolUno` y `nido` vienen de versiones anteriores. 
 
 ## Flujo de escenas
 
-`inicio → aterrizaje → chequeo → briefing → salida → sondeo → hallazgo → exterior → caida → averia → decision → extraccion → evacuacion → base → relevo`. La ruta de espera inserta `apagado` antes de `extraccion`. En el navegador se entra al aterrizaje desde el botón de la portada web. Al avanzar de día, el jugador vuelve al refugio. El cuarto día, la misión de Energía abre la fase exterior `nido` para controlar a Pluto.
+`inicio → aterrizaje → chequeo → briefing → salida → sondeo → taladro → sondeo → hallazgo → exterior → caida → averia → decision → extraccion → evacuacion → base → noche → relevo`. Tras el taladro, el segundo `sondeo` lleva a la caja. La ruta de espera inserta `apagado` antes de `extraccion`. En el navegador se entra al aterrizaje desde el botón de la portada web. Al avanzar de día, Nora despierta en el dormitorio. El cuarto día, la misión de Energía abre la fase exterior `nido` para controlar a Pluto.
 
 En superficie se camina sobre un eje horizontal. El refugio y el barranco tienen panoramas distintos. Dentro, las áreas `ROOMS` y `PASILLOS` permiten el paso, `EQUIPOS` lo bloquea y `TERMINALES` fija dónde interactuar. Al mover un mueble, puerta o panorama, comprueba su posición respecto de esas coordenadas. **M** alterna entre el plano general y el acercamiento.
 
@@ -43,6 +43,6 @@ Acuerda con el equipo cualquier cambio a nombres, tipos o significado de estos c
 1. Importa el proyecto en Godot 4.7.2 y ejecuta con F5.
 2. Haz la salida, recoge piedra y hielo en orden y comprueba que se puede regresar con el viento.
 3. Prueba cada decisión de rescate. Comprueba la batería, plantas y cuidados al comienzo del día 2.
-4. Recorre todos los módulos. Verifica que la puerta impida terminar un día antes del objetivo y que aún sea posible completar la misión después de las tareas opcionales permitidas.
+4. Recorre todos los módulos y los puntos de inspección. Verifica que el dormitorio impida descansar antes del objetivo y que aún sea posible completar la misión después de las tareas opcionales permitidas.
 5. Completa el circuito de agua, la sintonización, los tres relés de Pluto y el informe final. Verifica una partida con dos sesiones médicas y otra con cuidados pendientes.
 6. Si cambias la portada o el preset, abre la exportación servida por HTTP. Pulsa **Iniciar expedición** y comprueba que aparece el aterrizaje.

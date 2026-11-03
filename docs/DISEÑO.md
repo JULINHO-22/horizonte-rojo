@@ -4,13 +4,13 @@ Horizonte Rojo es el nombre del juego. Umbra es el nombre del refugio. Los panor
 
 ## Alcance actual
 
-El [guion y los personajes](HISTORIA.md) tienen su propia guía. La campaña tiene cinco objetivos obligatorios. Pluto guía al jugador y marca el módulo activo. La puerta permite terminar el día al cumplir la misión. Las acciones opcionales dejan margen de batería y turnos para la misión pendiente. El gasto se aplica al completar la tarea.
+El [guion y los personajes](HISTORIA.md) tienen su propia guía. La campaña tiene cinco objetivos obligatorios. Pluto guía al jugador y marca el módulo activo. El dormitorio permite terminar el día al cumplir la misión. Las acciones opcionales dejan margen de batería y turnos para la misión pendiente. El gasto se aplica al completar la tarea.
 
 El arte combina las referencias del equipo e ilustraciones generadas para los panoramas, las salas y los personajes. El repositorio conserva los recursos del proyecto. El registro completo de autoría y permisos de las referencias está pendiente.
 
 ### Recorrido y zonas
 
-La esclusa al sur desemboca en Control, el centro de comunicaciones. Tres pasillos conectan Control con Energía al oeste, la sala de plantas al norte y Enfermería al este. La cámara vuelve a una vista general en los pasillos y se acerca al entrar en cada sala. El acercamiento queda entre 1,85× y 2×, y Control usa una ilustración de alta resolución con los accesos visibles. Los equipos bloquean el paso y los terminales se abren con **E** al acercarse. Iris patrulla Control. En Enfermería, Teo ocupa el colchón a lo largo. El registro de la esclusa cierra el día. Los límites y puntos de interacción están en `scripts/puesto.gd`.
+La esclusa al sur desemboca en Control, el centro de comunicaciones. Tres pasillos conectan Control con Energía al oeste, la sala de plantas al norte y Enfermería al este. La cámara vuelve a una vista general en los pasillos y se acerca al entrar en cada sala. El acercamiento queda entre 1,85× y 2×, y Control usa una ilustración de alta resolución con los accesos visibles. Los equipos bloquean el paso y los terminales se abren con **E** al acercarse. Iris patrulla Control. En Enfermería, Teo ocupa el colchón a lo largo. El dormitorio queda al noreste y se alcanza por el corredor que sale del paso entre Control y Enfermería. Allí se cierra el día. Los límites y puntos de interacción están en `scripts/puesto.gd`.
 
 ## Presupuesto del Sol 1
 
@@ -61,3 +61,5 @@ El relevo añade agua, soporte vital, datos acumulados e informe del día. Los d
 - El hielo de agua marciano sirve como punto de partida para una futura misión de extracción. El equipo deberá documentar el costo de extraerlo, purificarlo y procesarlo antes de convertirlo en una mecánica. [NASA, Mars Facts](https://science.nasa.gov/mars/facts/)
 - La comunicación del prototipo es asíncrona. La bitácora distingue los informes enviados de los que quedaron en la base. [NASA, comunicaciones con Marte](https://science.nasa.gov/resource/mars-in-a-minute-what-happens-when-the-sun-blocks-our-signal/)
 - La página indicada por el equipo devolvió HTTP 502 al consultarla. Confirmar el nombre, la numeración y los criterios de entrega cuando vuelva a estar accesible. [NASA Space Apps, Junior Astronaut Mission Trainer](https://www.spaceappschallenge.org/2026/challenges/junior-astronaut-mission-trainer/)
+
+El salto de superficie usa una caída más lenta como adaptación jugable de la gravedad marciana. El refugio sellado suministra aire respirable. [JPL, Mars at a Glance](https://www.jpl.nasa.gov/news/press_kits/insight/landing/facts/mars-at-a-glance/)

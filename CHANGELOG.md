@@ -1,5 +1,12 @@
 # Cambios
 
+## 2026-11-03 | Exploración, extracción y descanso
+
+- Nora puede dar un salto corto en superficie. La aceleración cambia entre el interior, el suelo marciano y el aire.
+- El hielo se extrae con dos cortes al ritmo del taladro y se guarda en una caja antes del regreso.
+- Las salas tienen puntos de inspección y el encuadre resalta el módulo que se está recorriendo.
+- El dormitorio al noreste cierra cada día con una escena de descanso. La puerta del refugio indica que el interior tiene aire respirable.
+
 ## 2026-11-03 | Guía de continuidad para el equipo
 
 - Contexto narrativo y fichas de personajes para continuar el guion.
