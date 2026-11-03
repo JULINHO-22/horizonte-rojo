@@ -6,16 +6,16 @@ const ESPERA := "espera"
 const RESERVA_NOCTURNA := 4
 const MISIONES := ["energia", "cultivos", "radio", "energia", "radio"]
 const OBJETIVOS := [
-	"Restablece el circuito de soporte vital",
-	"Funde y filtra el hielo del depósito",
-	"Envía a Tierra los datos del agua",
-	"Conecta el blindaje usando a NIDO",
-	"Transmite el informe final",
+	"Devuelve la energía al aire y la calefacción",
+	"Derrite el hielo y limpia el agua",
+	"Cuenta a Tierra qué pasó con el agua",
+	"Usa a NIDO para encender la protección del refugio",
+	"Envía a Tierra los resultados de los cinco días",
 ]
 const ACCIONES := {
-	"energia": {"costo": 3, "titulo": "Reconfigurar el inversor"},
-	"cultivos": {"costo": 4, "titulo": "Estabilizar los cultivos"},
-	"medicina": {"costo": 3, "titulo": "Atender al compañero"},
+	"energia": {"costo": 3, "titulo": "Conectar la batería de reserva"},
+	"cultivos": {"costo": 4, "titulo": "Cuidar las plantas"},
+	"medicina": {"costo": 3, "titulo": "Cuidar a Teo"},
 	"radio": {"costo": 2, "titulo": "Enviar datos a Tierra"},
 }
 
@@ -36,11 +36,11 @@ var respuesta := false
 var paneles_revisados := false
 
 const EVENTOS := [
-	"Ve a Energía. El polvo redujo la luz y el depurador de aire depende de la batería.",
-	"Ve al Invernadero. La muestra que Teo preparó puede reponer el agua del refugio.",
+	"Ve a Energía. El polvo tapó la luz del Sol. Usa la batería para mantener el aire limpio.",
+	"Ve a la sala de plantas. La muestra que Teo preparó puede reponer el agua del refugio.",
 	"Ve a Control. Tierra necesita saber si el filtro funcionó antes de abrir otra reserva.",
-	"Ve a Energía. Hay una alerta solar: NIDO puede salir al banco mientras ustedes se refugian.",
-	"Ve a Control. En la última ventana de radio, envía el balance del agua y del refugio.",
+	"Ve a Energía. Se acerca una tormenta del Sol. NIDO puede salir a encender la protección mientras ustedes esperan dentro.",
+	"Ve a Control. La radio puede llegar a Tierra otra vez. Envía el resumen del agua y del refugio.",
 ]
 
 
@@ -50,10 +50,10 @@ func abrir(ruta_elegida: String) -> void:
 	if ruta_elegida == RESCATE:
 		energia -= 6
 		cultivo = "En pausa"
-		paciente = "Estable · en observación"
+		paciente = "A salvo · necesita descanso"
 	elif ruta_elegida == ESPERA:
 		energia -= 4
-		paciente = "Lesión agravada · requiere vigilancia"
+		paciente = "La lesión empeoró · necesita cuidados"
 	else:
 		return
 	ruta = ruta_elegida
@@ -122,7 +122,7 @@ func siguiente_sol() -> void:
 
 
 func relevo() -> Dictionary:
-	var cuidados := 0 if recuperacion >= 2 else 4 if paciente.begins_with("Lesión") else 1
+	var cuidados := 0 if recuperacion >= 2 else 4 if (ruta == ESPERA and recuperacion == 0) else 1
 	var comida := raciones + (2 if sol > 1 and cultivo != "En pausa" else 0) - 3
 	var agua_final := agua - 2
 	var blindaje := 2 if sol == 4 and not paneles_revisados else 0

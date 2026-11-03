@@ -1,16 +1,17 @@
 class_name PuestoUmbra
 extends Node2D
 
-const EXTERIOR := preload("res://assets/exterior.jpg")
+const SENDERO := preload("res://assets/sendero.png")
+const NAVE := preload("res://assets/nave_llegada.png")
+const TEO_CAIDA := preload("res://assets/teo_caida.png")
 const MAPA := preload("res://assets/base.jpg")
 const TORMENTA := preload("res://assets/tormenta.png")
-const FRENTE := preload("res://assets/frente_polvo.png")
 const CLINICA := preload("res://assets/enfermeria.png")
 const ENERGIA := preload("res://assets/energia_interior.png")
 const REFUGIO := preload("res://assets/esclusa_interior.png")
 const NORA := preload("res://assets/nora_reposo.png")
 const NORA_PASOS := preload("res://assets/nora_caminar.png")
-const NOMBRES := {"energia": "ENERGÍA", "cultivos": "INVERNADERO", "medicina": "ENFERMERÍA", "radio": "CONTROL", "cierre": "ESCLUSA"}
+const NOMBRES := {"energia": "ENERGÍA", "cultivos": "SALA DE PLANTAS", "medicina": "ENFERMERÍA", "radio": "CONTROL", "cierre": "PUERTA"}
 const IRIS := preload("res://assets/iris.png")
 const IRIS_PASOS := preload("res://assets/iris_caminar.png")
 const TEO := preload("res://assets/teo.png")
@@ -47,10 +48,13 @@ const EQUIPOS := [
 	Rect2(580, 161, 175, 47), Rect2(732, 209, 35, 81),
 	Rect2(356, 372, 19, 29), Rect2(431, 351, 18, 57),
 ]
-const ROVER := Vector2(493, 337)
-const ESCLUSA := Vector2(750, 329)
-const RELES := [Vector2(633, 345), Vector2(490, 364), Vector2(312, 330)]
-const ABRIGOS := [Vector2(482, 352), Vector2(645, 315), Vector2(733, 320)]
+const SUELO := 351.0
+const MUESTRA := Vector2(365, SUELO)
+const ROVER := Vector2(649, SUELO)
+const INICIO_CAIDA := 626.0
+const ESCLUSA := Vector2(732, SUELO)
+const RELES := [Vector2(633, SUELO), Vector2(490, SUELO), Vector2(312, SUELO)]
+const ABRIGOS := [Vector2(463, SUELO), Vector2(590, SUELO), Vector2(731, SUELO)]
 
 var interior := false
 var chequeo := false
@@ -66,7 +70,11 @@ static var secuencias: Dictionary = {}
 var punto := Vector2(111, 343)
 var paso := 0.0
 var tiempo := 0.0
-var cinematica := false
+var aterrizaje := false
+var hallazgo := false
+var carrera := false
+var caida := false
+var tiempo_caida := 0.0
 var evacuacion := false
 var extraccion := false
 var usa_cabrestante := false
@@ -84,6 +92,10 @@ var radio_enviada := false
 
 
 func avanzar(direccion: Vector2, delta: float) -> void:
+	if not interior:
+		direccion.y = 0.0
+		direccion = direccion.normalized()
+		punto.y = SUELO
 	var rapidez := 112.0 if interior else 176.0
 	if evacuacion:
 		rapidez = 135.0
@@ -106,8 +118,10 @@ func avanzar(direccion: Vector2, delta: float) -> void:
 
 
 func intensidad_viento() -> float:
-	if interior or chequeo:
+	if interior or chequeo or aterrizaje:
 		return 0.0
+	if caida:
+		return lerpf(1.0, 0.53, smoothstep(1.0, 3.8, tiempo_caida))
 	var pulso := pow(maxf(0, cos((tiempo - 20.0) * TAU / 6.5)), 6.0)
 	return (0.18 + 0.82 * pulso) * smoothstep(6.0, 13.0, tiempo)
 
@@ -146,7 +160,7 @@ func actualizar_camara(delta: float) -> void:
 
 func transitable(destino: Vector2) -> bool:
 	if not interior:
-		return Rect2(31, 296, 735, 97).has_point(destino)
+		return destino.x >= 42.0 and destino.x <= 756.0 and is_equal_approx(destino.y, SUELO)
 	for equipo: Rect2 in EQUIPOS:
 		if equipo.grow(3).has_point(destino):
 			return false
@@ -173,85 +187,112 @@ func _draw() -> void:
 func _origen_mundo() -> Vector2:
 	if interior:
 		return Vector2(ancho_visible * 0.5, 263.5) - centro_camara * escala_camara
-	return Vector2((ancho_visible - 804) * 0.5, -63)
+	var foco := punto.x
+	if caida:
+		foco = lerpf(foco, ROVER.x, smoothstep(0.0, 1.4, tiempo_caida))
+	var temblor := sin(tiempo * 39.0) * intensidad_viento() * 2.4
+	var zoom := _zoom_mundo()
+	return Vector2(clampf(ancho_visible * 0.5 - foco * zoom, ancho_visible - 804.0 * zoom, 0.0),
+		-112.0 - SUELO * (zoom - 1.0) + temblor)
+
+
+func _zoom_mundo() -> float:
+	return escala_camara if interior else 1.0 + 0.35 * smoothstep(0.0, 1.35, tiempo_caida)
 
 
 func _dibujar_exterior() -> void:
-	var zoom := 1.0 + 0.10 * clampf(tiempo / 16.0, 0, 1)
-	var lienzo := Vector2(804, 490)
-	var origen := _origen_mundo()
-	var ancho_fondo := ancho_visible / zoom
-	draw_set_transform(Vector2(0, origen.y), 0, Vector2.ONE * zoom)
-	var fondo := Rect2(-ancho_fondo * 0.04, -25, ancho_fondo * 1.08, lienzo.y)
-	draw_texture_rect(EXTERIOR, fondo, false)
-	var polvo := 0.0 if chequeo else smoothstep(3.5, 10.5, tiempo)
+	draw_set_transform(_origen_mundo(), 0, Vector2.ONE * _zoom_mundo())
+	draw_texture_rect(SENDERO, Rect2(0, 0, 886, 462), false)
 	var rafaga := intensidad_viento()
-	draw_texture_rect(TORMENTA, fondo, false, Color(1, 1, 1, polvo))
-	draw_texture_rect(FRENTE, fondo, false, Color(1, 1, 1, polvo * (0.35 + rafaga * 0.65)))
-	draw_set_transform(origen)
-	draw_rect(Rect2(-42, 302, 888, 182), Color(0.17, 0.07, 0.04, polvo * 0.21))
-	_sprite(VEHICULO, ROVER + Vector2(15, 6), 62)
+	var polvo := 0.0 if chequeo or aterrizaje else smoothstep(2.9, 6.7, tiempo)
+	var llegada := smoothstep(0.45, 5.2, tiempo) if aterrizaje else 1.0
+	var nave := Vector2(182, lerpf(35.0, SUELO - 21, llegada))
+	if aterrizaje and llegada < 1.0:
+		for i in range(23):
+			var x := sin(i * 8.31 + tiempo * 9.0) * (12.0 + llegada * 45.0)
+			var y := fposmod(i * 7.53 + tiempo * 145.0, 75.0)
+			draw_circle(nave + Vector2(x, y - 8), 1.7 + float(i % 5),
+				Color(1.0, 0.61, 0.27, (1.0 - y / 75.0) * 0.66))
+	_sprite(NAVE, nave, 171)
+	_sprite(VEHICULO, ROVER + Vector2(27, -5), 56)
+
 	var nora := punto
-	var iris := Vector2(668, 316)
-	var teo := ROVER + Vector2(-25, 14)
-	var accidente := not chequeo
-	var carrera := cinematica and tiempo >= 4.0
-	if cinematica:
-		nora = Vector2(lerpf(punto.x, 339, smoothstep(4, 12, tiempo)), 352)
-		iris = Vector2(lerpf(618, 667, smoothstep(4, 9, tiempo)), 319)
-		teo = Vector2(lerpf(443, ROVER.x - 25, smoothstep(4, 11.7, tiempo)), 351)
-		accidente = tiempo >= 11.8
-	elif extraccion:
-		var avance := smoothstep(17.3, 19.5, tiempo)
-		teo = teo.lerp(punto + Vector2(-26, 4), avance)
-		if usa_cabrestante:
-			draw_line(ROVER + Vector2(-7, -15), teo + Vector2(0, -10), OCRE, 2)
-	elif evacuacion:
-		teo = punto + Vector2(-26 if not direccion_izquierda else 26, 4)
-		iris = ESCLUSA + Vector2(-18, -13)
-	if chequeo:
-		iris = Vector2(618, 319)
-		teo.x = 443
-	var iris_camina := carrera and tiempo < 9.0
-	var iris_paso := int(fposmod((iris.x - 618) / 30.0, 1.0) * 8)
-	if not mando_nido:
-		_sprite(IRIS_PASOS if iris_camina else IRIS, iris, 49, 0.0, false, iris_paso if iris_camina else -1)
-	if accidente and not mando_nido:
-		if evacuacion or extraccion:
-			draw_line(teo + Vector2(-24, -5), teo + Vector2(24, -5), Color("#b9b6b1"), 4, true)
-			draw_circle(teo + Vector2(-16, 0), 3, OSCURO)
-			draw_circle(teo + Vector2(17, 0), 3, OSCURO)
-		_sprite(TEO, teo, 18)
-	elif not mando_nido:
-		var teo_paso := int(fposmod((teo.x - 443) / 28.0, 1.0) * 8)
-		_sprite(TEO_PASOS if carrera else TEO_NORMAL, teo, 48, 0.0, false, teo_paso if carrera else -1)
-	var ciclo := fposmod(absf(nora.x - punto.x) / 61.0, 1.0) if cinematica else paso
+	var iris := Vector2(284, SUELO)
+	var teo := MUESTRA
+	var afectado := caida or decision or extraccion or evacuacion
+	var salida := smoothstep(7.0, 9.6, tiempo)
+	if aterrizaje:
+		nora = Vector2(lerpf(194, 220, salida), lerpf(SUELO - 21.0, SUELO, salida))
+		iris.x = lerpf(194, 284, smoothstep(5.6, 8.7, tiempo))
+		teo.x = lerpf(194, MUESTRA.x, smoothstep(9.3, 13.5, tiempo))
+	elif carrera:
+		iris.x = minf(ESCLUSA.x, maxf(415.0, punto.x + 110.0))
+		teo.x = maxf(MUESTRA.x, punto.x + 62.0)
+	elif afectado:
+		iris.x = ESCLUSA.x - 10
+		teo.x = ROVER.x - 9
+		if caida:
+			nora.x -= 24.0 * smoothstep(0.0, 1.6, tiempo_caida)
+			teo.x = lerpf(INICIO_CAIDA + 62.0, teo.x, smoothstep(0.20, 1.65, tiempo_caida))
+		elif extraccion:
+			teo.x = lerpf(teo.x, punto.x - 27, smoothstep(17.3, 19.5, tiempo))
+			if usa_cabrestante:
+				draw_line(ESCLUSA - Vector2(8, 12), teo - Vector2(0, 8), OCRE, 2)
+		elif evacuacion:
+			teo.x = punto.x - 29 if not direccion_izquierda else punto.x + 29
+
 	if mando_nido:
-		_sprite(DRON, punto, 39, sin(tiempo * 10.0) * 1.0, direccion_izquierda)
-	else:
-		_sprite(NORA_PASOS if caminando or (carrera and tiempo < 12) else NORA,
-			nora, 51, 3.0 if anclado else rafaga, carrera or direccion_izquierda,
-			int(ciclo * 8) if caminando or (carrera and tiempo < 12) else -1)
-	for indice in range(132):
-		var x := fposmod(indice * 83.7 - tiempo * (185 + indice % 8 * 42), 886) - 42
-		var y := fposmod(indice * 51.9 + tiempo * 16, 480)
-		var estela := 12.0 + rafaga * 46.0 + indice % 23
-		draw_line(Vector2(x, y), Vector2(x - estela, y + 6), Color(1, 0.73, 0.49, polvo * (0.18 + rafaga * 0.4)), 2)
+		_sprite(DRON, punto, 53, sin(tiempo * 10.0), direccion_izquierda)
+	elif not aterrizaje or tiempo >= 6.0:
+		var corriendo := carrera and caminando
+		_sprite(IRIS_PASOS if corriendo else IRIS, iris, 69, 0.0, false,
+			int(fposmod(iris.x / 60.0, 1.0) * 8) if corriendo else -1)
+		if caida and tiempo_caida < 1.65:
+			var pose := mini(3, int(tiempo_caida / 0.41))
+			_sprite(TEO_CAIDA, teo, [68.0, 54.0, 37.0, 27.0][pose], 0.0, false, pose, 4)
+		elif afectado:
+			if evacuacion or extraccion:
+				draw_line(teo + Vector2(-26, -4), teo + Vector2(25, -4), Color("#c5bbb2"), 5, true)
+				draw_circle(teo + Vector2(-16, 1), 3.5, OSCURO)
+				draw_circle(teo + Vector2(17, 1), 3.5, OSCURO)
+			_sprite(TEO, teo, 24)
+		elif not aterrizaje or tiempo >= 9.3:
+			var teo_camina := corriendo or (aterrizaje and tiempo < 13.5)
+			_sprite(TEO_PASOS if teo_camina else TEO_NORMAL, teo, 69, 0.0, false,
+				int(fposmod(teo.x / 60.0, 1.0) * 8) if teo_camina else -1)
+		if not aterrizaje or tiempo >= 7.0:
+			var andando := caminando or (aterrizaje and tiempo < 9.6)
+			_sprite(NORA_PASOS if andando else NORA, nora, 73, 3.0 if anclado else 0.0,
+				direccion_izquierda, int(fposmod(nora.x / 61.0, 1.0) * 8) if andando else -1)
 	if polvo > 0.0:
-		draw_rect(Rect2(-44, 42, ancho_visible + 88, 440), Color(0.73, 0.36, 0.13, rafaga * 0.24))
+		draw_rect(Rect2(0, 0, 804, 462), Color(0.61, 0.25, 0.08, polvo * (0.16 + rafaga * 0.35)))
+		for i in range(8):
+			var x := fposmod(i * 159.0 - tiempo * (111.0 + i * 9.0), 1300.0) - 215.0
+			var y := 80.0 + i * 44.0
+			draw_colored_polygon(PackedVector2Array([
+				Vector2(x - 150, y + 26), Vector2(x + 35, y + 4),
+				Vector2(x + 153, y - 5), Vector2(x + 226, y + 13),
+				Vector2(x + 76, y + 28), Vector2(x - 75, y + 38),
+			]), Color(0.96, 0.58, 0.29, polvo * rafaga * 0.13))
+		for i in range(145):
+			var x := fposmod(i * 83.7 - tiempo * (180 + i % 8 * 46), 964) - 80
+			var y := fposmod(i * 51.9 + tiempo * 13, 485)
+			var estela := 16.0 + rafaga * 59.0 + i % 21
+			draw_line(Vector2(x, y), Vector2(x - estela, y + 5), Color(1, 0.68, 0.43, polvo * (0.13 + rafaga * 0.34)), 2)
 	if mando_nido:
 		for i in range(RELES.size()):
 			var torre: Vector2 = RELES[i]
 			draw_line(torre, torre + Vector2(0, -34), OSCURO, 5, true)
 			draw_circle(torre + Vector2(0, -35), 5, LUZ if i <= rele_actual else OCRE)
 		var objetivo: Vector2 = RELES[rele_actual] if rele_actual < RELES.size() else ESCLUSA
-		_baliza(objetivo + Vector2(0, -58), "RELÉ %d" % (rele_actual + 1) if rele_actual < RELES.size() else "REGRESO", LUZ)
-	elif not cinematica and not extraccion and not decision:
-		_baliza((ESCLUSA if evacuacion else ROVER) + Vector2(0, -83),
-			"ESCLUSA" if evacuacion else "TEO", LUZ)
-		if not chequeo:
-			for refugio: Vector2 in ABRIGOS:
-				draw_arc(refugio, 21, 0.0, TAU, 28, Color(0.68, 0.94, 0.82, 0.52), 1.5, true)
+		_baliza(objetivo + Vector2(0, -91), "PUESTO %d" % (rele_actual + 1) if rele_actual < RELES.size() else "REGRESO", LUZ)
+	elif chequeo:
+		draw_circle(MUESTRA - Vector2(18, 6), 4, LUZ)
+		_baliza(MUESTRA + Vector2(0, -92), "TEO", LUZ)
+	elif carrera or evacuacion:
+		_baliza(ESCLUSA + Vector2(0, -102), "REFUGIO", LUZ)
+		for refugio: Vector2 in ABRIGOS:
+			draw_arc(refugio, 21, 0.0, TAU, 28, Color(0.68, 0.94, 0.82, 0.52), 1.5, true)
 	draw_set_transform(Vector2.ZERO)
 
 
@@ -296,18 +337,28 @@ func _dibujar_interior() -> void:
 
 
 func _sprite(textura: Texture2D, ancla: Vector2, alto: float, balanceo := 0.0,
-		invertido := false, fotograma := -1) -> void:
+		invertido := false, fotograma := -1, columnas := 4) -> void:
 	if not recortes.has(textura):
 		recortes[textura] = textura.get_image().get_used_rect()
 	var region: Rect2 = recortes[textura]
 	if fotograma >= 0:
 		if not secuencias.has(textura):
 			var imagen := textura.get_image()
-			var ancho_celda := imagen.get_width() / 4
-			var alto_celda := imagen.get_height() / 2
+			var filas := 1 if textura == TEO_CAIDA else 2
+			var ancho_celda := imagen.get_width() / columnas
+			var alto_celda := imagen.get_height() / filas
 			var poses: Array[Rect2] = []
-			for i in range(8):
-				var celda := Rect2i(i % 4 * ancho_celda, i / 4 * alto_celda, ancho_celda, alto_celda)
+			for i in range(columnas * filas):
+				var celda := Rect2i(i % columnas * ancho_celda, i / columnas * alto_celda, ancho_celda, alto_celda)
+				if textura == TEO_CAIDA:
+					var marco: Rect2 = [
+						Rect2(0.0, 0.0, 0.243, 0.92),
+						Rect2(0.244, 0.14, 0.216, 0.76),
+						Rect2(0.441, 0.36, 0.24, 0.54),
+						Rect2(0.688, 0.44, 0.312, 0.46),
+					][i]
+					var tamano := Vector2(imagen.get_size())
+					celda = Rect2i(Vector2i(marco.position * tamano), Vector2i(marco.size * tamano))
 				var limites := imagen.get_region(celda).get_used_rect()
 				poses.append(Rect2(celda.position + limites.position, limites.size))
 			secuencias[textura] = poses
@@ -315,9 +366,10 @@ func _sprite(textura: Texture2D, ancla: Vector2, alto: float, balanceo := 0.0,
 	var ancho := alto * region.size.x / region.size.y
 	var tam := Vector2(ancho, alto)
 	var origen := ancla - Vector2(ancho * 0.5, alto + absf(balanceo))
-	draw_circle(ancla, 6.0, Color(0.08, 0.06, 0.11, 0.55))
+	if textura != NAVE and textura != VEHICULO:
+		draw_rect(Rect2(ancla - Vector2(7, 2), Vector2(14, 4)), Color(0.08, 0.06, 0.11, 0.43))
 	if invertido:
-		var zoom := escala_camara if interior else 1.0
+		var zoom := _zoom_mundo()
 		var desplazamiento := _origen_mundo()
 		draw_set_transform(desplazamiento + (origen + Vector2(ancho, 0)) * zoom, 0, Vector2(-zoom, zoom))
 		draw_texture_rect_region(textura, Rect2(Vector2.ZERO, tam), region)

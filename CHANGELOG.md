@@ -1,5 +1,12 @@
 # Cambios
 
+## 2026-11-03 | Aterrizaje y apertura para público infantil
+
+- Portada ilustrada que inicia el juego con un solo botón y deja el área del juego a todo el ancho disponible.
+- Aterrizaje animado, búsqueda de hielo, carrera jugable hacia el refugio y caída animada de Teo antes del rescate.
+- Sendero lateral dibujado bajo los pies. Las direcciones verticales se usan dentro del refugio.
+- Opciones de rescate y órdenes de NIDO en lenguaje cotidiano. La pantalla muestra días, batería, comida, agua y tareas restantes.
+
 ## 2026-11-03 | Tormenta, refugio y salida de NIDO
 
 - Ráfagas con empuje, refugios de superficie, anclaje manual, reducción de visibilidad y sonido variable.

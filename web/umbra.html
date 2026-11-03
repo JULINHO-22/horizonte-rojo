@@ -3,46 +3,57 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#101318">
-  <title>$GODOT_PROJECT_NAME</title>
+  <meta name="theme-color" content="#171320">
+  <title>UMBRA · Cinco días para sobrevivir</title>
   <style>
     * { box-sizing: border-box; }
-    body { margin: 0; min-height: 100vh; background: #101318; color: #fff1db; font: 16px system-ui, sans-serif; }
-    main { width: min(100% - 32px, 1280px); margin: 20px auto; }
-    header, footer { display: flex; align-items: baseline; gap: 12px 28px; justify-content: space-between; flex-wrap: wrap; }
-    header { margin-bottom: 13px; border-bottom: 1px solid #394652; padding-bottom: 12px; }
-    h1, p { margin: 0; }
-    h1 { font-size: clamp(21px, 4vw, 32px); letter-spacing: .15em; }
-    .tag, footer { color: #b3bfc8; font-size: 13px; letter-spacing: .05em; }
-    .tag { color: #7df0e0; }
-    section { position: relative; aspect-ratio: 16 / 9; overflow: hidden; border: 1px solid #394652; background: #181c24; }
-    canvas { display: block; width: 100%; height: 100%; outline: none; }
-    #launch { position: absolute; inset: 0; display: grid; align-content: center; justify-items: center; gap: 16px; padding: 16px; text-align: center; background: radial-gradient(ellipse at 65% 80%, #623825, #191e27 72%); }
-    #launch[hidden] { display: none; }
-    button { padding: 10px 18px; border: 1px solid #7df0e0; background: #151b22; color: #7df0e0; font: inherit; cursor: pointer; }
-    button:focus-visible, button:hover { background: #7df0e0; color: #101318; }
-    button:disabled { opacity: .6; cursor: wait; }
-    footer { margin-top: 12px; align-items: center; }
-    section:fullscreen { border: 0; }
+    :root { color-scheme: dark; font: 16px "Trebuchet MS", sans-serif; color: #fff6e8; background: #171320; }
+    body { margin: 0; }
+    [hidden] { display: none !important; }
+    #stage { position: relative; min-height: 100dvh; display: grid; place-items: center; overflow: hidden; }
+    canvas { display: block; width: min(100vw, 177.778dvh); height: min(100dvh, 56.25vw); outline: 0; }
+    #launch {
+      position: absolute; inset: 0; display: grid; align-items: end;
+      background: linear-gradient(90deg, #16121cf5, #211521cf 35%, transparent 73%),
+        linear-gradient(0deg, #191322, transparent 48%),
+        url("portada.png") center / cover, #543039;
+    }
+    .expedicion { width: min(35rem, 95%); padding: clamp(1.25rem, 6vw, 6rem); padding-right: 0; }
+    .destino { width: fit-content; padding: .48rem .85rem; color: #241d2a; background: #ffbb84; font-weight: 700; border-radius: .25rem .25rem 1rem .25rem; }
+    h1 { margin: .08em 0 0; font: 900 clamp(4rem, 13vw, 10rem)/.92 Georgia, serif; letter-spacing: -.08em; }
+    h2 { margin: .6rem 0 1rem; font: 400 clamp(1.32rem, 3.2vw, 2.4rem)/1.1 Georgia, serif; color: #ffcdb0; }
+    p { margin: 0; }
+    .historia { line-height: 1.55; font-size: clamp(1rem, 1.8vw, 1.2rem); max-width: 32ch; }
+    button { font: inherit; cursor: pointer; }
+    button:focus-visible { outline: 3px solid #fff6e8; outline-offset: 4px; }
+    #play { margin: 1.3rem 0 .65rem; min-height: 50px; padding: .75rem 1.65rem; color: #171320; background: #a9ecdf; border: 0; border-radius: .4rem; font-weight: bold; }
+    #play:hover { background: #e1fff5; }
+    #play:disabled { cursor: wait; opacity: .8; }
+    #status { min-height: 2.4em; color: #e8d6d1; font-size: .86rem; line-height: 1.35; }
+    #progreso { width: min(100%, 16rem); accent-color: #a9ecdf; display: block; }
+    #fullscreen { position: absolute; right: .75rem; bottom: .6rem; background: #211b2adb; color: #fff6e8; border: 1px solid #c8bcc7; border-radius: .35rem; min-width: 40px; min-height: 36px; }
+    @media (max-width: 650px) {
+      #launch { background-position: 62% center; }
+      .expedicion { padding-bottom: 1.2rem; }
+    }
   </style>
   $GODOT_HEAD_INCLUDE
 </head>
 <body>
-<main>
-  <header><h1>UMBRA</h1><p class="tag">MARTE / CINCO SOLES PARA SOBREVIVIR</p></header>
-  <section id="stage" aria-label="Juego UMBRA">
-    <canvas id="canvas" tabindex="0">Tu navegador necesita WebGL 2 para jugar.</canvas>
-    <div id="launch">
-      <p class="tag">PUESTO UMBRA / TRANSMISIÓN 01</p>
-      <h2>Una tormenta. Cinco soles.</h2>
-      <button id="play" type="button">Cargar UMBRA</button>
-      <p id="status" role="status">Juego para teclado y ratón</p>
+<main id="stage" aria-label="Juego UMBRA">
+  <canvas id="canvas" tabindex="0">Abre el juego en un navegador con gráficos 3D habilitados.</canvas>
+  <div id="launch">
+    <div class="expedicion">
+      <p class="destino">Primera parada · Marte</p>
+      <h1>UMBRA</h1>
+      <h2>Cinco días para sobrevivir</h2>
+      <p class="historia">Aterriza con Nora, Iris y Teo. Explora Marte y descubre cómo su hielo puede ayudar a la tripulación.</p>
+      <button id="play" type="button">Iniciar expedición</button>
+      <progress id="progreso" max="1" hidden></progress>
+      <p id="status" role="status">Usa el teclado para moverte y el ratón para elegir.</p>
     </div>
-  </section>
-  <footer>
-    <p>WASD / FLECHAS PARA MOVERTE · E PARA INTERACTUAR</p>
-    <button id="fullscreen" type="button" hidden>Pantalla completa</button>
-  </footer>
+  </div>
+  <button id="fullscreen" type="button" aria-label="Pantalla completa" title="Pantalla completa" hidden>⛶</button>
 </main>
 <script src="$GODOT_URL"></script>
 <script>
@@ -50,31 +61,37 @@
   const stage = document.querySelector("#stage");
   const play = document.querySelector("#play");
   const status = document.querySelector("#status");
+  const progreso = document.querySelector("#progreso");
   const fullscreen = document.querySelector("#fullscreen");
   function fitCanvas() {
-    const bounds = stage.getBoundingClientRect();
+    const bounds = canvas.getBoundingClientRect();
     const density = Math.min(devicePixelRatio, 2);
     canvas.width = Math.round(bounds.width * density);
     canvas.height = Math.round(bounds.height * density);
   }
-  new ResizeObserver(fitCanvas).observe(stage);
+  new ResizeObserver(fitCanvas).observe(canvas);
   play.addEventListener("click", async () => {
     play.disabled = true;
-    status.textContent = "Cargando la misión…";
+    play.textContent = "Preparando el aterrizaje…";
+    status.textContent = "La nave se acerca a Marte.";
+    progreso.hidden = false;
     try {
-      if (!Engine.isWebGLAvailable()) throw new Error("Se requiere WebGL 2.");
+      if (!Engine.isWebGLAvailable()) throw new Error("Activa la aceleración gráfica del navegador o prueba con otro navegador.");
       fitCanvas();
       await new Engine($GODOT_CONFIG).startGame({
         canvas,
         onProgress(current, total) {
-          if (total > 0) status.textContent = `Cargando ${Math.floor(current / total * 100)} %`;
+          if (total > 0) progreso.value = current / total;
         }
       });
       document.querySelector("#launch").hidden = true;
       fullscreen.hidden = !stage.requestFullscreen;
       canvas.focus();
     } catch (error) {
-      status.textContent = `No se pudo iniciar UMBRA. ${error.message || error}`;
+      console.error(error);
+      status.textContent = "No pudimos abrir el juego. Recarga la página o prueba con otro navegador.";
+      progreso.hidden = true;
+      play.textContent = "Volver a intentar";
       play.disabled = false;
     }
   });
