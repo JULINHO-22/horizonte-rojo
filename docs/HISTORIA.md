@@ -15,12 +15,14 @@
 
 1. **Aterrizaje.** La nave baja al lado del refugio. Iris presenta el plan de vivir cinco días y probar el hielo. El jugador puede saltar esta secuencia.
 2. **Aviso y salida.** Nora va a la puerta y se reúne con Iris. Tierra detectó una nube de polvo. La tripulación acuerda volver si el cielo se oscurece.
-3. **Barranco.** El campo tiene un panorama propio y queda lejos del refugio. Nora recoge primero una piedra para comparar el suelo y luego la muestra de hielo.
+3. **Barranco.** Nora recoge una piedra y compara las lecturas de dos puntos. La escarcha superficial puede cubrir suelo seco. En la veta correcta, Pluto le enseña a afirmar el taladro, abrir un hueco y levantar un trozo de hielo. Guarda el hielo en una caja antes de regresar.
 4. **Regreso.** La tormenta obliga a caminar contra el viento. Iris va delante, Nora en medio y Teo queda atrás con la muestra. Teo tropieza, se desliza y queda con la bota atrapada junto a la camioneta.
 5. **Avería.** La historia corta al refugio. El cable de los paneles se suelta y Pluto explica que la base depende de la batería.
-6. **Decisión y regreso.** Usar la cuerda con motor apaga las luces de las plantas y permite sacar antes a Teo. Esperar protege la reserva de energía y las plantas, pero agrava la lesión. En esa ruta se ve el corte de la toma exterior y el rescate con camilla cuando baja el viento. Nora cruza el barranco de vuelta y abre la puerta.
+6. **Decisión y regreso.** Usar la cuerda con motor apaga las luces de las plantas y libera a Teo pronto. Vuelve a pie apoyado en Iris. Esperar protege la reserva y las plantas, pero agrava la lesión. En esa ruta, Pluto corta la toma exterior, Nora busca abrigo y Teo sigue atrapado hasta que baja la ráfaga. Solo entonces se usa la camilla. El equipo atraviesa el sendero de vuelta y entra por la puerta de aire.
 
 ## Arco de los cinco días
+
+Cada día termina en el dormitorio, después de cumplir el objetivo. Una escena corta recuerda lo que consiguió la tripulación y prepara el día siguiente. La puerta confirma que el refugio está sellado y tiene aire respirable. En superficie la tripulación depende del aire del traje.
 
 | Día | Pregunta de la historia | Objetivo |
 | --- | --- | --- |
@@ -38,3 +40,15 @@
 - Mantén el barranco separado del refugio. Conservar esa distancia sostiene el dilema del rescate.
 
 Consulta [Diseño](DISEÑO.md) para valores y fuentes científicas. Consulta [Arquitectura](ARQUITECTURA.md) para las fases y sus archivos.
+
+## Actividades por acordar con el equipo
+
+Las misiones de la tabla son las actividades jugables actuales. Estas ideas sirven para discutir una segunda versión de cada día.
+
+| Día | Idea para ampliar | Cómo enlaza con la historia |
+| --- | --- | --- |
+| 1 | Seguir señales de la batería hasta encontrar qué equipo sigue funcionando. | El rescate cambia qué queda encendido. |
+| 2 | Comparar agua turbia y filtrada con una prueba visible. | La muestra que trajo Teo se convierte en evidencia. |
+| 3 | Elegir qué lectura enviar durante una ventana corta de radio. | Tierra puede responder a los datos que recibió. |
+| 4 | Planear la ruta de Pluto entre zonas protegidas y relés. | La tripulación se queda bajo techo durante la alerta. |
+| 5 | Elegir qué resultados incluir en el informe y ver qué respalda cada evidencia. | El final explica qué se aprendió y qué falta comprobar. |
