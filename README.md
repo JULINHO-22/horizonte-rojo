@@ -7,10 +7,10 @@
 1. Abre Godot 4.7.2. En esta carpeta hay una copia local para Windows.
 2. En el gestor de proyectos, elige **Importar** y selecciona `project.godot`.
 3. Pulsa **F6** con `scenes/umbra.tscn` abierta o **F5** desde cualquier escena.
-4. Pulsa **Iniciar misión** y mira el aterrizaje. En el camino de afuera usa **A/D o izquierda/derecha**. Reúnete con Iris en la puerta y pulsa **E**. En el barranco, recoge la piedra y compara los puntos numerados con **E**. Mantén **Espacio** para taladrar y suéltalo para enfriar la broca. Guarda el hielo en la caja marcada. Dentro de la base usa **WASD o flechas** y pulsa **Esc** para salir de un terminal.
-5. Cada día tiene una misión. Sigue el marcador turquesa y usa el terminal de ese módulo. Puedes gastar los turnos sobrantes en cuidados y reservas. Ve al dormitorio y elige **Descansar y terminar el día** para revisar las reservas y continuar.
+4. Pulsa **Iniciar misión** y mira el aterrizaje. En el camino de afuera usa **A/D o izquierda/derecha**. Reúnete con Iris en la puerta y pulsa **E**. En el barranco, recoge la piedra y compara los puntos numerados con **E**. Cuando Pluto confirme la veta, sigue los tres pasos en pantalla con **E** o con el botón. Guarda el hielo en la caja marcada con **E**. Dentro de la base usa **WASD o flechas** y pulsa **Esc** para salir de un terminal.
+5. Cada día tiene una misión. Sigue el marcador turquesa y usa el terminal de ese módulo. Puedes gastar los turnos sobrantes en cuidados y reservas. Desde Control, toma el pasillo hacia Enfermería y gira hacia arriba donde dice **Dormitorio**. En la sala, pulsa **E** y elige **Descansar y terminar el día** para revisar las reservas y continuar.
 
-En superficie, pulsa **Espacio** para dar un salto corto y mira la fuerza del viento. Las rachas pueden hacerte retroceder. Mantén **Shift** para anclarte y aprovecha la tregua para avanzar. Los círculos del terreno indican abrigo. Dentro del refugio, **M** alterna entre el plano general y el acercamiento por sala. En el Sol 4, **E** activa los relés mientras controlas a Pluto.
+En superficie, pulsa **Espacio** para dar un salto corto y mira la fuerza del viento. Las rachas pueden hacerte retroceder. Mantén **Shift** para anclarte y aprovecha la tregua para avanzar. Los círculos del terreno indican abrigo. Dentro del refugio, **M** alterna entre el plano general y la cámara de cerca. En la vista de cerca, camina por las puertas para recorrer el interior de cada sala. Desde Energía, sube por la puerta del fondo y gira a la izquierda para llegar al laboratorio. Para llegar al taller, sigue derecho por el corredor que pasa debajo del dormitorio. Pulsa **E** en las estaciones señaladas. En el Sol 4, **E** activa los relés mientras controlas a Pluto.
 
 ## Jugar en navegador
 

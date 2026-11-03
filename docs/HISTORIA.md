@@ -15,7 +15,7 @@
 
 1. **Aterrizaje.** La nave baja al lado del refugio. Iris presenta el plan de vivir cinco días y probar el hielo. El jugador puede saltar esta secuencia.
 2. **Aviso y salida.** Nora va a la puerta y se reúne con Iris. Tierra detectó una nube de polvo. La tripulación acuerda volver si el cielo se oscurece.
-3. **Barranco.** Nora recoge una piedra y compara las lecturas de dos puntos. La escarcha superficial puede cubrir suelo seco. En la veta correcta, alterna entre perforar y enfriar la broca. Guarda el hielo en una caja antes de regresar.
+3. **Barranco.** Nora recoge una piedra y compara las lecturas de dos puntos. La escarcha superficial puede cubrir suelo seco. En la veta correcta, Pluto le enseña a afirmar el taladro, abrir un hueco y levantar un trozo de hielo. Guarda el hielo en una caja antes de regresar.
 4. **Regreso.** La tormenta obliga a caminar contra el viento. Iris va delante, Nora en medio y Teo queda atrás con la muestra. Teo tropieza, se desliza y queda con la bota atrapada junto a la camioneta.
 5. **Avería.** La historia corta al refugio. El cable de los paneles se suelta y Pluto explica que la base depende de la batería.
 6. **Decisión y regreso.** Usar la cuerda con motor apaga las luces de las plantas y libera a Teo pronto. Vuelve a pie apoyado en Iris. Esperar protege la reserva y las plantas, pero agrava la lesión. En esa ruta, Pluto corta la toma exterior, Nora busca abrigo y Teo sigue atrapado hasta que baja la ráfaga. Solo entonces se usa la camilla. El equipo atraviesa el sendero de vuelta y entra por la puerta de aire.

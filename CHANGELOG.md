@@ -1,5 +1,26 @@
 # Cambios
 
+## 2026-11-03 | Referentes reales de Umbra
+
+- La apertura presenta Umbra como una misión simulada. Pluto explica el ajuste de presión en la esclusa y la comprobación de calidad después de filtrar el agua.
+- La guía de diseño distingue los ejemplos operativos de la EEI, el hábitat de simulación CHAPEA y la investigación sobre recursos marcianos.
+
+## 2026-11-03 | Ampliación del refugio
+
+- Dos módulos ilustrados y transitables amplían el plano. El laboratorio se alcanza desde Energía y el taller desde el corredor del dormitorio.
+- Seis estaciones nuevas explican el trabajo de Umbra. En dos de ellas se puede probar el filtro y localizar una fuga en un traje, con explicación de Pluto y posibilidad de volver a intentarlo.
+
+## 2026-11-03 | Cámara de interior y tormenta continua
+
+- La cámara entra en las salas con un encuadre cercano y pasa por las puertas y corredores. Las ilustraciones mantienen su iluminación y M abre el plano general.
+- El polvo y las ráfagas cubren toda la vista exterior, incluido el regreso a la esclusa y la avería de los paneles. La animación sigue al cambiar de panorama.
+
+## 2026-11-03 | Dormitorio y extracción guiada
+
+- El dormitorio tiene un desvío señalizado antes de Enfermería. Desde allí también se accede a la sala de plantas.
+- Nora se mueve por los pasillos y el suelo visible de las salas. Los límites se ajustaron a paredes, camas, jardineras y equipos.
+- Pluto guía la extracción en tres pasos que se activan con E o el botón. Las lecturas del terreno y el guardado de la muestra siguen siendo parte de la expedición.
+
 ## 2026-11-03 | Pasillos, sondeos y rutas de rescate
 
 - La cámara sigue a Nora por salas y pasillos. El plano completo se consulta con M; al caminar se revelan las habitaciones cercanas.

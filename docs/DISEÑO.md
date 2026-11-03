@@ -10,7 +10,9 @@ El arte combina las referencias del equipo e ilustraciones generadas para los pa
 
 ### Recorrido y zonas
 
-La esclusa al sur desemboca en Control, el centro de comunicaciones. Tres pasillos conectan Control con Energía al oeste, la sala de plantas al norte y Enfermería al este. La cámara sigue a Nora con un acercamiento continuo. Las salas se revelan por cercanía y M muestra el plano general. Control usa una ilustración de alta resolución con los accesos visibles. Los equipos bloquean el paso y los terminales se abren con **E** al acercarse. Iris patrulla Control. En Enfermería, Teo ocupa el colchón a lo largo. El dormitorio queda al noreste y se alcanza por el corredor que sale del paso entre Control y Enfermería. Allí se cierra el día. Los límites y puntos de interacción están en `scripts/puesto.gd`.
+La esclusa al sur desemboca en Control, el centro de comunicaciones. Control conecta con Energía al oeste y Enfermería al este. Antes de Enfermería, un corredor señalizado sube y se bifurca hacia la sala de plantas a la izquierda y el dormitorio a la derecha. La cámara sigue a Nora por los corredores y encuadra el interior al entrar en una sala. Las salas mantienen su iluminación y **M** muestra el plano general. Control usa una ilustración de alta resolución con los accesos visibles. Los equipos bloquean el paso y los terminales se abren con **E** al acercarse. Iris patrulla Control. En Enfermería, Teo ocupa el colchón a lo largo. El dormitorio queda al noreste y se alcanza por el corredor que sale del paso entre Control y Enfermería. Allí se cierra el día. Los límites y puntos de interacción están en `scripts/puesto.gd`.
+
+El laboratorio de agua está al oeste y se conecta por una puerta al fondo de Energía. Allí se pueden comparar las capas del hielo, leer cómo se conservan las muestras y practicar el filtrado. El taller queda al este, al final del pasillo que pasa bajo el dormitorio. Tiene un banco de reparación, un estante y un probador para encontrar fugas en un traje. Las dos pruebas guiadas son opcionales y permiten reintentar. El Sol 2 sigue usando la sala de plantas para el procesamiento que cuenta para la misión.
 
 ## Presupuesto del Sol 1
 
@@ -54,11 +56,23 @@ El relevo añade agua, soporte vital, datos acumulados e informe del día. Los d
 - En superficie las rachas alternan con treguas. El frente de polvo, las partículas, el sonido y el indicador avisan de la intensidad. Los círculos señalan dónde baja el empuje y Shift permite anclarse. El retroceso fuerte está exagerado para el entrenamiento. En Marte, la atmósfera tenue limita la fuerza del viento y el polvo que bloquea la luz sí amenaza la generación solar. [NASA, Helio and You](https://science.nasa.gov/helio-and-you-seasons-on-earth-mars-and-beyond/)
 - La alternancia entre exposición y refugio toma como referencia el papel del clima en [The Long Dark](https://store.steampowered.com/app/305620/The_Long_Dark/). El circuito de agua y las reservas compartidas se inspiran en las dependencias de tuberías, energía y soporte vital de [Oxygen Not Included](https://store.steampowered.com/app/457140/Oxygen_Not_Included/).
 
+## Qué representa cada módulo
+
+Umbra es un refugio marciano ficticio. Su distribución separa las funciones para que el jugador pueda ubicarlas. Una tripulación real puede compartir salas y agrupar equipos. Mars Dune Alpha es un hábitat de simulación en la Tierra. La Estación Espacial Internacional (EEI) ofrece ejemplos de equipos operativos en órbita.
+
+| Zona en Umbra | Referente |
+| --- | --- |
+| Control, Enfermería y Dormitorio | El análogo Mars Dune Alpha incluye puestos de trabajo, una estación médica y cuatro camarotes. Sus misiones simulan retrasos de comunicación. [NASA, hábitat CHAPEA](https://www.nasa.gov/reference/jsc-analogs-mockups/) · [NASA, misión CHAPEA 1](https://www.nasa.gov/humans-in-space/chapea/chapea-mission-1/) |
+| Sala de plantas | CHAPEA incluye estaciones de cultivo y ensayos de producción. En el juego las plantas complementan las raciones. [NASA, misión CHAPEA 1](https://www.nasa.gov/humans-in-space/chapea/chapea-mission-1/) |
+| Energía y soporte vital | La EEI utiliza sistemas que controlan el aire, la presión y la recuperación del agua. La dependencia del refugio respecto de los paneles representa un escenario de entrenamiento. [NASA, soporte vital](https://www.nasa.gov/reference/environmental-control-and-life-support-systems-eclss/) · [NASA, polvo y paneles en Marte](https://science.nasa.gov/solar-system/10-things-dust-in-the-wind-on-mars-and-well-beyond/) |
+| Esclusa y taller | La esclusa Quest tiene un espacio para mantenimiento de trajes y otro para entrada y salida. El taller de Umbra separa esa función e incorpora un vehículo de reserva como decisión de diseño. [NASA, esclusa Quest](https://www.nasa.gov/international-space-station/quest-airlock/) · [NASA, vehículos de exploración](https://www.nasa.gov/reference/vehicle-systems-interfaces-structure-environmental-design/) |
+| Laboratorio de agua | Tratar y revisar el agua son funciones reales de soporte vital. Extraer y procesar hielo marciano para abastecer un hábitat es una tecnología en estudio. En Umbra, el filtro retira partículas y el agua pasa por una comprobación de calidad antes de llegar a la reserva. [NASA, soporte vital](https://www.nasa.gov/reference/environmental-control-and-life-support-systems-eclss/) · [NASA, aprovechamiento de recursos locales](https://www.nasa.gov/overview-in-situ-resource-utilization/) |
+
 ## Ciencia y reto
 
 - El polvo puede reducir la generación solar. NASA documenta que InSight redujo su actividad científica para conservar batería durante una tormenta. Ese mecanismo inspira el presupuesto del juego. [NASA, Mars Report: Dust Storms on Mars](https://science.nasa.gov/resource/mars-report-dust-storms-on-mars/)
 - Una tormenta de polvo y un evento de radiación solar son fenómenos distintos. Si se añade radiación, darle su propia alerta, decisiones y consecuencias. [NASA, energía y calor en Marte](https://science.nasa.gov/wp-content/uploads/2024/02/mars-power-heating.pdf)
-- El hielo de agua marciano sirve como punto de partida para una futura misión de extracción. El equipo deberá documentar el costo de extraerlo, purificarlo y procesarlo antes de convertirlo en una mecánica. [NASA, Mars Facts](https://science.nasa.gov/mars/facts/)
+- La extracción de muestras de hielo y el tratamiento del agua del Sol 2 son actividades de entrenamiento. El juego simplifica el tiempo, el equipo y las comprobaciones de calidad. [NASA, Mars Facts](https://science.nasa.gov/mars/facts/)
 - La comunicación del prototipo es asíncrona. La bitácora distingue los informes enviados de los que quedaron en la base. [NASA, comunicaciones con Marte](https://science.nasa.gov/resource/mars-in-a-minute-what-happens-when-the-sun-blocks-our-signal/)
 - La página indicada por el equipo devolvió HTTP 502 al consultarla. Confirmar el nombre, la numeración y los criterios de entrega cuando vuelva a estar accesible. [NASA Space Apps, Junior Astronaut Mission Trainer](https://www.spaceappschallenge.org/2026/challenges/junior-astronaut-mission-trainer/)
 
