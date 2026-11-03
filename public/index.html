@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#241b2c">
+  <title>Horizonte Rojo · Cinco días en Marte</title>
+  <style>
+    * { box-sizing: border-box; }
+    :root { color-scheme: dark; font: 16px "Trebuchet MS", sans-serif; color: #fff6e8; background: #241b2c; }
+    body { margin: 0; }
+    [hidden] { display: none !important; }
+    #stage { position: relative; min-height: 100dvh; display: grid; place-items: center; overflow: hidden; }
+    #stage::before { content: ""; position: absolute; inset: -24px; background: linear-gradient(#241b2cb8, #241b2ce0), url("portada.png") center / cover; filter: blur(18px); pointer-events: none; }
+    canvas { position: relative; display: block; width: min(100vw, 177.778dvh); height: min(100dvh, 56.25vw); outline: 0; }
+    #launch {
+      position: absolute; inset: 0; display: grid; align-items: end;
+      background: linear-gradient(90deg, #211525f5, #342237c2 32%, transparent 77%),
+        linear-gradient(0deg, #211525, transparent 51%),
+        url("portada.png") center / cover, #543039;
+    }
+    .expedicion { width: min(45rem, 95%); padding: clamp(1.25rem, 6vw, 6rem); padding-right: 0; }
+    .destino { width: fit-content; padding: .48rem .85rem; color: #241d2a; background: #ffbb84; font-weight: 700; border-radius: .25rem .25rem 1rem .25rem; }
+    h1 { margin: .14em 0 0; font: 900 clamp(3.5rem, 10.5vw, 9.1rem)/.83 Georgia, serif; letter-spacing: -.065em; }
+    h2 { margin: .6rem 0 1rem; font: 400 clamp(1.32rem, 3.2vw, 2.4rem)/1.1 Georgia, serif; color: #ffcdb0; }
+    p { margin: 0; }
+    .historia { line-height: 1.55; font-size: clamp(1rem, 1.8vw, 1.2rem); max-width: 32ch; }
+    button { font: inherit; cursor: pointer; }
+    button:focus-visible { outline: 3px solid #fff6e8; outline-offset: 4px; }
+    #play { margin: 1.3rem 0 .65rem; min-height: 50px; padding: .75rem 1.65rem; color: #171320; background: #a9ecdf; border: 0; border-radius: .4rem; font-weight: bold; }
+    #play:hover { background: #e1fff5; }
+    #play:disabled { cursor: wait; opacity: .8; }
+    #status { min-height: 2.4em; color: #e8d6d1; font-size: .86rem; line-height: 1.35; }
+    #progreso { width: min(100%, 16rem); accent-color: #a9ecdf; display: block; }
+    #fullscreen { position: absolute; right: .75rem; bottom: .6rem; background: #211b2adb; color: #fff6e8; border: 1px solid #c8bcc7; border-radius: .35rem; min-width: 40px; min-height: 36px; }
+    @media (max-width: 650px) {
+      #launch { background-position: 62% center; }
+      .expedicion { padding-bottom: 1.2rem; }
+    }
+  </style>
+  
+</head>
+<body>
+<main id="stage" aria-label="Juego Horizonte Rojo">
+  <canvas id="canvas" tabindex="0">Abre el juego en un navegador con gráficos 3D habilitados.</canvas>
+  <div id="launch">
+    <div class="expedicion">
+      <p class="destino">Primera parada · Marte</p>
+      <h1>Horizonte<br>Rojo</h1>
+      <h2>Cinco días en Marte</h2>
+      <p class="historia">Aterriza con Nora, Iris y Teo. Explora Marte y descubre cómo su hielo puede ayudar a la tripulación.</p>
+      <button id="play" type="button">Iniciar expedición</button>
+      <progress id="progreso" max="1" hidden></progress>
+      <p id="status" role="status">Usa el teclado para moverte y el ratón para elegir.</p>
+    </div>
+  </div>
+  <button id="fullscreen" type="button" aria-label="Pantalla completa" title="Pantalla completa" hidden>⛶</button>
+</main>
+<script src="index.js"></script>
+<script>
+  const canvas = document.querySelector("#canvas");
+  const stage = document.querySelector("#stage");
+  const play = document.querySelector("#play");
+  const status = document.querySelector("#status");
+  const progreso = document.querySelector("#progreso");
+  const fullscreen = document.querySelector("#fullscreen");
+  function fitCanvas() {
+    const bounds = canvas.getBoundingClientRect();
+    const density = Math.min(devicePixelRatio, 2);
+    canvas.width = Math.round(bounds.width * density);
+    canvas.height = Math.round(bounds.height * density);
+  }
+  new ResizeObserver(fitCanvas).observe(canvas);
+  play.addEventListener("click", async () => {
+    play.disabled = true;
+    play.textContent = "Preparando el aterrizaje…";
+    status.textContent = "La nave se acerca a Marte.";
+    progreso.hidden = false;
+    try {
+      if (!Engine.isWebGLAvailable()) throw new Error("Activa la aceleración gráfica del navegador o prueba con otro navegador.");
+      fitCanvas();
+      await new Engine({"args":[],"canvasResizePolicy":0,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":true,"executable":"index","experimentalVK":false,"fileSizes":{"index.pck":56487384,"index.wasm":39514754},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4}).startGame({
+        canvas,
+        onProgress(current, total) {
+          if (total > 0) progreso.value = current / total;
+        }
+      });
+      document.querySelector("#launch").hidden = true;
+      fullscreen.hidden = !stage.requestFullscreen;
+      canvas.focus();
+    } catch (error) {
+      console.error(error);
+      status.textContent = "No pudimos abrir el juego. Recarga la página o prueba con otro navegador.";
+      progreso.hidden = true;
+      play.textContent = "Volver a intentar";
+      play.disabled = false;
+    }
+  });
+  fullscreen.addEventListener("click", async () => {
+    if (document.fullscreenElement) await document.exitFullscreen();
+    else await stage.requestFullscreen();
+    canvas.focus();
+  });
+</script>
+</body>
+</html>
+
