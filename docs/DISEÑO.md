@@ -2,19 +2,11 @@
 
 Horizonte Rojo es el nombre del juego. Umbra es el nombre del refugio. Los panoramas del refugio y del barranco mantienen la altura del sendero y la ubicación de los accesos. Las proporciones exteriores toman como referencia la abertura de la puerta.
 
-## Alcance del primer prototipo
+## Alcance actual
 
-Iris presenta a Tierra el objetivo de mantener un puesto con recursos locales. El viento levanta polvo y baja la generación solar. Iris ordena cerrar la esclusa. Teo, técnico de superficie, cae y queda atrapado junto al rover averiado. Nora, piloto y personaje jugable, se acerca al rover para evaluar el rescate. El robot advierte que el cabrestante comparte el circuito del invernadero. Nora elige usar el circuito ahora o cerrar la esclusa y volver por Teo tras una tregua. La extracción se representa con una secuencia corta y el jugador lleva a Teo hasta la esclusa.
+El [guion y los personajes](HISTORIA.md) tienen su propia guía. La campaña tiene cinco objetivos obligatorios. Pluto guía al jugador y marca el módulo activo. La puerta permite terminar el día al cumplir la misión. Las acciones opcionales dejan margen de batería y turnos para la misión pendiente. El gasto se aplica al completar la tarea.
 
-La nave aterriza junto al refugio. Iris explica que el equipo quiere vivir cinco días en Marte y probar si su hielo puede darles agua. En la puerta transmite el aviso de polvo de Tierra. Desde allí el equipo sale hacia un barranco que tiene su propio panorama, recoge una piedra para comparar el suelo y luego recoge hielo. El cielo se oscurece y los tres emprenden el regreso. Teo va detrás con la muestra. Lejos de la base, el viento lo hace caer y su bota queda atrapada bajo la camioneta.
-
-La historia corta al refugio para mostrar cómo el viento suelta el cable que traía energía de los paneles. Pluto explica el costo del rescate con la batería. Si se elige esperar, Pluto apaga la toma exterior y el equipo saca a Teo con la camilla al bajar la ráfaga. Nora debe volver desde el barranco y abrir la puerta del refugio. La muestra vuelve al primer plano el segundo día y el informe cierra la historia.
-
-La interfaz usa «día», «puntos de batería» y «canal de radio». En el rescate se explica el costo concreto de cada decisión: apagar las luces de las plantas para usar la cuerda eléctrica o esperar a que baje el viento con Teo todavía afuera. Los costos internos siguen en el presupuesto del diseño.
-
-La campaña tiene cinco objetivos obligatorios en orden: recuperar soporte vital, procesar hielo, informar a Tierra, activar el blindaje y transmitir el informe final. Pluto explica la meta en una banda central y marca el módulo en el mapa. La esclusa permite cerrar el sol después de completar esa meta. Las acciones opcionales reservan un turno y suficiente batería para el objetivo pendiente. Los procedimientos usan secuencias de mandos o una antena sintonizable. El gasto se aplica al completar la tarea.
-
-El exterior y el mapa usan las referencias del equipo. El arte generado añade la tormenta, una enfermería de mayor detalle y sprites con iluminación neutra. Nora lleva violeta, Iris lleva cian y Teo lleva azul cobalto y blanco con acentos granate. Nora reacciona con alarma, Iris da órdenes con expresión firme y Teo pasa de dolor a reposo y reincorporación. Registrar la procedencia y los permisos de las referencias antes de distribuir públicamente el juego.
+El arte combina las referencias del equipo e ilustraciones generadas para los panoramas, las salas y los personajes. El repositorio conserva los recursos del proyecto. El registro completo de autoría y permisos de las referencias está pendiente.
 
 ### Recorrido y zonas
 
@@ -22,7 +14,7 @@ La esclusa al sur desemboca en Control, el centro de comunicaciones. Tres pasill
 
 ## Presupuesto del Sol 1
 
-Los valores son de diseño y están sujetos a pruebas. **UE** significa unidad abstracta de energía. El estado inicial tiene 16 UE y 9 raciones. El cierre reserva 4 UE de soporte vital y consume 3 raciones.
+Los valores son de diseño y están sujetos a pruebas. **UE** significa unidad abstracta de energía. El estado inicial tiene 16 UE, 9 raciones, 6 de agua y 100% de soporte. La noche cuesta 4 UE, 3 raciones y 2 de agua.
 
 | Decisión | UE antes de operar | Cultivos | Salud al entrar | Trabajo disponible |
 | --- | ---: | --- | --- | ---: |
@@ -40,26 +32,18 @@ Cada módulo se puede operar una vez por sol. Cada tarea consume un turno de tra
 
 Con energía y radio en ambas rutas, el rescate deja **6 UE**, cultivos en pausa y **1 UE** de cuidados previstos. La espera deja **8 UE**, cultivos estables y **4 UE** de cuidados previstos. Una vez cubiertos los cuidados, quedarían **5 UE** tras el rescate temprano y **4 UE** tras la espera. La espera preserva producción y batería a corto plazo. Dedicarle un turno a enfermería reduce la previsión de cuidados a 1 UE y desplaza otro trabajo.
 
-## Contrato con el Sol 2
+## Reservas entre días
 
-`SolUno.relevo()` devuelve un diccionario en memoria. Se obtiene después de ejecutar las tareas elegidas. El Sol 2 podrá consumirlo para iniciar su propia escena.
+Consulta el [contrato técnico](ARQUITECTURA.md#contrato-de-campaña) para los nombres y el significado de los campos. Los cuidados cuestan 4 UE si se esperó y Teo sigue sin atender, 1 UE en observación o reposo y 0 UE al recuperarse. Después de descontarlos, la batería recibe 9 UE más el número del nuevo día y 2 UE adicionales si se revisaron los paneles. El máximo al amanecer es 24 UE.
 
-| Clave | Tipo y significado |
-| --- | --- |
-| `ruta` | String, `rescate` o `espera`. |
-| `energia`, `raciones` | Enteros, reservas después de la noche. |
-| `operativos` | Entero, personas disponibles al cierre. |
-| `cultivo`, `paciente` | Strings, estados visibles en la bitácora. |
-| `energia_comprometida` | Entero, previsión de cuidados que el Sol 2 podrá aplicar. La batería del relevo ya refleja la noche y conserva esta previsión por separado. |
-| `ciencia_enviada` | Booleano, informe en tránsito. |
-| `acciones` | Array[String], identificadores de tareas hechas en orden. |
+Después del primer día, si las plantas siguen activas o protegidas aportan 2 raciones antes del consumo nocturno. Cada unidad faltante de comida, agua o batería reduce el soporte vital en 12, 15 o 10 puntos, respectivamente.
 
 ### Campaña de cinco soles
 
 | Sol | Decisiones y consecuencias |
 | --- | --- |
-| 2 | Usa la reserva de hielo para obtener agua o dedica turnos a estabilizar a Teo y recuperar el banco auxiliar. |
-| 3 | Repite el procesamiento si hace falta agua. Comunica el experimento a Tierra y recibe la respuesta en el siguiente sol. |
+| 2 | Procesa el hielo como objetivo obligatorio. El turno restante puede ir a Enfermería o al banco auxiliar. |
+| 3 | Comunica el experimento a Tierra como objetivo obligatorio. Repite el procesamiento como tarea adicional si hace falta agua. |
 | 4 | Durante la alerta solar, Nora pilota a Pluto desde Energía. Activa tres relés exteriores en orden y vuelve a la esclusa para conectar el blindaje. La cosecha vuelve a estar disponible. |
 | 5 | Asegura la última noche y transmite el informe. Completar la misión exige soporte vital y al menos tres datos además de ese informe. |
 

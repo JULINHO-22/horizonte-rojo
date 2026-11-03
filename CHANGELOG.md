@@ -1,5 +1,11 @@
 # Cambios
 
+## 2026-11-03 | Guía de continuidad para el equipo
+
+- Contexto narrativo y fichas de personajes para continuar el guion.
+- Mapa del código, contrato de estado entre días y recorridos de verificación.
+- Procedimiento para colaborar en GitHub y actualizar la versión pública de Render.
+
 ## 2026-11-03 | Horizonte Rojo
 
 - Nuevo nombre y portada web. El escenario ocupa el área de juego sin la cabecera y el pie decorativos.

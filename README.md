@@ -8,7 +8,7 @@
 2. En el gestor de proyectos, elige **Importar** y selecciona `project.godot`.
 3. Pulsa **F6** con `scenes/umbra.tscn` abierta o **F5** desde cualquier escena.
 4. Pulsa **Iniciar misión** y mira el aterrizaje. En el camino de afuera usa **A/D o izquierda/derecha**. Reúnete con Iris en la puerta y pulsa **E**. Ya en el campo de hielo, pulsa **E** para recoger primero la piedra y luego el hielo. Dentro de la base, usa **WASD o flechas** en las cuatro direcciones. Pulsa **Esc** para salir de un terminal.
-5. Cada sol tiene una misión. Sigue el marcador turquesa y usa el terminal de ese módulo. Puedes gastar los turnos sobrantes en cuidados y reservas. Regresa a la esclusa y elige **Cerrar el sol** para revisar las reservas y continuar.
+5. Cada día tiene una misión. Sigue el marcador turquesa y usa el terminal de ese módulo. Puedes gastar los turnos sobrantes en cuidados y reservas. Regresa a la puerta y elige **Terminar el día** para revisar las reservas y continuar.
 
 En superficie, mira la carga de viento. Las rachas pueden hacerte retroceder. Mantén **Shift** para anclarte y aprovecha la tregua para avanzar. Los círculos del terreno indican abrigo. Dentro del refugio, **M** alterna entre el plano general y el acercamiento por sala. En el Sol 4, **E** activa los relés mientras controlas a Pluto.
 
@@ -20,8 +20,11 @@ El preset usa WebGL 2 sin hilos. La página de lanzamiento está en [web/umbra.h
 
 ## Colaborar
 
-El repositorio Git local está inicializado en `main`. Cuando el equipo tenga su repositorio de GitHub, se puede asociar como remoto y publicar desde Git. Para una copia clonada, cada integrante debe instalar Godot por separado.
+Prueba la versión publicada en [Render](https://horizonte-rojo.onrender.com/). El [repositorio privado](https://github.com/JULINHO-22/horizonte-rojo) contiene el código y las imágenes en `main`. Cada integrante necesita acceso al repositorio e instalar Godot en su equipo.
 
 - [AGENTS.md](AGENTS.md) orienta a Codex y fija qué documentación mantener.
-- [Diseño y relevo](docs/DISEÑO.md) define la apertura y las variables que recibe el Sol 2.
+- [Historia](docs/HISTORIA.md) reúne el guion, los personajes y la continuidad.
+- [Diseño](docs/DISEÑO.md) explica las reglas, el balance y la ciencia.
+- [Arquitectura](docs/ARQUITECTURA.md) indica qué código tocar y cómo verificarlo.
+- [Publicación](docs/PUBLICACION.md) explica las ramas y el despliegue en Render.
 - [Cambios](CHANGELOG.md) registra los avances del equipo.
