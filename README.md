@@ -1,6 +1,6 @@
-# UMBRA
+# Horizonte Rojo
 
-**Cinco soles para sobrevivir** es un juego narrativo 2D en el que una tormenta de polvo deja a una base marciana con energía limitada. Tomas decisiones de rescate y repartes el trabajo de la tripulación para mantener el refugio y avanzar la investigación.
+**Horizonte Rojo** es un juego narrativo 2D de cinco días en Marte. Una tormenta de polvo deja al refugio Umbra con energía limitada. Tomas decisiones de rescate y repartes el trabajo de la tripulación para mantener el refugio y avanzar la investigación.
 
 ## Jugar en Godot
 
@@ -14,7 +14,7 @@ En superficie, mira la carga de viento. Las rachas pueden hacerte retroceder. Ma
 
 ## Jugar en navegador
 
-Instala las plantillas de exportación de **Godot 4.7.2** y ejecuta `./web/exportar.ps1 -Godot "<ruta al ejecutable de consola de Godot>"` en PowerShell. El script exporta el juego, copia la portada y arma `build/UMBRA-Web.zip`. Sirve el directorio completo por HTTP. Para probarlo desde PowerShell, ejecuta `python -m http.server 8065 --bind 127.0.0.1 --directory build/web` y abre [UMBRA en el navegador](http://127.0.0.1:8065/). Pulsa **Iniciar expedición** para comenzar el aterrizaje.
+Instala las plantillas de exportación de **Godot 4.7.2** y ejecuta `./web/exportar.ps1 -Godot "<ruta al ejecutable de consola de Godot>"` en PowerShell. El script exporta el juego, copia la portada y arma `build/Horizonte-Rojo-Web.zip`. Sirve el directorio completo por HTTP. Para probarlo desde PowerShell, ejecuta `python -m http.server 8065 --bind 127.0.0.1 --directory build/web` y abre [Horizonte Rojo en el navegador](http://127.0.0.1:8065/). Pulsa **Iniciar expedición** para comenzar el aterrizaje.
 
 El preset usa WebGL 2 sin hilos. La página de lanzamiento está en [web/umbra.html](web/umbra.html) y el juego completo corre dentro de ella. Publica juntos el HTML, el motor y el paquete de datos en el alojamiento del equipo.
 

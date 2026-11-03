@@ -3,9 +3,9 @@ extends Control
 const EXTERIOR := preload("res://assets/exterior.jpg")
 const IRIS_ORDEN := preload("res://assets/iris_orden.png")
 const TEO_ALARMA := preload("res://assets/teo_alarma.png")
-const FONDO := Color("#101318")
-const PANEL := Color("#1a2129")
-const LINEA := Color("#394652")
+const FONDO := Color("#241b2c")
+const PANEL := Color("#32283c")
+const LINEA := Color("#6b566c")
 const MARFIL := Color("#fff1db")
 const MUTED := Color("#b3bfc8")
 const CIAN := Color("#7df0e0")
@@ -52,7 +52,7 @@ const CONDUCTOS := [
 	["Filtro", "Cerrado", "Al tanque", "A retorno"],
 ]
 const RUTA_AGUA: Array[int] = [1, 2, 1]
-const AREA := Rect2(32, 84, 1216, 578)
+const AREA := Rect2(0, 0, 1280, 720)
 const NOMBRES := {"energia": "Energía", "cultivos": "Sala de plantas", "medicina": "Enfermería", "radio": "Control", "cierre": "Puerta del refugio"}
 const PLANES := {
 	"energia": [["Apagar luces extra", "Conectar la batería", "Comprobar el aire"], [2, 0, 1]],
@@ -248,11 +248,7 @@ func _render() -> void:
 		ambiente.play()
 	elif not en_superficie:
 		ambiente.stop()
-	_panel(Rect2(0, 0, 1280, 720), FONDO, FONDO)
-	_texto("UMBRA", Rect2(32, 17, 230, 46), 36)
-	_texto("CINCO DÍAS PARA SOBREVIVIR", Rect2(184, 33, 390, 24), 15, MUTED)
-	_texto("MARTE   /   PUESTO UMBRA", Rect2(988, 32, 266, 26), 16, CIAN)
-	_panel(Rect2(32, 74, 1216, 1), LINEA, LINEA)
+	_panel(AREA, FONDO, FONDO)
 	match fase:
 		"inicio":
 			_inicio()
@@ -270,18 +266,16 @@ func _render() -> void:
 			_base()
 		"relevo":
 			_relevo()
-	_texto("Pluto  /  CANAL DE MISIÓN", Rect2(32, 682, 440, 22), 14, MUTED)
-	_texto("DÍA %d DE 5   ·   REFUGIO UMBRA" % estado.sol, Rect2(914, 682, 334, 22), 14, MUTED)
 	if cambio_de_fase and is_instance_valid(puesto):
 		puesto.modulate.a = 0.18
 		puesto.create_tween().tween_property(puesto, "modulate:a", 1.0, 0.36)
 
 
 func _inicio() -> void:
-	_imagen(EXTERIOR, AREA)
+	_imagen(PuestoUmbra.SENDERO, AREA)
 	_panel(Rect2(307, 242, 666, 278), FONDO)
 	_texto("PUESTO UMBRA   /   ENTRENAMIENTO MARCIANO", Rect2(344, 269, 595, 28), 17, AMBAR)
-	_texto("Cinco días para sobrevivir", Rect2(344, 308, 598, 64), 40)
+	_texto("Horizonte Rojo", Rect2(344, 308, 598, 64), 46)
 	_texto("Prueba el equipo con Teo. La misión es mantener con vida a la tripulación y enviar evidencia de que el agua local puede sostener el puesto.",
 		Rect2(344, 380, 592, 70), 19, MUTED)
 	_boton("Iniciar misión", Rect2(344, 460, 592, 40), _comenzar, CIAN)
@@ -361,7 +355,7 @@ func _crear_puesto(es_interior: bool, area: Rect2) -> void:
 	puesto.rele_actual = rele_nido
 	puesto.plano = ver_plano
 	puesto.objetivo_mision = "cierre" if estado.mision_cumplida() else SolUno.MISIONES[estado.sol - 1]
-	puesto.escala_visual = area.size.y / (527.0 if es_interior else 334.0)
+	puesto.escala_visual = area.size.y / (527.0 if es_interior else 385.0)
 	puesto.ancho_visible = area.size.x / puesto.escala_visual
 	puesto.scale = Vector2.ONE * puesto.escala_visual
 	puesto.evacuacion = fase == "evacuacion"
@@ -383,16 +377,18 @@ func _crear_puesto(es_interior: bool, area: Rect2) -> void:
 
 func _superficie() -> void:
 	_crear_puesto(false, AREA)
+	_panel(Rect2(1040, 20, 218, 40), FONDO)
+	_texto("Marte   ·   Día %d de 5" % estado.sol, Rect2(1061, 29, 180, 24), 16, MARFIL)
 	if fase in ["exterior", "evacuacion", "nido"]:
-		_panel(Rect2(48, 100, 236, 52), FONDO)
-		_texto("Pluto  /  FUERZA DEL VIENTO", Rect2(60, 106, 218, 21), 13, AMBAR)
+		_panel(Rect2(22, 20, 236, 52), FONDO)
+		_texto("Fuerza del viento", Rect2(35, 26, 208, 21), 14, AMBAR)
 		intensidad_ui = ProgressBar.new()
 		intensidad_ui.max_value = 1.0
 		intensidad_ui.step = 0.0
 		intensidad_ui.show_percentage = false
 		intensidad_ui.add_theme_stylebox_override("background", _estilo(PANEL, LINEA))
 		intensidad_ui.add_theme_stylebox_override("fill", _estilo(AMBAR, AMBAR))
-		_colocar(intensidad_ui, Rect2(61, 130, 209, 9))
+		_colocar(intensidad_ui, Rect2(35, 50, 209, 9))
 	_panel(Rect2(260, 514, 760, 129), FONDO)
 	retrato = _imagen(PuestoUmbra.DRON, Rect2(276, 528, 90, 94), TextureRect.STRETCH_KEEP_ASPECT_CENTERED)
 	hablante = _texto("Pluto   /   ASISTENTE DE MISIÓN", Rect2(379, 526, 620, 24), 15, CIAN)
@@ -444,11 +440,11 @@ func _elegir(ruta: String) -> void:
 
 func _base() -> void:
 	_crear_puesto(true, AREA)
-	_panel(Rect2(44, 96, 1192, 38), FONDO)
+	_panel(Rect2(24, 20, 1232, 40), FONDO)
 	_texto("Día %d   ·   Batería %d/24   ·   Comida %d   ·   Agua %d   ·   Tareas restantes %d   ·   Estado del refugio %d%%   ·   Hallazgos %d" % [
 		estado.sol, estado.energia, estado.raciones, estado.agua,
 		estado.operativos - estado.acciones.size(), estado.soporte, estado.muestras],
-		Rect2(61, 104, 1150, 25), 17, CIAN)
+		Rect2(43, 28, 1190, 25), 17, MARFIL)
 	if not modulo.is_empty():
 		_terminal()
 		return
@@ -716,6 +712,8 @@ func _estilo(color: Color, borde: Color) -> StyleBoxFlat:
 	estilo.bg_color = color
 	estilo.border_color = borde
 	estilo.set_border_width_all(1)
+	if color == FONDO and borde != FONDO:
+		estilo.set_corner_radius_all(12)
 	return estilo
 
 

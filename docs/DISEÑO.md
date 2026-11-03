@@ -1,4 +1,6 @@
-# Diseño de UMBRA
+# Diseño de Horizonte Rojo
+
+Horizonte Rojo es el nombre del juego. Umbra es el nombre del refugio. Los panoramas del refugio y del barranco mantienen la altura del sendero y la ubicación de los accesos. Las proporciones exteriores toman como referencia la abertura de la puerta.
 
 ## Alcance del primer prototipo
 
@@ -16,7 +18,7 @@ El exterior y el mapa usan las referencias del equipo. El arte generado añade l
 
 ### Recorrido y zonas
 
-La esclusa al sur desemboca en Control, el centro de comunicaciones. Tres pasillos conectan Control con Energía al oeste, la sala de plantas al norte y Enfermería al este. La cámara vuelve a una vista general en los pasillos y se acerca al entrar en cada sala. El acercamiento queda entre 2,04× y 2,26×, y Control usa una ilustración de alta resolución con los accesos visibles. Los equipos bloquean el paso y los terminales se abren con **E** al acercarse. Iris patrulla Control. En Enfermería, Teo ocupa el colchón a lo largo. El registro de la esclusa cierra el día. Los límites y puntos de interacción están en `scripts/puesto.gd`.
+La esclusa al sur desemboca en Control, el centro de comunicaciones. Tres pasillos conectan Control con Energía al oeste, la sala de plantas al norte y Enfermería al este. La cámara vuelve a una vista general en los pasillos y se acerca al entrar en cada sala. El acercamiento queda entre 1,85× y 2×, y Control usa una ilustración de alta resolución con los accesos visibles. Los equipos bloquean el paso y los terminales se abren con **E** al acercarse. Iris patrulla Control. En Enfermería, Teo ocupa el colchón a lo largo. El registro de la esclusa cierra el día. Los límites y puntos de interacción están en `scripts/puesto.gd`.
 
 ## Presupuesto del Sol 1
 

@@ -1,6 +1,6 @@
-# UMBRA | Contexto para Codex
+# Horizonte Rojo | Contexto para Codex
 
-UMBRA es un juego de gestión narrativa 2D en Godot 4.7.2 para un equipo de seis estudiantes. La campaña abarca cinco soles y puede exportarse al navegador. La apertura visita el refugio y un campo de hielo distante. En el regreso durante la tormenta, Teo queda atrás y se atasca junto a la camioneta. Pluto muestra la avería de la energía solar. El rescate temprano interrumpe el invernadero. Esperar una tregua ahorra energía hoy y agrava la lesión. Al comienzo quedan dos personas operativas.
+Horizonte Rojo es un juego de gestión narrativa 2D en Godot 4.7.2 para un equipo de seis estudiantes. La campaña abarca cinco soles y puede exportarse al navegador. La apertura visita el refugio y un campo de hielo distante. En el regreso durante la tormenta, Teo queda atrás y se atasca junto a la camioneta. Pluto muestra la avería de la energía solar. El rescate temprano interrumpe el invernadero. Esperar una tregua ahorra energía hoy y agrava la lesión. Al comienzo quedan dos personas operativas.
 
 1. Lee [README.md](README.md) para ejecutar el juego.
 2. Lee [docs/DISEÑO.md](docs/DISEÑO.md) para historia, balance, ciencia y contrato de relevo. Consulta solo las secciones que afecte tu tarea.

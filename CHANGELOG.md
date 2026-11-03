@@ -1,5 +1,11 @@
 # Cambios
 
+## 2026-11-03 | Horizonte Rojo
+
+- Nuevo nombre y portada web. El escenario ocupa el área de juego sin la cabecera y el pie decorativos.
+- Panoramas recreados del refugio y del barranco. Los personajes toman la abertura de la puerta como referencia de escala.
+- Sala de plantas ilustrada a mayor resolución, con el recorrido ajustado al pasillo y las jardineras.
+
 ## 2026-11-03 | Expedición al campo de hielo y salas
 
 - El robot se llama Pluto. La tripulación recibe el aviso en el refugio, viaja a un barranco y recoge una piedra y una muestra de hielo.
