@@ -6,7 +6,7 @@ UMBRA es un juego de gestión narrativa 2D en Godot 4.7.2 para un equipo de seis
 2. Lee [docs/DISEÑO.md](docs/DISEÑO.md) para historia, balance, ciencia y contrato de relevo. Consulta solo las secciones que afecte tu tarea.
 3. Revisa [CHANGELOG.md](CHANGELOG.md) y el diff de Git antes de modificar un sistema compartido.
 
-La escena de inicio está en `scenes/umbra.tscn`. `scripts/umbra.gd` maneja el flujo, los diálogos y la interfaz. `scripts/puesto.gd` dibuja el mapa, mueve la cámara y define colisiones y terminales. `scripts/sol_uno.gd` concentra el estado y las reglas de la campaña. `web/umbra.html` es la plantilla de lanzamiento para el preset Web.
+La escena de inicio está en `scenes/umbra.tscn`. `scripts/umbra.gd` maneja el flujo, la guía de NIDO y las operaciones de terminal. `scripts/puesto.gd` dibuja el mapa, anima la tripulación y define cámara, colisiones y terminales. `scripts/sol_uno.gd` concentra los objetivos obligatorios y el estado de campaña. `web/umbra.html` es la plantilla de lanzamiento para el preset Web.
 
 En el mismo PR, registra los cambios relevantes para jugadores o equipo en `CHANGELOG.md`. Si cambias historia, reglas, valores, fuentes o el contrato entre soles, actualiza también `docs/DISEÑO.md`. Si cambia la instalación o la entrada principal, actualiza `README.md`. Mantén esta cabecera breve y revisa su contenido al cambiar el alcance o la arquitectura.
 

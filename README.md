@@ -7,8 +7,8 @@
 1. Abre Godot 4.7.2. En esta carpeta hay una copia local para Windows.
 2. En el gestor de proyectos, elige **Importar** y selecciona `project.godot`.
 3. Pulsa **F6** con `scenes/umbra.tscn` abierta o **F5** desde cualquier escena.
-4. Pulsa **Iniciar misión** para ver la cinemática. Mueve a Nora con **WASD o flechas** y pulsa **E** cerca del rover, la esclusa o un terminal. En los menús, elige con el ratón o usa **Tab** y **Enter**.
-5. Entra a cada sala para acercar la cámara. Usa el terminal y elige un procedimiento. Al comienzo tienes dos turnos por sol. Regresa a la esclusa, pulsa **E** y elige **Cerrar el sol** para revisar las reservas y continuar.
+4. Pulsa **Iniciar misión** y sigue a NIDO. Mueve a Nora con **WASD o flechas** y pulsa **E** cerca de Teo para empezar el chequeo. En los menús, elige con el ratón o usa **Tab** y **Enter**. Pulsa **Esc** para salir del terminal.
+5. Cada sol tiene una misión. Sigue el marcador turquesa y usa el terminal de ese módulo. Puedes gastar los turnos sobrantes en cuidados y reservas. Regresa a la esclusa y elige **Cerrar el sol** para revisar las reservas y continuar.
 
 ## Jugar en navegador
 

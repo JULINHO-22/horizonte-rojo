@@ -4,6 +4,14 @@ extends RefCounted
 const RESCATE := "rescate"
 const ESPERA := "espera"
 const RESERVA_NOCTURNA := 4
+const MISIONES := ["energia", "cultivos", "radio", "energia", "radio"]
+const OBJETIVOS := [
+	"Restablece el circuito de soporte vital",
+	"Funde y filtra el hielo del depósito",
+	"Envía a Tierra los datos del agua",
+	"Conecta el blindaje usando a NIDO",
+	"Transmite el informe final",
+]
 const ACCIONES := {
 	"energia": {"costo": 3, "titulo": "Reconfigurar el inversor"},
 	"cultivos": {"costo": 4, "titulo": "Estabilizar los cultivos"},
@@ -28,11 +36,11 @@ var respuesta := false
 var paneles_revisados := false
 
 const EVENTOS := [
-	"Polvo sobre los paneles. El refugio funciona con batería.",
-	"El banco auxiliar sigue cargado. El robot puede traer hielo del depósito.",
-	"El hielo almacenado puede fundirse y entrar al circuito de agua.",
-	"Alerta de partículas solares. Usa el robot para las operaciones exteriores.",
-	"Queda una ventana de radio. Envía el resultado del experimento a Tierra.",
+	"Ve a Energía. El polvo redujo la luz y el depurador de aire depende de la batería.",
+	"Ve al Invernadero. La muestra que Teo preparó puede reponer el agua del refugio.",
+	"Ve a Control. Tierra necesita saber si el filtro funcionó antes de abrir otra reserva.",
+	"Ve a Energía. Hay una alerta solar: NIDO puede salir al banco mientras ustedes se refugian.",
+	"Ve a Control. En la última ventana de radio, envía el balance del agua y del refugio.",
 ]
 
 
@@ -52,13 +60,25 @@ func abrir(ruta_elegida: String) -> void:
 
 
 func disponible(id: String) -> bool:
-	return (
+	if not (
 		not ruta.is_empty()
 		and ACCIONES.has(id)
 		and acciones.size() < operativos
 		and not acciones.has(id)
 		and energia - RESERVA_NOCTURNA >= ACCIONES[id]["costo"]
-	)
+	):
+		return false
+	var principal: String = MISIONES[sol - 1]
+	if id == principal or acciones.has(principal):
+		return true
+	var costo_total: int = ACCIONES[id]["costo"] + ACCIONES[principal]["costo"]
+	if id == "energia":
+		costo_total -= 6
+	return acciones.size() < operativos - 1 and energia - RESERVA_NOCTURNA >= costo_total
+
+
+func mision_cumplida() -> bool:
+	return acciones.has(MISIONES[sol - 1])
 
 
 func aplicar(id: String) -> void:

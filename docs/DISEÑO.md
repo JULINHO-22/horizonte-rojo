@@ -4,7 +4,9 @@
 
 Iris presenta a Tierra el objetivo de mantener un puesto con recursos locales. El viento levanta polvo y baja la generación solar. Iris ordena cerrar la esclusa. Teo, técnico de superficie, cae y queda atrapado junto al rover averiado. Nora, piloto y personaje jugable, se acerca al rover para evaluar el rescate. El robot advierte que el cabrestante comparte el circuito del invernadero. Nora elige usar el circuito ahora o cerrar la esclusa y volver por Teo tras una tregua. La extracción se representa con una secuencia corta y el jugador lleva a Teo hasta la esclusa.
 
-El objetivo del Sol 1 es mantener el soporte vital y elegir qué trabajos hacer con dos personas disponibles. La campaña jugable tiene cinco soles. Los procedimientos de las salas usan decisiones breves con retroalimentación antes de gastar energía y turnos.
+La campaña empieza en calma. NIDO envía a Nora a revisar el rover con Teo y presenta la muestra de hielo. El polvo interrumpe el chequeo y convierte el experimento de agua local en un recurso para sobrevivir. La misma muestra vuelve al primer plano en el Sol 2 y el informe de sus resultados cierra la historia.
+
+La campaña tiene cinco objetivos obligatorios en orden: recuperar soporte vital, procesar hielo, informar a Tierra, activar el blindaje y transmitir el informe final. NIDO explica la meta en una banda central y marca el módulo en el mapa. La esclusa permite cerrar el sol después de completar esa meta. Las acciones opcionales reservan un turno y suficiente batería para el objetivo pendiente. Los procedimientos usan secuencias de mandos o una antena sintonizable. El gasto se aplica al completar la tarea.
 
 El exterior y el mapa usan las referencias del equipo. El arte generado añade la tormenta, una enfermería de mayor detalle y sprites con iluminación neutra. Nora lleva violeta, Iris lleva cian y Teo lleva azul cobalto y blanco con acentos granate. Nora reacciona con alarma, Iris da órdenes con expresión firme y Teo pasa de dolor a reposo y reincorporación. Registrar la procedencia y los permisos de las referencias antes de distribuir públicamente el juego.
 

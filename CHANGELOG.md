@@ -1,5 +1,12 @@
 # Cambios
 
+## 2026-11-03 | Chequeo inicial y misiones guiadas
+
+- Chequeo jugable con Teo antes de la tormenta, y estados de salud diferenciados.
+- Caminata con fotogramas de cuerpo completo y animación vinculada al desplazamiento.
+- Mapa a todo el ancho, operaciones y bitácora centradas, guía de NIDO y marcador del objetivo.
+- Una misión obligatoria por sol, con turnos reservados y tareas adicionales de supervivencia. Operación de circuitos y filtros por pasos y sintonización de radio.
+
 ## 2026-11-03 | Arte de tripulación, supervivencia y Web
 
 - El mapa de referencia se usa como mundo explorable con zoom por sala, y enfermería tiene una ilustración ampliada.
