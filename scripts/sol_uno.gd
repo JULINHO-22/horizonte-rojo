@@ -9,7 +9,7 @@ const OBJETIVOS := [
 	"Devuelve la energía al aire y la calefacción",
 	"Derrite el hielo y limpia el agua",
 	"Cuenta a Tierra qué pasó con el agua",
-	"Usa a NIDO para encender la protección del refugio",
+	"Usa a Pluto para encender la protección del refugio",
 	"Envía a Tierra los resultados de los cinco días",
 ]
 const ACCIONES := {
@@ -39,7 +39,7 @@ const EVENTOS := [
 	"Ve a Energía. El polvo tapó la luz del Sol. Usa la batería para mantener el aire limpio.",
 	"Ve a la sala de plantas. La muestra que Teo preparó puede reponer el agua del refugio.",
 	"Ve a Control. Tierra necesita saber si el filtro funcionó antes de abrir otra reserva.",
-	"Ve a Energía. Se acerca una tormenta del Sol. NIDO puede salir a encender la protección mientras ustedes esperan dentro.",
+	"Ve a Energía. Se acerca una tormenta del Sol. Pluto puede salir a encender la protección mientras ustedes esperan dentro.",
 	"Ve a Control. La radio puede llegar a Tierra otra vez. Envía el resumen del agua y del refugio.",
 ]
 

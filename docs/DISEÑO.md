@@ -4,17 +4,19 @@
 
 Iris presenta a Tierra el objetivo de mantener un puesto con recursos locales. El viento levanta polvo y baja la generación solar. Iris ordena cerrar la esclusa. Teo, técnico de superficie, cae y queda atrapado junto al rover averiado. Nora, piloto y personaje jugable, se acerca al rover para evaluar el rescate. El robot advierte que el cabrestante comparte el circuito del invernadero. Nora elige usar el circuito ahora o cerrar la esclusa y volver por Teo tras una tregua. La extracción se representa con una secuencia corta y el jugador lleva a Teo hasta la esclusa.
 
-La nave aterriza junto al refugio. Iris explica que el equipo quiere vivir cinco días en Marte y probar si su hielo puede darles agua. Nora explora el sendero lateral y encuentra a Teo junto a la primera muestra. El cielo se oscurece y los tres corren hacia la base. El viento puede hacer retroceder a Nora. Antes de la puerta, Teo tropieza, se desliza y queda con la bota atrapada bajo la camioneta. La misma muestra vuelve al primer plano el segundo día y el informe cierra la historia.
+La nave aterriza junto al refugio. Iris explica que el equipo quiere vivir cinco días en Marte y probar si su hielo puede darles agua. En la puerta transmite el aviso de polvo de Tierra. Desde allí el equipo sale hacia un barranco que tiene su propio panorama, recoge una piedra para comparar el suelo y luego recoge hielo. El cielo se oscurece y los tres emprenden el regreso. Teo va detrás con la muestra. Lejos de la base, el viento lo hace caer y su bota queda atrapada bajo la camioneta.
+
+La historia corta al refugio para mostrar cómo el viento suelta el cable que traía energía de los paneles. Pluto explica el costo del rescate con la batería. Si se elige esperar, Pluto apaga la toma exterior y el equipo saca a Teo con la camilla al bajar la ráfaga. Nora debe volver desde el barranco y abrir la puerta del refugio. La muestra vuelve al primer plano el segundo día y el informe cierra la historia.
 
 La interfaz usa «día», «puntos de batería» y «canal de radio». En el rescate se explica el costo concreto de cada decisión: apagar las luces de las plantas para usar la cuerda eléctrica o esperar a que baje el viento con Teo todavía afuera. Los costos internos siguen en el presupuesto del diseño.
 
-La campaña tiene cinco objetivos obligatorios en orden: recuperar soporte vital, procesar hielo, informar a Tierra, activar el blindaje y transmitir el informe final. NIDO explica la meta en una banda central y marca el módulo en el mapa. La esclusa permite cerrar el sol después de completar esa meta. Las acciones opcionales reservan un turno y suficiente batería para el objetivo pendiente. Los procedimientos usan secuencias de mandos o una antena sintonizable. El gasto se aplica al completar la tarea.
+La campaña tiene cinco objetivos obligatorios en orden: recuperar soporte vital, procesar hielo, informar a Tierra, activar el blindaje y transmitir el informe final. Pluto explica la meta en una banda central y marca el módulo en el mapa. La esclusa permite cerrar el sol después de completar esa meta. Las acciones opcionales reservan un turno y suficiente batería para el objetivo pendiente. Los procedimientos usan secuencias de mandos o una antena sintonizable. El gasto se aplica al completar la tarea.
 
 El exterior y el mapa usan las referencias del equipo. El arte generado añade la tormenta, una enfermería de mayor detalle y sprites con iluminación neutra. Nora lleva violeta, Iris lleva cian y Teo lleva azul cobalto y blanco con acentos granate. Nora reacciona con alarma, Iris da órdenes con expresión firme y Teo pasa de dolor a reposo y reincorporación. Registrar la procedencia y los permisos de las referencias antes de distribuir públicamente el juego.
 
 ### Recorrido y zonas
 
-La esclusa al sur desemboca en control, el centro de comunicaciones. Tres pasillos conectan control con energía al oeste, el invernadero al norte y enfermería al este. La cámara vuelve a una vista general en los pasillos y se acerca al entrar en cada sala. Los equipos bloquean el paso y los terminales se abren con **E** al acercarse. Las luces de los cultivos, la consola de radio, el monitor médico y la postura de Teo reflejan las decisiones. El registro de la esclusa cierra el día. Los límites y puntos de interacción están en `scripts/puesto.gd`.
+La esclusa al sur desemboca en Control, el centro de comunicaciones. Tres pasillos conectan Control con Energía al oeste, la sala de plantas al norte y Enfermería al este. La cámara vuelve a una vista general en los pasillos y se acerca al entrar en cada sala. El acercamiento queda entre 2,04× y 2,26×, y Control usa una ilustración de alta resolución con los accesos visibles. Los equipos bloquean el paso y los terminales se abren con **E** al acercarse. Iris patrulla Control. En Enfermería, Teo ocupa el colchón a lo largo. El registro de la esclusa cierra el día. Los límites y puntos de interacción están en `scripts/puesto.gd`.
 
 ## Presupuesto del Sol 1
 
@@ -56,7 +58,7 @@ Con energía y radio en ambas rutas, el rescate deja **6 UE**, cultivos en pausa
 | --- | --- |
 | 2 | Usa la reserva de hielo para obtener agua o dedica turnos a estabilizar a Teo y recuperar el banco auxiliar. |
 | 3 | Repite el procesamiento si hace falta agua. Comunica el experimento a Tierra y recibe la respuesta en el siguiente sol. |
-| 4 | Durante la alerta solar, Nora pilota a NIDO desde Energía. Activa tres relés exteriores en orden y vuelve a la esclusa para conectar el blindaje. La cosecha vuelve a estar disponible. |
+| 4 | Durante la alerta solar, Nora pilota a Pluto desde Energía. Activa tres relés exteriores en orden y vuelve a la esclusa para conectar el blindaje. La cosecha vuelve a estar disponible. |
 | 5 | Asegura la última noche y transmite el informe. Completar la misión exige soporte vital y al menos tres datos además de ese informe. |
 
 El relevo añade agua, soporte vital, datos acumulados e informe del día. Los déficits de agua, comida o batería reducen el soporte vital. Dos sesiones médicas devuelven un turno a la tripulación a partir del siguiente sol. La misión completa exige recuperar a Teo, conservar al menos 80% de soporte vital y enviar el último informe con tres datos acumulados. La electrólisis, la construcción con regolito, el escenario lunar y el guardado quedan como candidatos de desarrollo.

@@ -1,5 +1,12 @@
 # Cambios
 
+## 2026-11-03 | Expedición al campo de hielo y salas
+
+- El robot se llama Pluto. La tripulación recibe el aviso en el refugio, viaja a un barranco y recoge una piedra y una muestra de hielo.
+- Teo va al final del grupo durante el regreso. La avería de los paneles se ve antes del dilema; esperar muestra el corte de la toma exterior y la salida con camilla.
+- Iris usa sus fotogramas de marcha al salir de la nave, durante la carrera y al patrullar Control.
+- Cámara de interior más abierta, ilustración de Control a mayor resolución y Teo acostado a lo largo del colchón.
+
 ## 2026-11-03 | Aterrizaje y apertura para público infantil
 
 - Portada ilustrada que inicia el juego con un solo botón y deja el área del juego a todo el ancho disponible.

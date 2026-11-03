@@ -7,10 +7,10 @@
 1. Abre Godot 4.7.2. En esta carpeta hay una copia local para Windows.
 2. En el gestor de proyectos, elige **Importar** y selecciona `project.godot`.
 3. Pulsa **F6** con `scenes/umbra.tscn` abierta o **F5** desde cualquier escena.
-4. Pulsa **Iniciar misión** y mira el aterrizaje. En el camino de afuera usa **A/D o izquierda/derecha**. Busca a Teo y pulsa **E** para hablar con él. Dentro de la base, usa **WASD o flechas** en las cuatro direcciones. Pulsa **Esc** para salir de un terminal.
+4. Pulsa **Iniciar misión** y mira el aterrizaje. En el camino de afuera usa **A/D o izquierda/derecha**. Reúnete con Iris en la puerta y pulsa **E**. Ya en el campo de hielo, pulsa **E** para recoger primero la piedra y luego el hielo. Dentro de la base, usa **WASD o flechas** en las cuatro direcciones. Pulsa **Esc** para salir de un terminal.
 5. Cada sol tiene una misión. Sigue el marcador turquesa y usa el terminal de ese módulo. Puedes gastar los turnos sobrantes en cuidados y reservas. Regresa a la esclusa y elige **Cerrar el sol** para revisar las reservas y continuar.
 
-En superficie, mira la carga de viento. Las rachas pueden hacerte retroceder. Mantén **Shift** para anclarte y aprovecha la tregua para avanzar. Los círculos del terreno indican abrigo. Dentro del refugio, **M** alterna entre el plano general y el acercamiento por sala. En el Sol 4, **E** activa los relés mientras controlas a NIDO.
+En superficie, mira la carga de viento. Las rachas pueden hacerte retroceder. Mantén **Shift** para anclarte y aprovecha la tregua para avanzar. Los círculos del terreno indican abrigo. Dentro del refugio, **M** alterna entre el plano general y el acercamiento por sala. En el Sol 4, **E** activa los relés mientras controlas a Pluto.
 
 ## Jugar en navegador
 
