@@ -1,5 +1,12 @@
 # Cambios
 
+## 2026-11-03 | Arte de tripulación, supervivencia y Web
+
+- El mapa de referencia se usa como mundo explorable con zoom por sala, y enfermería tiene una ilustración ampliada.
+- Sprites y retratos nuevos de Nora, Iris, Teo y el robot, con expresiones de emergencia y una variante de recuperación.
+- Cinco soles jugables con procedimientos en terminales, agua, alimentos, cuidados, alerta solar y resultados científicos.
+- Preset Web de Godot y página de lanzamiento con controles y progreso de carga.
+
 ## 2026-11-03 | Apertura narrativa y base explorable
 
 - Inicio de misión y cinemática animada con Nora, Iris, Teo, tormenta, caída y extracción.

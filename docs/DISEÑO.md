@@ -4,13 +4,13 @@
 
 Iris presenta a Tierra el objetivo de mantener un puesto con recursos locales. El viento levanta polvo y baja la generación solar. Iris ordena cerrar la esclusa. Teo, técnico de superficie, cae y queda atrapado junto al rover averiado. Nora, piloto y personaje jugable, se acerca al rover para evaluar el rescate. El robot advierte que el cabrestante comparte el circuito del invernadero. Nora elige usar el circuito ahora o cerrar la esclusa y volver por Teo tras una tregua. La extracción se representa con una secuencia corta y el jugador lleva a Teo hasta la esclusa.
 
-El objetivo del Sol 1 es mantener el soporte vital y elegir qué trabajos hacer con dos personas disponibles. La misión completa tiene cinco soles. La duración de la tormenta, la curva de recuperación y los desenlaces de los soles 2 a 5 quedan abiertos para el equipo.
+El objetivo del Sol 1 es mantener el soporte vital y elegir qué trabajos hacer con dos personas disponibles. La campaña jugable tiene cinco soles. Los procedimientos de las salas usan decisiones breves con retroalimentación antes de gastar energía y turnos.
 
-El aspecto provisional usa las referencias como ilustración exterior y retratos. El plano original se conserva como referencia de composición. El interior se dibuja en 2D con suelos, paredes, muebles, personajes y luces. Los trajes distinguen a Nora (rosa), Iris (turquesa) y Teo (ámbar). El robot cumple el papel de guía y explica el costo inmediato. Registrar la autoría y los permisos de las referencias antes de distribuir públicamente el juego.
+El exterior y el mapa usan las referencias del equipo. El arte generado añade la tormenta, una enfermería de mayor detalle y sprites con iluminación neutra. Nora lleva violeta, Iris lleva cian y Teo lleva azul cobalto y blanco con acentos granate. Nora reacciona con alarma, Iris da órdenes con expresión firme y Teo pasa de dolor a reposo y reincorporación. Registrar la procedencia y los permisos de las referencias antes de distribuir públicamente el juego.
 
 ### Recorrido y zonas
 
-La esclusa al sur desemboca en control, el centro de comunicaciones. Tres pasillos conectan control con energía al oeste, el invernadero al norte y enfermería al este. Los equipos bloquean el paso y los terminales se abren con **E** al acercarse. Las luces de los cultivos, la consola de radio y la camilla reflejan el estado del Sol 1. El registro de la esclusa cierra el día. Los límites y puntos de interacción están en `scripts/puesto.gd`.
+La esclusa al sur desemboca en control, el centro de comunicaciones. Tres pasillos conectan control con energía al oeste, el invernadero al norte y enfermería al este. La cámara vuelve a una vista general en los pasillos y se acerca al entrar en cada sala. Los equipos bloquean el paso y los terminales se abren con **E** al acercarse. Las luces de los cultivos, la consola de radio, el monitor médico y la postura de Teo reflejan las decisiones. El registro de la esclusa cierra el día. Los límites y puntos de interacción están en `scripts/puesto.gd`.
 
 ## Presupuesto del Sol 1
 
@@ -46,16 +46,16 @@ Con energía y radio en ambas rutas, el rescate deja **6 UE**, cultivos en pausa
 | `ciencia_enviada` | Booleano, informe en tránsito. |
 | `acciones` | Array[String], identificadores de tareas hechas en orden. |
 
-### Espacio de trabajo para los siguientes soles
+### Campaña de cinco soles
 
-| Sol | Posible pregunta de diseño |
+| Sol | Decisiones y consecuencias |
 | --- | --- |
-| 2 | ¿Cómo recuperar cultivos y atender la lesión con el presupuesto heredado? |
-| 3 | ¿Cuándo compensa salir por hielo para reponer agua? |
-| 4 | ¿Qué actividad se puede detener si hay una alerta de radiación? |
-| 5 | ¿Qué parte de la misión científica pudo sostener la tripulación? |
+| 2 | Usa la reserva de hielo para obtener agua o dedica turnos a estabilizar a Teo y recuperar el banco auxiliar. |
+| 3 | Repite el procesamiento si hace falta agua. Comunica el experimento a Tierra y recibe la respuesta en el siguiente sol. |
+| 4 | Durante la alerta solar, el robot accede al banco exterior. Si se omite la intervención, el blindaje auxiliar consume 2 UE al cierre. La cosecha vuelve a estar disponible. |
+| 5 | Asegura la última noche y transmite el informe. Completar la misión exige soporte vital y al menos tres datos además de ese informe. |
 
-Estas preguntas son propuestas. El equipo puede repartir un sol por rama y acordar entradas y salidas en cada PR. Las expediciones, electrólisis, construcción con regolito, escenario lunar, cronómetro, guardado y desenlaces quedan como candidatos de desarrollo.
+El relevo añade agua, soporte vital, datos acumulados e informe del día. Los déficits de agua, comida o batería reducen el soporte vital. Dos sesiones médicas devuelven un turno a la tripulación a partir del siguiente sol. Las expediciones fuera del refugio, la electrólisis, la construcción con regolito, el escenario lunar y el guardado quedan como candidatos de desarrollo.
 
 ## Ciencia y reto
 

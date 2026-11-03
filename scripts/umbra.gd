@@ -2,7 +2,9 @@ extends Control
 
 const EXTERIOR := preload("res://assets/exterior.jpg")
 const ROBOT := preload("res://assets/robot.jpg")
-const ASTRONAUTA := preload("res://assets/astronauta.jpg")
+const NORA_ALARMA := preload("res://assets/nora_alarma.png")
+const IRIS_ORDEN := preload("res://assets/iris_orden.png")
+const TEO_ALARMA := preload("res://assets/teo_alarma.png")
 const FONDO := Color("#101318")
 const PANEL := Color("#1a2129")
 const LINEA := Color("#394652")
@@ -36,6 +38,12 @@ var boton_cierre: Button
 var posicion := Vector2(339, 352)
 var reloj := 0.0
 var ambiente: AudioStreamPlayer
+var operacion := ""
+var aviso_operacion := ""
+var zoom_anterior := 1.0
+var centro_anterior := Vector2(402, 263.5)
+var orientacion_izquierda := false
+var retrato: TextureRect
 
 
 func _ready() -> void:
@@ -58,6 +66,7 @@ func _process(delta: float) -> void:
 			parte = 1
 		hablante.text = GUION[parte][0]
 		subtitulo.text = GUION[parte][1]
+		retrato.texture = IRIS_ORDEN if parte in [0, 2] else TEO_ALARMA
 		if reloj >= 13.0:
 			_fin_cinematica()
 			return
@@ -74,6 +83,7 @@ func _process(delta: float) -> void:
 				int(Input.is_physical_key_pressed(KEY_W) or Input.is_action_pressed("ui_up")))
 		puesto.avanzar(direccion.normalized(), delta)
 		posicion = puesto.punto
+		puesto.actualizar_camara(delta)
 		_actualizar_aviso()
 	puesto.tiempo += delta
 	puesto.queue_redraw()
@@ -89,13 +99,15 @@ func _unhandled_key_input(evento: InputEvent) -> void:
 				_render()
 		"evacuacion":
 			if posicion.distance_to(PuestoUmbra.ESCLUSA) <= 42:
-				posicion = Vector2(411, 474)
+				posicion = PuestoUmbra.ENTRADA
 				fase = "base"
 				_render()
 		"base":
 			var cerca := puesto.terminal_cercana()
 			if not cerca.is_empty():
 				modulo = cerca
+				operacion = ""
+				aviso_operacion = ""
 				_render()
 
 
@@ -115,6 +127,10 @@ func _actualizar_aviso() -> void:
 
 
 func _render() -> void:
+	if is_instance_valid(puesto):
+		zoom_anterior = puesto.escala_camara
+		centro_anterior = puesto.centro_camara
+		orientacion_izquierda = puesto.direccion_izquierda
 	puesto = null
 	boton_tarea = null
 	boton_cierre = null
@@ -145,7 +161,7 @@ func _render() -> void:
 		"relevo":
 			_relevo()
 	_texto("UMBRA  /  PROTOTIPO 01", Rect2(32, 682, 440, 22), 14, MUTED)
-	_texto("SOL 01 DE 05   •   TORMENTA DE POLVO", Rect2(914, 682, 334, 22), 14, MUTED)
+	_texto("SOL %02d DE 05   •   PUESTO UMBRA" % estado.sol, Rect2(914, 682, 334, 22), 14, MUTED)
 
 
 func _inicio() -> void:
@@ -197,6 +213,7 @@ func _crear_puesto(es_interior: bool, area: Rect2) -> void:
 	marco.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_colocar(marco, area)
 	puesto = PuestoUmbra.new()
+	puesto.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
 	puesto.interior = es_interior
 	puesto.cinematica = fase == "cinematica"
 	puesto.evacuacion = fase == "evacuacion"
@@ -207,7 +224,12 @@ func _crear_puesto(es_interior: bool, area: Rect2) -> void:
 	puesto.tiempo = 0.0 if puesto.cinematica else 13.0
 	puesto.cultivo_activo = estado.cultivo != "En pausa"
 	puesto.radio_enviada = estado.ciencia_enviada
-	puesto.atendido = estado.acciones.has("medicina")
+	puesto.atendido = estado.recuperacion > 0
+	puesto.lesion_grave = estado.paciente.begins_with("Lesión")
+	puesto.teo_recuperado = estado.recuperacion >= 2
+	puesto.escala_camara = zoom_anterior
+	puesto.centro_camara = centro_anterior
+	puesto.direccion_izquierda = orientacion_izquierda
 	marco.add_child(puesto)
 
 
@@ -218,9 +240,10 @@ func _superficie() -> void:
 	subtitulo = _texto(GUION[0][1], Rect2(49, 572, 764, 66), 21)
 	_panel(Rect2(856, 92, 392, 570), PANEL)
 	_texto("SUPERFICIE   /   SOL 01", Rect2(876, 112, 350, 24), 16, AMBAR)
-	_imagen(_recorte(ASTRONAUTA, Rect2(178, 10, 255, 240)), Rect2(876, 157, 108, 108))
-	_texto("NORA", Rect2(1001, 170, 210, 40), 30)
-	_texto("Piloto · traje rosa", Rect2(1001, 214, 219, 32), 17, MUTED)
+	retrato = _imagen(IRIS_ORDEN if fase in ["cinematica", "extraccion"] else NORA_ALARMA,
+		Rect2(875, 151, 172, 145), TextureRect.STRETCH_KEEP_ASPECT_CENTERED)
+	_texto("TRIPULACIÓN", Rect2(1050, 174, 174, 28), 19)
+	_texto("Nora · Piloto\nIris · Comandante\nTeo · Técnico", Rect2(1050, 209, 174, 83), 15, MUTED)
 	_texto("Iris dirige la base. Teo se ocupa de los equipos de superficie. La tripulación necesita demostrar que puede mantener el refugio con recursos locales.",
 		Rect2(876, 291, 350, 150), 19)
 	if fase == "cinematica":
@@ -248,7 +271,7 @@ func _apertura() -> void:
 	_texto("«¡CIERREN LAS COMPUERTAS! ¡LA TORMENTA ESTÁ ENCIMA!»",
 		Rect2(48, 524, 780, 25), 20)
 	_panel(Rect2(32, 578, 804, 84), PANEL)
-	_imagen(_recorte(ASTRONAUTA, Rect2(178, 10, 255, 240)), Rect2(45, 587, 66, 66))
+	_imagen(TEO_ALARMA, Rect2(45, 587, 66, 66), TextureRect.STRETCH_KEEP_ASPECT_CENTERED)
 	_texto("CANAL DE TRIPULACIÓN", Rect2(124, 592, 300, 20), 14, CIAN)
 	_texto("«Me caí junto al rover. No puedo sacar la pierna.»",
 		Rect2(124, 617, 690, 32), 20)
@@ -278,29 +301,35 @@ func _base() -> void:
 	_panel(Rect2(32, 625, 804, 37), PANEL)
 	aviso = _texto("", Rect2(47, 633, 770, 24), 16, CIAN)
 	_panel(Rect2(856, 92, 392, 570), PANEL)
-	_texto("SOL 01   /   ESTABILIZAR LA BASE", Rect2(875, 108, 351, 24), 16, AMBAR)
+	_texto("SOL %02d   /   ESTABILIZAR LA BASE" % estado.sol, Rect2(875, 108, 351, 24), 16, AMBAR)
 	_texto("Reserva de batería", Rect2(875, 143, 285, 28), 22)
 	_texto("%02d UE" % estado.energia, Rect2(1145, 143, 85, 28), 22, CIAN)
 	_panel(Rect2(876, 180, 350, 8), LINEA, LINEA)
-	_panel(Rect2(876, 180, 350 * estado.energia / 16.0, 8), CIAN, CIAN)
-	_texto("%d raciones    •    %d / %d tareas disponibles" % [
-		estado.raciones, estado.operativos - estado.acciones.size(), estado.operativos],
+	_panel(Rect2(876, 180, 350 * minf(estado.energia / 24.0, 1.0), 8), CIAN, CIAN)
+	_texto("%d raciones  ·  %d agua  ·  %d turnos" % [
+		estado.raciones, estado.agua, estado.operativos - estado.acciones.size()],
 		Rect2(875, 199, 352, 42), 17, MARFIL)
 	_texto("Cultivos · %s\nTripulante · %s" % [estado.cultivo, estado.paciente],
 		Rect2(875, 243, 352, 74), 17, MUTED)
 	_panel(Rect2(875, 322, 352, 195), FONDO)
 	if modulo.is_empty():
 		_texto("IRIS   /   REFUGIO", Rect2(888, 335, 327, 24), 14, CIAN)
-		_texto("Teo queda en enfermería. Podemos hacer dos tareas. Acércate a un terminal y pulsa E para usarlo.",
+		var parte: String = estado.EVENTOS[estado.sol - 1]
+		if estado.respuesta:
+			parte += " Tierra confirma recepción del informe."
+		_texto(parte + " Acércate a un terminal y pulsa E.",
 			Rect2(888, 366, 327, 134), 18)
 	elif modulo == "cierre":
 		_texto("05  /  ESCLUSA", Rect2(888, 335, 327, 24), 14, CIAN)
-		_texto("Sella la base para pasar la noche. El registro guarda las consecuencias para el siguiente sol.",
+		var cierre := "Sella la base para pasar la noche. El registro guarda las consecuencias."
+		if estado.sol == 4 and not estado.paneles_revisados:
+			cierre = "La alerta solar exige activar el blindaje auxiliar: cuesta 2 UE adicionales al cerrar."
+		_texto(cierre,
 			Rect2(888, 366, 327, 89), 17)
 		boton_cierre = _boton("Cerrar el sol", Rect2(888, 451, 326, 48), _cerrar, AMBAR)
 	else:
 		_terminal()
-	_texto("Reserva nocturna · 4 UE y 3 raciones.\nCada persona operativa puede hacer una tarea.",
+	_texto("Noche · 4 UE, 3 raciones y 2 agua.\nSoporte vital %d%%  ·  Datos de misión %d" % [estado.soporte, estado.muestras],
 		Rect2(875, 527, 352, 63), 16, MUTED)
 	_texto("Para terminar, vuelve a la esclusa.", Rect2(875, 615, 352, 32), 16, AMBAR)
 	_actualizar_aviso()
@@ -308,22 +337,83 @@ func _base() -> void:
 
 func _terminal() -> void:
 	_texto(MODULOS[modulo][0], Rect2(888, 335, 327, 24), 14, CIAN)
-	_texto(MODULOS[modulo][1], Rect2(888, 366, 327, 74), 17)
+	if not operacion.is_empty():
+		_procedimiento()
+		return
+	var descripcion: String = MODULOS[modulo][1]
 	var accion: String = SolUno.ACCIONES[modulo]["titulo"]
+	if estado.sol > 1:
+		match modulo:
+			"energia":
+				accion = "Recuperar carga auxiliar"
+				descripcion = "3 UE. Recupera 6 UE y prepara los paneles para el siguiente sol."
+				if estado.sol == 4:
+					descripcion = "3 UE. Usa el robot, recupera 6 UE y conecta el refugio al circuito protegido."
+			"cultivos":
+				accion = "Procesar hielo" if estado.sol <= 3 else "Cosechar bandejas"
+				descripcion = "4 UE. Funde hielo de la reserva: +4 agua y +1 dato." if estado.sol <= 3 else "4 UE. Protege las plantas y recoge 4 raciones."
+			"medicina":
+				descripcion = "3 UE. Tras dos sesiones, Teo se reincorpora en el siguiente sol."
+			"radio":
+				accion = "Transmitir informe"
+				descripcion = "2 UE. Registra 1 dato. La respuesta de Tierra llega al siguiente sol."
+	if modulo == "medicina":
+		if estado.recuperacion >= 2:
+			descripcion = "«Puedo volver a la consola. Gracias por darme tiempo.»"
+		elif estado.recuperacion == 1:
+			descripcion = "«Me siento más estable. Aún necesito reposo.»"
+		var cara: Texture2D = TEO_ALARMA
+		if estado.recuperacion >= 2:
+			cara = _recorte(PuestoUmbra.TEO_RECUPERADO, Rect2(219, 0, 495, 444))
+		_imagen(cara, Rect2(1134, 353, 80, 88), TextureRect.STRETCH_KEEP_ASPECT_CENTERED)
+	_texto(descripcion, Rect2(888, 366, 236 if modulo == "medicina" else 327, 74), 17)
 	if estado.acciones.has(modulo):
 		accion = "Tarea completada"
 	elif estado.acciones.size() == estado.operativos:
 		accion = "Turnos agotados"
 	elif not estado.disponible(modulo):
 		accion = "Batería reservada para la noche"
-	boton_tarea = _boton(accion, Rect2(888, 451, 326, 48), _accion.bind(modulo), CIAN,
+	boton_tarea = _boton(accion, Rect2(888, 451, 326, 48), _abrir_operacion, CIAN,
 		not estado.disponible(modulo))
 
 
-func _accion(id: String) -> void:
-	if puesto.terminal_cercana() != id:
+func _abrir_operacion() -> void:
+	if puesto.terminal_cercana() != modulo or not estado.disponible(modulo):
 		return
-	estado.aplicar(id)
+	operacion = modulo
+	_render()
+
+
+func _procedimiento() -> void:
+	var pasos := {
+		"energia": ["El inversor muestra una caída de carga. ¿Qué circuito proteges?", "Soporte vital", "Todas las luces"],
+		"cultivos": ["Debes recuperar producción con poca energía.", "Ajustar al consumo mínimo", "Encender todo el módulo"],
+		"medicina": ["Teo necesita reposo y seguimiento.", "Registrar y vigilar signos", "Enviarlo a trabajar"],
+		"radio": ["Tierra recibirá el mensaje con retraso.", "Enviar el registro de datos", "Esperar indicaciones en vivo"],
+	}
+	var ficha: Array = pasos[operacion]
+	if operacion == "cultivos" and estado.sol in [2, 3]:
+		ficha = ["El hielo contiene polvo del terreno.", "Fundir y filtrar", "Enviar hielo directo al tanque"]
+	elif operacion == "energia" and estado.sol == 4:
+		ficha = ["Hay una alerta solar. ¿Cómo accedes al banco exterior?", "Enviar el robot", "Enviar a un tripulante"]
+	var pregunta: String = ficha[0] if aviso_operacion.is_empty() else aviso_operacion
+	_texto(pregunta, Rect2(888, 363, 327, 58), 16, MARFIL)
+	var invertir := (estado.sol + operacion.length()) % 2 == 0
+	for fila in range(2):
+		var acierto := fila == int(invertir)
+		_boton(ficha[1 if acierto else 2], Rect2(888, 426 + 40 * fila, 326, 34),
+			_resolver_operacion.bind(acierto), CIAN)
+
+
+func _resolver_operacion(acierto: bool) -> void:
+	if puesto.terminal_cercana() != operacion or not estado.disponible(operacion):
+		return
+	if acierto:
+		estado.aplicar(operacion)
+		operacion = ""
+		aviso_operacion = ""
+	else:
+		aviso_operacion = "El robot detectó un riesgo. Revisa el procedimiento antes de activarlo."
 	_render()
 
 
@@ -336,6 +426,9 @@ func _cerrar() -> void:
 
 func _relevo() -> void:
 	var informe := estado.relevo()
+	if estado.sol > 1:
+		_relevo_campana(informe)
+		return
 	_imagen(EXTERIOR, Rect2(32, 92, 728, 570))
 	_panel(Rect2(32, 470, 728, 192), PANEL)
 	_texto("BITÁCORA   /   FIN DEL SOL 01", Rect2(54, 491, 680, 25), 16, CIAN)
@@ -356,12 +449,45 @@ func _relevo() -> void:
 	if estado.ruta == SolUno.ESPERA:
 		leccion = "La espera conservó los cultivos. Si la lesión sigue sin atenderse, mañana compromete más batería."
 	_texto(leccion, Rect2(802, 490, 424, 94), 17, MUTED)
-	_boton("Probar otra decisión", Rect2(802, 600, 424, 44), _reiniciar, CIAN)
+	_boton("Comenzar Sol 2", Rect2(802, 584, 424, 34), _siguiente_sol, CIAN)
+	_boton("Volver al comienzo", Rect2(802, 623, 424, 29), _reiniciar, AMBAR)
+
+
+func _relevo_campana(informe: Dictionary) -> void:
+	_imagen(PuestoUmbra.TORMENTA, Rect2(32, 92, 728, 570))
+	_panel(Rect2(32, 484, 728, 178), PANEL)
+	var final: bool = estado.sol == 5 or informe.soporte <= 0
+	var titulo := "Fin del Sol %02d" % estado.sol
+	var mensaje: String = estado.EVENTOS[mini(estado.sol, 4)]
+	if final:
+		titulo = "Misión completada" if informe.soporte > 0 and informe.muestras >= 3 and informe.informe_hoy else "Misión interrumpida" if informe.soporte <= 0 else "Supervivencia con misión parcial"
+		mensaje = "Tierra registró %d datos. Teo: %s." % [informe.muestras, informe.paciente]
+	_texto(titulo, Rect2(54, 503, 680, 47), 34, CIAN)
+	_texto(mensaje, Rect2(54, 566, 680, 75), 21)
+	_panel(Rect2(780, 92, 468, 570), PANEL)
+	_texto("BITÁCORA   /   SOL %02d" % estado.sol, Rect2(802, 115, 424, 43), 21, AMBAR)
+	_texto("%d UE en batería\n%d raciones · %d agua\nSoporte vital: %d%%\nDatos acumulados: %d\n\nTeo: %s" % [
+		informe.energia, informe.raciones, informe.agua, informe.soporte,
+		informe.muestras, informe.paciente], Rect2(802, 180, 424, 320), 23)
+	if final:
+		_boton("Volver al comienzo", Rect2(802, 590, 424, 48), _reiniciar, AMBAR)
+	else:
+		_boton("Comenzar Sol %d" % (estado.sol + 1), Rect2(802, 590, 424, 48), _siguiente_sol, CIAN)
+
+
+func _siguiente_sol() -> void:
+	estado.siguiente_sol()
+	posicion = PuestoUmbra.ENTRADA
+	modulo = ""
+	operacion = ""
+	fase = "base"
+	_render()
 
 
 func _reiniciar() -> void:
 	estado = SolUno.new()
 	modulo = ""
+	operacion = ""
 	fase = "inicio"
 	_render()
 
@@ -397,13 +523,14 @@ func _texto(contenido: String, area: Rect2, puntos: int, color := MARFIL) -> Lab
 	return etiqueta
 
 
-func _imagen(textura: Texture2D, area: Rect2, ajuste := TextureRect.STRETCH_KEEP_ASPECT_COVERED) -> void:
+func _imagen(textura: Texture2D, area: Rect2, ajuste := TextureRect.STRETCH_KEEP_ASPECT_COVERED) -> TextureRect:
 	var imagen := TextureRect.new()
 	imagen.texture = textura
 	imagen.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	imagen.stretch_mode = ajuste
 	imagen.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_colocar(imagen, area)
+	return imagen
 
 
 func _recorte(textura: Texture2D, region: Rect2) -> AtlasTexture:
