@@ -1,5 +1,12 @@
 # Cambios
 
+## 2026-11-03 | Pasillos, sondeos y rutas de rescate
+
+- La cámara sigue a Nora por salas y pasillos. El plano completo se consulta con M; al caminar se revelan las habitaciones cercanas.
+- Los panoramas del refugio y el barranco comparten un tramo de sendero. La entrada a la base muestra el cierre de la puerta antes de pasar al interior.
+- Dos lecturas del terreno permiten distinguir hielo de escarcha o suelo seco. El taladro avanza mientras se mantiene Espacio y se enfría al soltarlo.
+- El rescate temprano devuelve a Teo a pie con Iris. En la otra ruta, Nora busca abrigo, espera la tregua y vuelve con Teo en camilla.
+
 ## 2026-11-03 | Exploración, extracción y descanso
 
 - Nora puede dar un salto corto en superficie. La aceleración cambia entre el interior, el suelo marciano y el aire.

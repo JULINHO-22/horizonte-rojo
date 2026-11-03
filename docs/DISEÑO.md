@@ -10,7 +10,7 @@ El arte combina las referencias del equipo e ilustraciones generadas para los pa
 
 ### Recorrido y zonas
 
-La esclusa al sur desemboca en Control, el centro de comunicaciones. Tres pasillos conectan Control con Energía al oeste, la sala de plantas al norte y Enfermería al este. La cámara vuelve a una vista general en los pasillos y se acerca al entrar en cada sala. El acercamiento queda entre 1,85× y 2×, y Control usa una ilustración de alta resolución con los accesos visibles. Los equipos bloquean el paso y los terminales se abren con **E** al acercarse. Iris patrulla Control. En Enfermería, Teo ocupa el colchón a lo largo. El dormitorio queda al noreste y se alcanza por el corredor que sale del paso entre Control y Enfermería. Allí se cierra el día. Los límites y puntos de interacción están en `scripts/puesto.gd`.
+La esclusa al sur desemboca en Control, el centro de comunicaciones. Tres pasillos conectan Control con Energía al oeste, la sala de plantas al norte y Enfermería al este. La cámara sigue a Nora con un acercamiento continuo. Las salas se revelan por cercanía y M muestra el plano general. Control usa una ilustración de alta resolución con los accesos visibles. Los equipos bloquean el paso y los terminales se abren con **E** al acercarse. Iris patrulla Control. En Enfermería, Teo ocupa el colchón a lo largo. El dormitorio queda al noreste y se alcanza por el corredor que sale del paso entre Control y Enfermería. Allí se cierra el día. Los límites y puntos de interacción están en `scripts/puesto.gd`.
 
 ## Presupuesto del Sol 1
 

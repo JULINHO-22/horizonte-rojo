@@ -60,6 +60,7 @@ const ROOMS := {
 	"cierre": Rect2(355, 353, 96, 49),
 	"dormitorio": Rect2(587, 62, 196, 49),
 }
+const SENDAS_PLANTAS := [Rect2(303, 49, 208, 9), Rect2(303, 53, 10, 48), Rect2(499, 53, 12, 48)]
 const PASILLOS := [
 	Rect2(385, 99, 30, 78), Rect2(208, 224, 98, 35),
 	Rect2(492, 222, 83, 39), Rect2(382, 294, 39, 65),
@@ -76,8 +77,11 @@ const EQUIPOS := [
 	Rect2(356, 372, 19, 29), Rect2(431, 351, 18, 57),
 ]
 const SUELO := 351.0
+const DISTANCIA_PANORAMA := 700.0
 const ROCA := Vector2(250, SUELO)
 const MUESTRA := Vector2(659, SUELO)
+const SONDEOS := [Vector2(548, SUELO), Vector2(600, SUELO), MUESTRA]
+const ABRIGO_TEO := Vector2(463, SUELO)
 const ROVER := Vector2(506, SUELO)
 const INICIO_CAIDA := 416.0
 const ALTURA_TRAJE := 49.0
@@ -91,6 +95,7 @@ var campo := false
 var sondeo := false
 var muestra_roca := false
 var muestra_preparada := false
+var sondeos_hechos: Array[int] = []
 var altura := 0.0
 var velocidad_vertical := 0.0
 var corte := false
@@ -98,7 +103,6 @@ var mando_nido := false
 var rele_actual := 0
 var anclado := false
 var plano := false
-var sala_actual := ""
 var objetivo_mision := ""
 var ancho_visible := 804.0
 var escala_visual := 1.0
@@ -113,6 +117,8 @@ var carrera := false
 var caida := false
 var tiempo_caida := 0.0
 var evacuacion := false
+var camilla := false
+var refugio_teo := false
 var extraccion := false
 var usa_cabrestante := false
 var decision := false
@@ -191,16 +197,13 @@ func empuje_viento() -> float:
 func actualizar_camara(delta: float) -> void:
 	if not interior:
 		return
-	var objetivo := Vector2(402, 263.5)
-	var escala := 1.0
-	sala_actual = ""
+	var objetivo := Vector2(402, 263.5) if plano else punto - Vector2(0, 17)
+	var escala := 1.0 if plano else 1.86
 	for zona: String in ROOMS:
 		var sala: Rect2 = ROOMS[zona]
 		if sala.has_point(punto) and not plano:
-			sala_actual = zona
-			escala = 2.0 if zona != "cierre" else 1.85
 			var encuadre: Rect2 = ENCUADRES[zona]
-			objetivo = encuadre.get_center().lerp(punto, 0.39) + Vector2(0, -16)
+			objetivo = encuadre.get_center().lerp(punto, 0.78) + Vector2(0, -16)
 			break
 	var peso := 1.0 - exp(-delta * 5.8)
 	escala_camara = lerpf(escala_camara, escala, peso)
@@ -213,7 +216,7 @@ func transitable(destino: Vector2) -> bool:
 	for equipo: Rect2 in EQUIPOS:
 		if equipo.grow(3).has_point(destino):
 			return false
-	for sector: Rect2 in ROOMS.values() + PASILLOS + PASO_DORMITORIO:
+	for sector: Rect2 in ROOMS.values() + PASILLOS + PASO_DORMITORIO + SENDAS_PLANTAS:
 		if sector.has_point(destino):
 			return true
 	return false
@@ -252,7 +255,10 @@ func _origen_mundo() -> Vector2:
 		foco = lerpf(foco, ROVER.x, smoothstep(0.0, 1.4, tiempo_caida))
 	var temblor := sin(tiempo * 39.0) * intensidad_viento() * 2.4
 	var zoom := _zoom_mundo()
-	return Vector2(clampf(ancho_visible * 0.5 - foco * zoom, ancho_visible - 804.0 * zoom, 0.0),
+	var origen_campo := DISTANCIA_PANORAMA if campo else 0.0
+	var foco_global := foco + origen_campo
+	return Vector2(clampf(ancho_visible * 0.5 - foco_global * zoom,
+		ancho_visible - (DISTANCIA_PANORAMA + 886.0) * zoom, 0.0) + origen_campo * zoom,
 		-76.0 - SUELO * (zoom - 1.0) + temblor)
 
 
@@ -262,7 +268,17 @@ func _zoom_mundo() -> float:
 
 func _dibujar_exterior() -> void:
 	draw_set_transform(_origen_mundo(), 0, Vector2.ONE * _zoom_mundo())
-	draw_texture_rect(CAMPO if campo else SENDERO, Rect2(0, 0, 886, 462), false)
+	var origen_campo := 0.0 if campo else DISTANCIA_PANORAMA
+	draw_texture_rect(SENDERO, Rect2(origen_campo - DISTANCIA_PANORAMA, 0, 886, 462), false)
+	var inicio_mezcla := origen_campo + 64.0
+	var fin_mezcla := origen_campo + 170.0
+	var uv := PackedVector2Array([Vector2(64.0 / 886.0, 0), Vector2(170.0 / 886.0, 0),
+		Vector2(170.0 / 886.0, 1), Vector2(64.0 / 886.0, 1)])
+	draw_polygon(PackedVector2Array([Vector2(inicio_mezcla, 0), Vector2(fin_mezcla, 0),
+		Vector2(fin_mezcla, 462), Vector2(inicio_mezcla, 462)]),
+		PackedColorArray([Color(1, 1, 1, 0), Color.WHITE, Color.WHITE, Color(1, 1, 1, 0)]), uv, CAMPO)
+	draw_texture_rect_region(CAMPO, Rect2(fin_mezcla, 0, 716, 462),
+		Rect2(Vector2(CAMPO.get_width() * 170.0 / 886.0, 0), Vector2(CAMPO.get_width() * 716.0 / 886.0, CAMPO.get_height())))
 	var rafaga := intensidad_viento()
 	var polvo := (0.22 if muestra_roca else 0.06) if sondeo else 0.0 if chequeo or aterrizaje else smoothstep(2.9, 6.7, tiempo)
 	var llegada := smoothstep(0.45, 5.2, tiempo) if aterrizaje else 1.0
@@ -285,7 +301,7 @@ func _dibujar_exterior() -> void:
 	var nora := punto
 	var iris := Vector2(284, SUELO)
 	var teo := MUESTRA if campo else Vector2(695, SUELO)
-	var afectado := caida or decision or extraccion or evacuacion
+	var afectado := caida or decision or extraccion or evacuacion or refugio_teo
 	var salida := smoothstep(7.0, 9.6, tiempo)
 	if aterrizaje:
 		nora = Vector2(lerpf(194, 220, salida), lerpf(SUELO - 21.0, SUELO, salida))
@@ -306,6 +322,8 @@ func _dibujar_exterior() -> void:
 				draw_line(Vector2(100, SUELO - 12), teo - Vector2(0, 8), OCRE, 2)
 		elif evacuacion:
 			teo.x = punto.x - 29 if not direccion_izquierda else punto.x + 29
+			if not camilla:
+				iris.x = teo.x + (14.0 if direccion_izquierda else -14.0)
 
 	if mando_nido:
 		_sprite(DRON, punto, 30, sin(tiempo * 10.0), direccion_izquierda)
@@ -317,14 +335,17 @@ func _dibujar_exterior() -> void:
 		elif chequeo and not campo:
 			iris_x = lerpf(284.0, 717.0, smoothstep(0.0, 5.0, tiempo))
 		iris.x = iris_x
-		var iris_camina := corriendo or (aterrizaje and tiempo < 8.7) or (chequeo and not campo and tiempo < 5.0)
-		_sprite(IRIS_PASOS if iris_camina else IRIS, iris, ALTURA_TRAJE, 0.0, carrera,
+		var iris_camina := corriendo or (evacuacion and caminando and not camilla) or (aterrizaje and tiempo < 8.7) or (chequeo and not campo and tiempo < 5.0)
+		_sprite(IRIS_PASOS if iris_camina else IRIS, iris, ALTURA_TRAJE, 0.0, carrera or (evacuacion and direccion_izquierda),
 			int(fposmod(iris.x / 48.0, 1.0) * 8) if iris_camina else -1)
 		if caida and tiempo_caida < 1.65:
 			var pose := mini(3, int(tiempo_caida / 0.41))
 			_sprite(TEO_CAIDA, teo, [49.0, 39.0, 27.0, 20.0][pose], 0.0, false, pose, 4)
+		elif evacuacion and not camilla:
+			_sprite(TEO_PASOS if caminando else TEO_NORMAL, teo, 45, 2.0 if caminando else 0.0,
+				direccion_izquierda, int(paso * 8) if caminando else -1)
 		elif afectado:
-			if evacuacion or extraccion:
+			if camilla and (evacuacion or (extraccion and tiempo >= 17.5)):
 				draw_line(teo + Vector2(-26, -4), teo + Vector2(25, -4), Color("#c5bbb2"), 5, true)
 				draw_circle(teo + Vector2(-16, 1), 3.5, OSCURO)
 				draw_circle(teo + Vector2(17, 1), 3.5, OSCURO)
@@ -361,8 +382,15 @@ func _dibujar_exterior() -> void:
 			draw_circle(torre + Vector2(0, -35), 5, LUZ if i <= rele_actual else OCRE)
 		var objetivo: Vector2 = RELES[rele_actual] if rele_actual < RELES.size() else ESCLUSA
 		_baliza(objetivo + Vector2(0, -91), "PUESTO %d" % (rele_actual + 1) if rele_actual < RELES.size() else "REGRESO", LUZ)
+	elif refugio_teo:
+		_baliza(ABRIGO_TEO + Vector2(0, -91), "ABRIGO", LUZ)
+	elif sondeo and muestra_roca and not muestra_preparada:
+		for i in range(SONDEOS.size()):
+			var sitio: Vector2 = SONDEOS[i]
+			draw_circle(sitio - Vector2(0, 5), 4, LUZ if sondeos_hechos.has(i) else OCRE)
+			_baliza(sitio + Vector2(0, -68 - 17 * (i % 2)), str(i + 1), LUZ if sondeos_hechos.has(i) else OCRE)
 	elif sondeo:
-		var meta := MUESTRA + Vector2(44, 0) if muestra_preparada else MUESTRA if muestra_roca else ROCA
+		var meta := MUESTRA + Vector2(44, 0) if muestra_preparada else ROCA
 		draw_circle(meta - Vector2(0, 7), 5, LUZ)
 		_baliza(meta + Vector2(0, -82), "CAJA DE MUESTRAS" if muestra_preparada else "VETA DE HIELO" if muestra_roca else "PIEDRA", LUZ)
 	elif chequeo and not campo:
@@ -397,57 +425,94 @@ func _dibujar_corte() -> void:
 	_baliza(caja + Vector2(-45, -92), "CABLE SUELTO" if roto else "ENERGÍA DEL SOL", OCRE if roto else LUZ)
 
 
+func _visibilidad_sala(id: String) -> float:
+	if plano:
+		return 1.0
+	var zona: Rect2 = ROOMS[id]
+	var borde := punto.clamp(zona.position, zona.end)
+	var alcance := 51.0
+	for sala: Rect2 in ROOMS.values():
+		if sala.has_point(punto):
+			return 1.0 - smoothstep(5.0, alcance, punto.distance_to(borde))
+	return 1.0 - smoothstep(12.0, 94.0, punto.distance_to(borde))
+
+
+func _dibujar_pasillos() -> void:
+	var escala_mapa := MAPA.get_size() / Vector2(804, 527)
+	for corredor: Rect2 in PASILLOS:
+		var borde := punto.clamp(corredor.position, corredor.end)
+		var visibilidad := 1.0 if plano else 1.0 - smoothstep(35.0, 91.0, punto.distance_to(borde))
+		if visibilidad > 0.0:
+			var zona := corredor.grow(4)
+			draw_texture_rect_region(MAPA, zona, Rect2(zona.position * escala_mapa, zona.size * escala_mapa),
+				Color(1, 1, 1, visibilidad))
+	for corredor: Rect2 in PASO_DORMITORIO:
+		var borde := punto.clamp(corredor.position, corredor.end)
+		var visibilidad := 1.0 if plano else 1.0 - smoothstep(30.0, 88.0, punto.distance_to(borde))
+		if visibilidad <= 0.0:
+			continue
+		draw_rect(corredor.grow(5), Color(0.56, 0.40, 0.32, visibilidad))
+		draw_rect(corredor, Color(0.25, 0.24, 0.31, visibilidad))
+		var horizontal := corredor.size.x > corredor.size.y
+		var longitud := int(corredor.size.x if horizontal else corredor.size.y)
+		for i in range(8, longitud - 5, 12):
+			var inicio := corredor.position + (Vector2(i, 4) if horizontal else Vector2(4, i))
+			var fin := inicio + (Vector2(0, corredor.size.y - 8) if horizontal else Vector2(corredor.size.x - 8, 0))
+			draw_line(inicio, fin, Color(0.42, 0.40, 0.46, visibilidad), 1.0, true)
+
+
 func _dibujar_interior() -> void:
 	var marco := Vector2(804, 527)
-	draw_rect(Rect2(0, 0, ancho_visible, marco.y), Color("#171c22"))
+	draw_rect(Rect2(0, 0, ancho_visible, marco.y), Color("#181621"))
 	draw_set_transform(_origen_mundo(), 0, Vector2.ONE * escala_camara)
-	draw_texture_rect(MAPA, Rect2(Vector2.ZERO, marco), false)
-	for corredor: Rect2 in PASO_DORMITORIO:
-		draw_rect(corredor.grow(5), Color("#d2a48a"))
-	for corredor: Rect2 in PASO_DORMITORIO:
-		draw_rect(corredor, Color("#685a62"))
-		draw_rect(corredor.grow(-3), Color("#a898a0"), false, 1)
-	draw_texture_rect(DORMITORIO, Rect2(570, 0, 230, 133), false)
-	draw_texture_rect(PLANTAS, Rect2(235, 0, 334, 150), false)
-	var silueta := PackedVector2Array()
-	for vertice: Vector2 in CONTORNO_CONTROL:
-		silueta.append(Vector2(279, 141) + vertice * Vector2(247, 197))
-	draw_polygon(silueta, PackedColorArray([Color.WHITE]), PackedVector2Array(CONTORNO_CONTROL), CONTROL)
-	draw_texture_rect(ENERGIA, Rect2(10, 130, 236, 211), false)
-	draw_texture_rect(REFUGIO, Rect2(331, 321, 142, 137), false)
-	draw_texture_rect(CLINICA, Rect2(554, 132, 245, 209), false)
+	if plano:
+		draw_texture_rect(MAPA, Rect2(Vector2.ZERO, marco), false)
+	_dibujar_pasillos()
+	var fondos := {
+		"energia": ENERGIA, "cultivos": PLANTAS, "medicina": CLINICA,
+		"cierre": REFUGIO, "dormitorio": DORMITORIO,
+	}
+	for id: String in fondos:
+		var visibilidad := _visibilidad_sala(id)
+		if visibilidad > 0.0:
+			draw_texture_rect(fondos[id], ENCUADRES[id], false, Color(1, 1, 1, visibilidad))
+	var visibilidad_control := _visibilidad_sala("radio")
+	if visibilidad_control > 0.0:
+		var silueta := PackedVector2Array()
+		for vertice: Vector2 in CONTORNO_CONTROL:
+			silueta.append(Vector2(279, 141) + vertice * Vector2(247, 197))
+		draw_polygon(silueta, PackedColorArray([Color(1, 1, 1, visibilidad_control)]),
+			PackedVector2Array(CONTORNO_CONTROL), CONTROL)
 	if not cultivo_activo:
-		draw_rect(Rect2(259, 33, 282, 88), Color(0.14, 0.19, 0.26, 0.52))
-	if radio_enviada:
+		draw_rect(Rect2(259, 33, 282, 88), Color(0.14, 0.19, 0.26, 0.52 * _visibilidad_sala("cultivos")))
+	if radio_enviada and visibilidad_control > 0.65:
 		draw_circle(Vector2(402, 188), 4.0, Color(0.34, 1.0, 0.84, 0.55))
 	var estado_teo := LUZ if atendido or teo_recuperado else Color("#ee8377") if lesion_grave else OCRE
-	if teo_recuperado:
+	if teo_recuperado and visibilidad_control > 0.65:
 		_sprite(TEO_RECUPERADO, Vector2(365, 216), 33)
-	else:
+	elif not teo_recuperado and _visibilidad_sala("medicina") > 0.65:
 		_sprite(TEO_CAMA, Vector2(752, 213), 29)
-	draw_circle(Vector2(728, 181), 2.0 + sin(tiempo * 6) * 0.5, estado_teo)
+	if _visibilidad_sala("medicina") > 0.65:
+		draw_circle(Vector2(728, 181), 2.0 + sin(tiempo * 6) * 0.5, estado_teo)
 	var patrulla := fposmod(tiempo - 17.0, 8.0)
 	var iris_x := 457.0 + 21.0 * (smoothstep(0.5, 2.7, patrulla) - smoothstep(4.1, 6.3, patrulla))
 	var iris_camina := (patrulla > 0.5 and patrulla < 2.7) or (patrulla > 4.1 and patrulla < 6.3)
-	_sprite(IRIS_PASOS if iris_camina else IRIS, Vector2(iris_x, 215), 31, 0.0,
-		patrulla >= 4.1, int(fposmod(iris_x / 20.0, 1.0) * 8) if iris_camina else -1)
-	_sprite(DRON, Vector2(340, 257), 22, sin(tiempo * 4.5))
+	if visibilidad_control > 0.65:
+		_sprite(IRIS_PASOS if iris_camina else IRIS, Vector2(iris_x, 215), 31, 0.0,
+			patrulla >= 4.1, int(fposmod(iris_x / 20.0, 1.0) * 8) if iris_camina else -1)
+		_sprite(DRON, Vector2(340, 257), 22, sin(tiempo * 4.5))
 	_sprite(NORA_PASOS if caminando else NORA, punto, 32, 0.0,
 		direccion_izquierda, int(paso * 8) if caminando else -1)
 	var terminal := terminal_cercana()
 	for id: String in TERMINALES:
+		if _visibilidad_sala(id) < 0.65:
+			continue
 		var color := LUZ if id == objetivo_mision or terminal == id else OCRE
 		draw_circle(TERMINALES[id] + Vector2(0, 8), 3.2, color, false, 1.0, true)
 	for id: String in INSPECCIONES:
 		var sitio: Vector2 = INSPECCIONES[id]
-		draw_circle(sitio, 3.0, Color("#ebc8ff"), false, 1.0, true)
-	if not sala_actual.is_empty():
-		var zona: Rect2 = ENCUADRES[sala_actual]
-		var sombra := Color(0.08, 0.06, 0.13, clampf((escala_camara - 1.0) * 0.42, 0.0, 0.42))
-		draw_rect(Rect2(0, 0, 804, zona.position.y), sombra)
-		draw_rect(Rect2(0, zona.end.y, 804, 527 - zona.end.y), sombra)
-		draw_rect(Rect2(0, zona.position.y, zona.position.x, zona.size.y), sombra)
-		draw_rect(Rect2(zona.end.x, zona.position.y, 804 - zona.end.x, zona.size.y), sombra)
+		if plano or punto.distance_to(sitio) < 108:
+			draw_circle(sitio, 3.0, Color("#ebc8ff"), false, 1.0, true)
 	draw_set_transform(Vector2.ZERO)
 	if TERMINALES.has(objetivo_mision):
 		var destino: Vector2 = TERMINALES[objetivo_mision]
