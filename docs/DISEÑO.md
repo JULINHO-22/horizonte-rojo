@@ -2,11 +2,15 @@
 
 ## Alcance del primer prototipo
 
-Tres astronautas corren a cerrar la esclusa. Uno tropieza y queda atrapado junto al rover averiado. El robot explica que el cabrestante de emergencia comparte el circuito del invernadero. El jugador decide si usa ese circuito ahora o cierra la esclusa y vuelve a extraer al compañero tras una tregua. El jugador ve el accidente en el relato y escucha la urgencia a través del texto del canal de tripulación.
+Iris presenta a Tierra el objetivo de mantener un puesto con recursos locales. El viento levanta polvo y baja la generación solar. Iris ordena cerrar la esclusa. Teo, técnico de superficie, cae y queda atrapado junto al rover averiado. Nora, piloto y personaje jugable, se acerca al rover para evaluar el rescate. El robot advierte que el cabrestante comparte el circuito del invernadero. Nora elige usar el circuito ahora o cerrar la esclusa y volver por Teo tras una tregua. La extracción se representa con una secuencia corta y el jugador lleva a Teo hasta la esclusa.
 
 El objetivo del Sol 1 es mantener el soporte vital y elegir qué trabajos hacer con dos personas disponibles. La misión completa tiene cinco soles. La duración de la tormenta, la curva de recuperación y los desenlaces de los soles 2 a 5 quedan abiertos para el equipo.
 
-El aspecto provisional usa las cuatro referencias entregadas por el equipo como ilustración exterior, mapa de módulos y dos retratos recortados dentro de Godot. Las capas de interfaz y polvo animado se dibujan en 2D. El robot cumple el papel de guía y explica el costo inmediato. Registrar la autoría y los permisos de las referencias antes de distribuir públicamente el juego.
+El aspecto provisional usa las referencias como ilustración exterior y retratos. El plano original se conserva como referencia de composición. El interior se dibuja en 2D con suelos, paredes, muebles, personajes y luces. Los trajes distinguen a Nora (rosa), Iris (turquesa) y Teo (ámbar). El robot cumple el papel de guía y explica el costo inmediato. Registrar la autoría y los permisos de las referencias antes de distribuir públicamente el juego.
+
+### Recorrido y zonas
+
+La esclusa al sur desemboca en control, el centro de comunicaciones. Tres pasillos conectan control con energía al oeste, el invernadero al norte y enfermería al este. Los equipos bloquean el paso y los terminales se abren con **E** al acercarse. Las luces de los cultivos, la consola de radio y la camilla reflejan el estado del Sol 1. El registro de la esclusa cierra el día. Los límites y puntos de interacción están en `scripts/puesto.gd`.
 
 ## Presupuesto del Sol 1
 

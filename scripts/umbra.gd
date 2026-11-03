@@ -1,7 +1,6 @@
 extends Control
 
 const EXTERIOR := preload("res://assets/exterior.jpg")
-const BASE := preload("res://assets/base.jpg")
 const ROBOT := preload("res://assets/robot.jpg")
 const ASTRONAUTA := preload("res://assets/astronauta.jpg")
 const FONDO := Color("#101318")
@@ -12,44 +11,134 @@ const MUTED := Color("#b3bfc8")
 const CIAN := Color("#7df0e0")
 const AMBAR := Color("#ffb46f")
 const MODULOS := {
-	"energia": ["01  /  ENERGÍA", "Consume 3 UE. Recupera 5 UE del banco auxiliar.", Vector2(205, 412)],
-	"cultivos": ["02  /  INVERNADERO", "Consume 4 UE. Protege las bandejas durante la noche.", Vector2(418, 124)],
-	"medicina": ["03  /  ENFERMERÍA", "Consume 3 UE. Estabiliza al compañero, que sigue en reposo.", Vector2(640, 255)],
-	"radio": ["04  /  COMUNICACIONES", "Consume 2 UE. Envía la lectura del polvo y el informe. Respuesta pendiente.", Vector2(578, 405)],
+	"energia": ["01  /  ENERGÍA", "Consume 3 UE. Recupera 5 UE del banco auxiliar."],
+	"cultivos": ["02  /  INVERNADERO", "Consume 4 UE. Protege las bandejas durante la noche."],
+	"medicina": ["03  /  ENFERMERÍA", "Consume 3 UE. Estabiliza a Teo, que sigue en reposo."],
+	"radio": ["04  /  COMUNICACIONES", "Consume 2 UE. Envía la lectura del polvo y el informe. Respuesta pendiente."],
 }
+const GUION := [
+	["IRIS  /  CONTROL DE MISIÓN", "Puesto Umbra a Tierra. Hoy intentaremos sostener la base con recursos de Marte durante cinco soles."],
+	["TEO  /  OPERACIONES", "El viento levantó polvo. La lectura de los paneles acaba de caer."],
+	["IRIS  /  CANAL DE EMERGENCIA", "¡CIERREN LAS COMPUERTAS! ¡LA TORMENTA ESTÁ ENCIMA!"],
+	["TEO  /  CANAL DE EMERGENCIA", "¡Nora! Me caí junto al rover averiado. No puedo sacar la pierna."],
+]
 
 var estado := SolUno.new()
-var fase := "apertura"
-var modulo := "energia"
+var fase := "inicio"
+var modulo := ""
 var pantalla: Control
-var polvo: Control
+var puesto: PuestoUmbra
+var subtitulo: Label
+var hablante: Label
+var aviso: Label
+var boton_tarea: Button
+var boton_cierre: Button
+var posicion := Vector2(339, 352)
 var reloj := 0.0
+var ambiente: AudioStreamPlayer
 
 
 func _ready() -> void:
 	get_window().min_size = Vector2i(800, 450)
+	_preparar_viento()
 	_render()
 
 
 func _process(delta: float) -> void:
-	reloj += delta
-	if is_instance_valid(polvo):
-		polvo.queue_redraw()
+	if not is_instance_valid(puesto):
+		return
+	if fase == "cinematica":
+		reloj += delta
+		var parte := 0
+		if reloj >= 9.0:
+			parte = 3
+		elif reloj >= 6.0:
+			parte = 2
+		elif reloj >= 3.0:
+			parte = 1
+		hablante.text = GUION[parte][0]
+		subtitulo.text = GUION[parte][1]
+		if reloj >= 13.0:
+			_fin_cinematica()
+			return
+	elif fase == "extraccion":
+		if puesto.tiempo >= 16.0:
+			fase = "evacuacion"
+			_render()
+			return
+	elif fase != "decision":
+		var direccion := Vector2(
+			int(Input.is_physical_key_pressed(KEY_D) or Input.is_action_pressed("ui_right")) -
+				int(Input.is_physical_key_pressed(KEY_A) or Input.is_action_pressed("ui_left")),
+			int(Input.is_physical_key_pressed(KEY_S) or Input.is_action_pressed("ui_down")) -
+				int(Input.is_physical_key_pressed(KEY_W) or Input.is_action_pressed("ui_up")))
+		puesto.avanzar(direccion.normalized(), delta)
+		posicion = puesto.punto
+		_actualizar_aviso()
+	puesto.tiempo += delta
+	puesto.queue_redraw()
+
+
+func _unhandled_key_input(evento: InputEvent) -> void:
+	if not evento is InputEventKey or not evento.pressed or evento.echo or evento.physical_keycode != KEY_E:
+		return
+	match fase:
+		"exterior":
+			if posicion.distance_to(PuestoUmbra.ROVER) <= 42:
+				fase = "decision"
+				_render()
+		"evacuacion":
+			if posicion.distance_to(PuestoUmbra.ESCLUSA) <= 42:
+				posicion = Vector2(411, 474)
+				fase = "base"
+				_render()
+		"base":
+			var cerca := puesto.terminal_cercana()
+			if not cerca.is_empty():
+				modulo = cerca
+				_render()
+
+
+func _actualizar_aviso() -> void:
+	if fase == "base":
+		var cerca := puesto.terminal_cercana()
+		aviso.text = "WASD / flechas   ·   Acércate a un terminal" if cerca.is_empty() else "E   /   " + (
+			"ABRIR REGISTRO DE ESCLUSA" if cerca == "cierre" else str(MODULOS[cerca][0]))
+		if is_instance_valid(boton_tarea):
+			boton_tarea.disabled = cerca != modulo or not estado.disponible(modulo)
+		if is_instance_valid(boton_cierre):
+			boton_cierre.disabled = cerca != "cierre"
+	elif fase == "exterior":
+		aviso.text = "E   /   HABLAR CON TEO" if posicion.distance_to(PuestoUmbra.ROVER) <= 42 else "WASD / flechas   ·   Acércate al rover"
+	elif fase == "evacuacion":
+		aviso.text = "E   /   ABRIR ESCLUSA" if posicion.distance_to(PuestoUmbra.ESCLUSA) <= 42 else "WASD / flechas   ·   Lleva a Teo al refugio"
 
 
 func _render() -> void:
+	puesto = null
+	boton_tarea = null
+	boton_cierre = null
 	if is_instance_valid(pantalla):
 		remove_child(pantalla)
 		pantalla.queue_free()
 	pantalla = Control.new()
 	add_child(pantalla)
+	var en_superficie := fase in ["cinematica", "exterior", "decision", "extraccion", "evacuacion"]
+	if en_superficie and not ambiente.playing:
+		ambiente.play()
+	elif not en_superficie:
+		ambiente.stop()
 	_panel(Rect2(0, 0, 1280, 720), FONDO, FONDO)
 	_texto("UMBRA", Rect2(32, 17, 230, 46), 36)
 	_texto("CINCO SOLES PARA SOBREVIVIR", Rect2(184, 33, 390, 24), 15, MUTED)
 	_texto("MARTE   /   PUESTO UMBRA", Rect2(988, 32, 266, 26), 16, CIAN)
 	_panel(Rect2(32, 74, 1216, 1), LINEA, LINEA)
 	match fase:
-		"apertura":
+		"inicio":
+			_inicio()
+		"cinematica", "exterior", "extraccion", "evacuacion":
+			_superficie()
+		"decision":
 			_apertura()
 		"base":
 			_base()
@@ -59,15 +148,100 @@ func _render() -> void:
 	_texto("SOL 01 DE 05   •   TORMENTA DE POLVO", Rect2(914, 682, 334, 22), 14, MUTED)
 
 
+func _inicio() -> void:
+	_imagen(EXTERIOR, Rect2(32, 92, 1216, 570))
+	_panel(Rect2(55, 358, 524, 282), FONDO)
+	_texto("PUESTO UMBRA   /   MARTE", Rect2(79, 382, 450, 24), 16, AMBAR)
+	_texto("Cinco soles\npara sobrevivir", Rect2(79, 415, 470, 110), 42)
+	_texto("Nora, Iris y Teo · Expedición de recursos locales", Rect2(79, 542, 473, 29), 18, MUTED)
+	_boton("Iniciar misión", Rect2(79, 582, 476, 42), _comenzar, CIAN)
+
+
+func _comenzar() -> void:
+	fase = "cinematica"
+	reloj = 0.0
+	_render()
+
+
+func _preparar_viento() -> void:
+	var audio := AudioStreamWAV.new()
+	audio.format = AudioStreamWAV.FORMAT_16_BITS
+	audio.mix_rate = 12000
+	audio.loop_mode = AudioStreamWAV.LOOP_FORWARD
+	audio.loop_end = 48000
+	var muestras := PackedByteArray()
+	muestras.resize(audio.loop_end * 2)
+	var ruido := RandomNumberGenerator.new()
+	ruido.seed = 741
+	var suave := 0.0
+	for indice in range(audio.loop_end):
+		suave = lerpf(suave, ruido.randf_range(-1.0, 1.0), 0.12)
+		var rafaga := sin(TAU * float(indice) / audio.loop_end) * 0.24 + 0.76
+		muestras.encode_s16(indice * 2, int(suave * rafaga * 9400))
+	audio.data = muestras
+	ambiente = AudioStreamPlayer.new()
+	ambiente.stream = audio
+	ambiente.volume_db = -16.0
+	add_child(ambiente)
+
+
+func _fin_cinematica() -> void:
+	fase = "exterior"
+	posicion = Vector2(339, 352)
+	_render()
+
+
+func _crear_puesto(es_interior: bool, area: Rect2) -> void:
+	var marco := Control.new()
+	marco.clip_contents = true
+	marco.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_colocar(marco, area)
+	puesto = PuestoUmbra.new()
+	puesto.interior = es_interior
+	puesto.cinematica = fase == "cinematica"
+	puesto.evacuacion = fase == "evacuacion"
+	puesto.extraccion = fase == "extraccion"
+	puesto.usa_cabrestante = estado.ruta == SolUno.RESCATE
+	puesto.decision = fase == "decision"
+	puesto.punto = posicion
+	puesto.tiempo = 0.0 if puesto.cinematica else 13.0
+	puesto.cultivo_activo = estado.cultivo != "En pausa"
+	puesto.radio_enviada = estado.ciencia_enviada
+	puesto.atendido = estado.acciones.has("medicina")
+	marco.add_child(puesto)
+
+
+func _superficie() -> void:
+	_crear_puesto(false, Rect2(32, 92, 804, 421))
+	_panel(Rect2(32, 526, 804, 136), PANEL)
+	hablante = _texto(GUION[0][0], Rect2(49, 539, 764, 25), 15, CIAN)
+	subtitulo = _texto(GUION[0][1], Rect2(49, 572, 764, 66), 21)
+	_panel(Rect2(856, 92, 392, 570), PANEL)
+	_texto("SUPERFICIE   /   SOL 01", Rect2(876, 112, 350, 24), 16, AMBAR)
+	_imagen(_recorte(ASTRONAUTA, Rect2(178, 10, 255, 240)), Rect2(876, 157, 108, 108))
+	_texto("NORA", Rect2(1001, 170, 210, 40), 30)
+	_texto("Piloto · traje rosa", Rect2(1001, 214, 219, 32), 17, MUTED)
+	_texto("Iris dirige la base. Teo se ocupa de los equipos de superficie. La tripulación necesita demostrar que puede mantener el refugio con recursos locales.",
+		Rect2(876, 291, 350, 150), 19)
+	if fase == "cinematica":
+		_boton("Saltar cinemática", Rect2(876, 595, 351, 43), _fin_cinematica, AMBAR)
+		return
+	if fase == "extraccion":
+		hablante.text = "IRIS   /   OPERACIONES DE RESCATE"
+		subtitulo.text = "¡Sujétate, Teo! Activamos el cabrestante." if estado.ruta == SolUno.RESCATE else (
+			"La racha cedió. Salimos por Teo con la camilla. ¡Ya lo tenemos!")
+		_texto("EXTRACCIÓN EN CURSO", Rect2(876, 537, 350, 54), 20, AMBAR)
+		return
+	hablante.text = "NORA   /   CANAL LOCAL"
+	subtitulo.text = "Tengo que llegar al rover. Teo sigue fuera." if fase == "exterior" else (
+		"El cabrestante lo liberó. El invernadero se quedó sin luz. Llevémoslo a la esclusa." if estado.ruta == SolUno.RESCATE else
+		"Tras la tregua volvimos por él. Conservamos el invernadero, pero Teo necesita atención.")
+	aviso = _texto("", Rect2(876, 528, 351, 95), 21, CIAN)
+	_actualizar_aviso()
+
+
 func _apertura() -> void:
-	_imagen(EXTERIOR, Rect2(32, 92, 804, 468))
-	polvo = Control.new()
-	polvo.position = Vector2(32, 92)
-	polvo.size = Vector2(804, 468)
-	polvo.clip_contents = true
-	polvo.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	pantalla.add_child(polvo)
-	polvo.draw.connect(_dibujar_polvo)
+	_crear_puesto(false, Rect2(32, 92, 804, 421))
 	_panel(Rect2(47, 109, 233, 34), FONDO)
 	_texto("EXTERIOR   /   ESCLUSA 01", Rect2(60, 116, 205, 20), 14, AMBAR)
 	_panel(Rect2(32, 511, 804, 49), Color("#15191f"))
@@ -93,28 +267,16 @@ func _apertura() -> void:
 		Rect2(877, 556, 350, 75), 16, MUTED)
 
 
-func _dibujar_polvo() -> void:
-	for indice in range(46):
-		var x := fposmod(indice * 109.7 + reloj * (55.0 + (indice % 4) * 27.0), 820.0)
-		var y := fposmod(indice * 73.1 + reloj * 9.0, 425.0)
-		polvo.draw_line(Vector2(x, y), Vector2(x + 14 + (indice % 5) * 5, y + 4),
-			Color(1.0, 0.65, 0.4, 0.27), 2.0)
-
-
 func _elegir(ruta: String) -> void:
 	estado.abrir(ruta)
-	fase = "base"
+	fase = "extraccion"
 	_render()
 
 
 func _base() -> void:
-	_imagen(BASE, Rect2(32, 92, 804, 527), TextureRect.STRETCH_KEEP_ASPECT_CENTERED)
-	for id: String in MODULOS:
-		var posicion: Vector2 = MODULOS[id][2] + Vector2(32, 92)
-		_boton(MODULOS[id][0].left(2), Rect2(posicion, Vector2(42, 36)),
-			_seleccionar.bind(id), CIAN if modulo == id else MARFIL)
+	_crear_puesto(true, Rect2(32, 92, 804, 527))
 	_panel(Rect2(32, 625, 804, 37), PANEL)
-	_texto("BASE   /   Selecciona un módulo en el plano", Rect2(47, 633, 770, 24), 16, CIAN)
+	aviso = _texto("", Rect2(47, 633, 770, 24), 16, CIAN)
 	_panel(Rect2(856, 92, 392, 570), PANEL)
 	_texto("SOL 01   /   ESTABILIZAR LA BASE", Rect2(875, 108, 351, 24), 16, AMBAR)
 	_texto("Reserva de batería", Rect2(875, 143, 285, 28), 22)
@@ -127,6 +289,24 @@ func _base() -> void:
 	_texto("Cultivos · %s\nTripulante · %s" % [estado.cultivo, estado.paciente],
 		Rect2(875, 243, 352, 74), 17, MUTED)
 	_panel(Rect2(875, 322, 352, 195), FONDO)
+	if modulo.is_empty():
+		_texto("IRIS   /   REFUGIO", Rect2(888, 335, 327, 24), 14, CIAN)
+		_texto("Teo queda en enfermería. Podemos hacer dos tareas. Acércate a un terminal y pulsa E para usarlo.",
+			Rect2(888, 366, 327, 134), 18)
+	elif modulo == "cierre":
+		_texto("05  /  ESCLUSA", Rect2(888, 335, 327, 24), 14, CIAN)
+		_texto("Sella la base para pasar la noche. El registro guarda las consecuencias para el siguiente sol.",
+			Rect2(888, 366, 327, 89), 17)
+		boton_cierre = _boton("Cerrar el sol", Rect2(888, 451, 326, 48), _cerrar, AMBAR)
+	else:
+		_terminal()
+	_texto("Reserva nocturna · 4 UE y 3 raciones.\nCada persona operativa puede hacer una tarea.",
+		Rect2(875, 527, 352, 63), 16, MUTED)
+	_texto("Para terminar, vuelve a la esclusa.", Rect2(875, 615, 352, 32), 16, AMBAR)
+	_actualizar_aviso()
+
+
+func _terminal() -> void:
 	_texto(MODULOS[modulo][0], Rect2(888, 335, 327, 24), 14, CIAN)
 	_texto(MODULOS[modulo][1], Rect2(888, 366, 327, 74), 17)
 	var accion: String = SolUno.ACCIONES[modulo]["titulo"]
@@ -136,24 +316,20 @@ func _base() -> void:
 		accion = "Turnos agotados"
 	elif not estado.disponible(modulo):
 		accion = "Batería reservada para la noche"
-	_boton(accion, Rect2(888, 451, 326, 48), _accion.bind(modulo), CIAN,
+	boton_tarea = _boton(accion, Rect2(888, 451, 326, 48), _accion.bind(modulo), CIAN,
 		not estado.disponible(modulo))
-	_texto("Reserva nocturna · 4 UE y 3 raciones.\nCada persona operativa puede hacer una tarea.",
-		Rect2(875, 527, 352, 63), 16, MUTED)
-	_boton("Cerrar el sol", Rect2(875, 603, 352, 43), _cerrar, AMBAR)
-
-
-func _seleccionar(id: String) -> void:
-	modulo = id
-	_render()
 
 
 func _accion(id: String) -> void:
+	if puesto.terminal_cercana() != id:
+		return
 	estado.aplicar(id)
 	_render()
 
 
 func _cerrar() -> void:
+	if puesto.terminal_cercana() != "cierre":
+		return
 	fase = "relevo"
 	_render()
 
@@ -185,8 +361,8 @@ func _relevo() -> void:
 
 func _reiniciar() -> void:
 	estado = SolUno.new()
-	modulo = "energia"
-	fase = "apertura"
+	modulo = ""
+	fase = "inicio"
 	_render()
 
 
@@ -211,13 +387,14 @@ func _panel(area: Rect2, color: Color, borde := LINEA) -> void:
 	_colocar(panel, area)
 
 
-func _texto(contenido: String, area: Rect2, puntos: int, color := MARFIL) -> void:
+func _texto(contenido: String, area: Rect2, puntos: int, color := MARFIL) -> Label:
 	var etiqueta := Label.new()
 	etiqueta.text = contenido
 	etiqueta.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	etiqueta.add_theme_font_size_override("font_size", puntos)
 	etiqueta.add_theme_color_override("font_color", color)
 	_colocar(etiqueta, area)
+	return etiqueta
 
 
 func _imagen(textura: Texture2D, area: Rect2, ajuste := TextureRect.STRETCH_KEEP_ASPECT_COVERED) -> void:
@@ -237,7 +414,7 @@ func _recorte(textura: Texture2D, region: Rect2) -> AtlasTexture:
 
 
 func _boton(titulo: String, area: Rect2, evento: Callable, acento: Color,
-		desactivado := false) -> void:
+		desactivado := false) -> Button:
 	var boton := Button.new()
 	boton.text = titulo
 	boton.disabled = desactivado
@@ -253,3 +430,4 @@ func _boton(titulo: String, area: Rect2, evento: Callable, acento: Color,
 	boton.add_theme_stylebox_override("focus", _estilo(Color.TRANSPARENT, MARFIL))
 	_colocar(boton, area)
 	boton.pressed.connect(evento)
+	return boton
