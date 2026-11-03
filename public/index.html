@@ -79,7 +79,7 @@
     try {
       if (!Engine.isWebGLAvailable()) throw new Error("Activa la aceleración gráfica del navegador o prueba con otro navegador.");
       fitCanvas();
-      await new Engine({"args":[],"canvasResizePolicy":0,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":true,"executable":"index","experimentalVK":false,"fileSizes":{"index.pck":56487384,"index.wasm":39514754},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4}).startGame({
+      await new Engine({"args":[],"canvasResizePolicy":0,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":true,"executable":"index","experimentalVK":false,"fileSizes":{"index.pck":60291812,"index.wasm":39514754},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4}).startGame({
         canvas,
         onProgress(current, total) {
           if (total > 0) progreso.value = current / total;
