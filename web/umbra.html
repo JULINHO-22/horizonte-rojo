@@ -48,8 +48,8 @@
       <p class="destino">Primera parada · Marte</p>
       <h1>Horizonte<br>Rojo</h1>
       <h2>Cinco días en Marte</h2>
-      <p class="historia">Aterriza con Nora, Iris y Teo. Explora Marte y descubre cómo su hielo puede ayudar a la tripulación.</p>
-      <button id="play" type="button">Iniciar expedición</button>
+      <p class="historia">Viaja con Nora, Iris y Teo. Conoce el refugio y acompaña su regreso. Inicio, noches y final en revisión; actividades por definir.</p>
+      <button id="play" type="button">Entrar al recorrido</button>
       <progress id="progreso" max="1" hidden></progress>
       <p id="status" role="status">Usa el teclado para moverte y el ratón para elegir.</p>
     </div>
@@ -66,9 +66,12 @@
   const fullscreen = document.querySelector("#fullscreen");
   function fitCanvas() {
     const bounds = canvas.getBoundingClientRect();
-    const density = Math.min(devicePixelRatio, 2);
-    canvas.width = Math.round(bounds.width * density);
-    canvas.height = Math.round(bounds.height * density);
+    if (!bounds.width || !bounds.height) return;
+    const density = Math.min(devicePixelRatio, 1920 / bounds.width, 1080 / bounds.height);
+    const width = Math.round(bounds.width * density);
+    const height = Math.round(bounds.height * density);
+    if (canvas.width !== width) canvas.width = width;
+    if (canvas.height !== height) canvas.height = height;
   }
   new ResizeObserver(fitCanvas).observe(canvas);
   play.addEventListener("click", async () => {

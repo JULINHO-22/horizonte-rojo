@@ -1,10 +1,10 @@
 class_name SolUno
 extends RefCounted
 
-const RESCATE := "rescate"
-const ESPERA := "espera"
+const COSTO_RETORNO := 4
+const TAMANO_TRIPULACION := 3
 const RESERVA_NOCTURNA := 4
-const MISIONES := ["energia", "cultivos", "radio", "energia", "radio"]
+const MISIONES := ["energia", "agua", "radio", "energia", "radio"]
 const OBJETIVOS := [
 	"Devuelve la energía al aire y la calefacción",
 	"Derrite el hielo y limpia el agua",
@@ -15,53 +15,52 @@ const OBJETIVOS := [
 const ACCIONES := {
 	"energia": {"costo": 3, "titulo": "Conectar la batería de reserva"},
 	"cultivos": {"costo": 4, "titulo": "Cuidar las plantas"},
-	"medicina": {"costo": 3, "titulo": "Cuidar a Teo"},
+	"agua": {"costo": 4, "titulo": "Comprobar y guardar el agua"},
 	"radio": {"costo": 2, "titulo": "Enviar datos a Tierra"},
 }
 
-var ruta := ""
+var regreso_iniciado := false
 var energia := 16
 var raciones := 9
-var operativos := 2
+var operativos := TAMANO_TRIPULACION
 var cultivo := "Estable"
-var paciente := ""
 var ciencia_enviada := false
 var acciones: Array[String] = []
 var sol := 1
 var agua := 6
 var soporte := 100
-var recuperacion := 0
 var muestras := 0
 var respuesta := false
 var paneles_revisados := false
 
+const CAMPOS_GUARDADO := [
+	"regreso_iniciado", "energia", "raciones", "cultivo",
+	"ciencia_enviada", "sol", "agua", "soporte", "muestras",
+	"respuesta", "paneles_revisados",
+]
+
 const EVENTOS := [
 	"Ve a Energía. El polvo tapó la luz del Sol. Usa la batería para mantener el aire limpio.",
-	"Ve a la sala de plantas. La muestra que Teo preparó puede reponer el agua del refugio.",
+	"Desde Energía, toma el pasillo del fondo. En el Centro de agua revisa la muestra antes de llenar el tanque.",
 	"Ve a Control. Tierra necesita saber si el filtro funcionó antes de abrir otra reserva.",
 	"Ve a Energía. Se acerca una tormenta del Sol. Pluto puede salir a encender la protección mientras ustedes esperan dentro.",
 	"Ve a Control. La radio puede llegar a Tierra otra vez. Envía el resumen del agua y del refugio.",
 ]
 
 
-func abrir(ruta_elegida: String) -> void:
-	if not ruta.is_empty():
+func iniciar_regreso(gasto_taladro: int) -> void:
+	if regreso_iniciado:
 		return
-	if ruta_elegida == RESCATE:
-		energia -= 6
-		cultivo = "En pausa"
-		paciente = "En pie · bajo observación"
-	elif ruta_elegida == ESPERA:
-		energia -= 4
-		paciente = "La lesión empeoró · necesita cuidados"
-	else:
-		return
-	ruta = ruta_elegida
+	regreso_iniciado = true
+	energia -= COSTO_RETORNO + gasto_taladro
+	cultivo = "En pausa"
 
 
 func disponible(id: String) -> bool:
+	if id == "agua" and sol != 2:
+		return false
 	if not (
-		not ruta.is_empty()
+		regreso_iniciado
 		and ACCIONES.has(id)
 		and acciones.size() < operativos
 		and not acciones.has(id)
@@ -92,15 +91,11 @@ func aplicar(id: String) -> void:
 			paneles_revisados = sol > 1
 		"cultivos":
 			if sol > 1:
-				if sol in [2, 3]:
-					agua += 4
-					muestras += 1
-				else:
-					raciones += 4
+				raciones += 4
 			cultivo = "Protegido"
-		"medicina":
-			recuperacion += 1
-			paciente = "Recuperado · activo" if recuperacion >= 2 else "Atendido · bajo observación"
+		"agua":
+			agua += 4
+			muestras += 1
 		"radio":
 			ciencia_enviada = true
 			if sol > 1:
@@ -109,20 +104,42 @@ func aplicar(id: String) -> void:
 
 func siguiente_sol() -> void:
 	var cierre := relevo()
-	energia = maxi(0, int(cierre.energia) - int(cierre.energia_comprometida))
+	energia = cierre.energia
 	raciones = cierre.raciones
 	agua = cierre.agua
 	soporte = cierre.soporte
 	respuesta = acciones.has("radio")
 	sol += 1
 	energia = mini(24, energia + 9 + sol + (2 if paneles_revisados else 0))
-	operativos = 3 if recuperacion >= 2 else 2
 	acciones.clear()
 	paneles_revisados = false
 
 
+func datos_guardado() -> Dictionary:
+	var datos := {"acciones": acciones.duplicate()}
+	for campo: String in CAMPOS_GUARDADO:
+		datos[campo] = get(campo)
+	return datos
+
+
+func restaurar_guardado(datos: Dictionary) -> bool:
+	for campo: String in CAMPOS_GUARDADO:
+		if not datos.has(campo) or typeof(datos[campo]) != typeof(get(campo)):
+			return false
+	if datos.sol < 1 or datos.sol > MISIONES.size():
+		return false
+	if not datos.get("acciones") is Array:
+		return false
+	for accion: Variant in datos.acciones:
+		if not ACCIONES.has(accion):
+			return false
+	for campo: String in CAMPOS_GUARDADO:
+		set(campo, datos[campo])
+	acciones.assign(datos.acciones)
+	return true
+
+
 func relevo() -> Dictionary:
-	var cuidados := 0 if recuperacion >= 2 else 4 if (ruta == ESPERA and recuperacion == 0) else 1
 	var comida := raciones + (2 if sol > 1 and cultivo != "En pausa" else 0) - 3
 	var agua_final := agua - 2
 	var blindaje := 2 if sol == 4 and not paneles_revisados else 0
@@ -130,7 +147,6 @@ func relevo() -> Dictionary:
 	var soporte_final := maxi(0, soporte - maxi(0, -comida) * 12 -
 		maxi(0, -agua_final) * 15 - maxi(0, -bateria) * 10)
 	return {
-		"ruta": ruta,
 		"energia": maxi(0, bateria),
 		"raciones": maxi(0, comida),
 		"agua": maxi(0, agua_final),
@@ -138,8 +154,6 @@ func relevo() -> Dictionary:
 		"muestras": muestras,
 		"operativos": operativos,
 		"cultivo": cultivo,
-		"paciente": paciente,
-		"energia_comprometida": cuidados,
 		"ciencia_enviada": ciencia_enviada,
 		"informe_hoy": acciones.has("radio"),
 		"acciones": acciones.duplicate(),

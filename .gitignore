@@ -1,4 +1,6 @@
 .godot/
 /Godot_*_win64.exe/
 /build/
+/.firebase/
+/firebase-debug.log
 *.tmp

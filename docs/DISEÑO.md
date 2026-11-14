@@ -2,7 +2,11 @@
 
 Horizonte Rojo es el nombre del juego. Umbra es el nombre del refugio. Los panoramas del refugio y del barranco mantienen la altura del sendero y la ubicación de los accesos. Las proporciones exteriores toman como referencia la abertura de la puerta.
 
-## Alcance actual
+## Alcance vigente
+
+Se implementa únicamente el recorrido de [inicio, noches y final](NARRATIVA-EQUIPO.md). Las actividades y el balance siguientes son un prototipo anterior separado. No son requisitos aprobados. En el recorrido narrativo se puede descansar sin tareas previas para revisar las cinco noches, sin descontar suministros ni simular éxitos que no se jugaron.
+
+## Simulador anterior
 
 El [guion y los personajes](HISTORIA.md) tienen su propia guía. La campaña tiene cinco objetivos obligatorios. Pluto guía al jugador y marca el módulo activo. El dormitorio permite terminar el día al cumplir la misión. Las acciones opcionales dejan margen de batería y turnos para la misión pendiente. Pluto guía primero a la tarea del día, luego ofrece dedicar el turno sobrante a otra sala y lleva al dormitorio para revisar el cierre. El gasto se aplica al completar la tarea.
 
@@ -10,33 +14,17 @@ El arte combina las referencias del equipo e ilustraciones generadas para los pa
 
 ### Recorrido y zonas
 
-La esclusa al sur desemboca en Control, el centro de comunicaciones. Control conecta con Energía al oeste y Enfermería al este. Antes de Enfermería, un corredor señalizado sube y se bifurca hacia la sala de plantas a la izquierda y el dormitorio a la derecha. La cámara sigue a Nora por los corredores y encuadra el interior al entrar en una sala. Las salas mantienen su iluminación y **M** muestra el plano general. Control tiene puertas al oeste, al este y al sur. La pared norte reúne las consolas. Para llegar a Plantas, cruza la puerta este, gira hacia arriba antes de Enfermería y luego a la izquierda. Los equipos bloquean el paso y los terminales se abren con **E** al acercarse. Iris patrulla Control. Si el objetivo principal está pendiente, las estaciones de trabajo muestran un aviso en la guía inferior y permiten seguir caminando. La radio se maneja desde una franja inferior. En Enfermería, Nora recoge el soporte de pierna en el botiquín y lo lleva a la camilla. Mantener E junto a Teo ajusta la correa y completa el turno de cuidados. El dormitorio queda al noreste y se alcanza por el corredor que sale del paso entre Control y Enfermería. Allí se cierra el día. Los límites y puntos de interacción están en `scripts/puesto.gd`.
-
-El laboratorio de agua está al oeste y se conecta por una puerta al fondo de Energía. Allí se pueden comparar las capas del hielo, leer cómo se conservan las muestras y practicar el filtrado. El taller queda al este, al final del pasillo que pasa bajo el dormitorio. Tiene un banco de reparación, un estante y un probador para encontrar fugas en un traje. Las dos pruebas guiadas son opcionales y permiten reintentar. El Sol 2 sigue usando la sala de plantas para el procesamiento que cuenta para la misión.
+La esclusa al sur desemboca en Control. El corredor oeste lleva a Energía y su pasillo norte conecta con el Centro de agua. Desde Control, el corredor este sube hacia Plantas y el Dormitorio. El taller está inmediatamente al este de Control; ya no requiere seguir el desvío del dormitorio. El Centro de agua contiene la estación del Sol 2. Derretir el hielo, tratar el agua y comprobar su calidad son pasos distintos. La primera prueba del ejercicio detecta impurezas y retiene el lote. Al tratarlo de nuevo y superar la revisión, el tanque recibe agua y la campaña registra el resultado. Las cantidades, el reintento y el tiempo son decisiones de diseño. En la Estación Espacial Internacional, el soporte vital incluye aire y agua. El sistema real aplica controles de calidad antes de usar el agua recuperada. [NASA sobre soporte vital](https://www.nasa.gov/reference/environmental-control-and-life-support-systems-eclss/) · [Mapa de hielo SWIM](https://science.nasa.gov/resource/swim-map-shows-subsurface-water-ice-on-mars/).
 
 ## Presupuesto del Sol 1
 
 Los valores son de diseño y están sujetos a pruebas. **UE** significa unidad abstracta de energía. El estado inicial tiene 16 UE, 9 raciones, 6 de agua y 100% de soporte. La noche cuesta 4 UE, 3 raciones y 2 de agua.
 
-| Decisión | UE antes de operar | Cultivos | Salud al entrar | Trabajo disponible |
-| --- | ---: | --- | --- | ---: |
-| Rescatar ahora | 10 | En pausa | Estable en observación | 2 |
-| Cerrar y esperar | 12 | Estables | Lesión agravada | 2 |
-
-Si se probó el taladro en suelo seco, ambas rutas disponen de un punto menos de batería. Cada módulo se puede operar una vez por sol. Cada tarea consume un turno de trabajo y respeta la reserva nocturna.
-
-| Módulo | Efecto |
-| --- | --- |
-| Energía | Usa 3 UE para recuperar 5 UE del banco auxiliar. |
-| Invernadero | Usa 4 UE y deja las bandejas protegidas durante la noche. |
-| Enfermería | Usa 3 UE y deja al compañero atendido y en reposo. |
-| Comunicaciones | Usa 2 UE y envía la lectura del polvo a Tierra. La respuesta queda pendiente. |
-
-Con energía y radio en ambas rutas, el rescate deja **6 UE**, cultivos en pausa y **1 UE** de cuidados previstos. La espera deja **8 UE**, cultivos estables y **4 UE** de cuidados previstos. Una vez cubiertos los cuidados, quedarían **5 UE** tras el rescate temprano y **4 UE** tras la espera. La espera preserva producción y batería a corto plazo. Dedicarle un turno a enfermería reduce la previsión de cuidados a 1 UE y desplaza otro trabajo.
+Con el regreso comienza el perfil de emergencia. La batería baja de 16 a 12 UE y se apagan las luces de cultivo. Perforar en suelo seco deja 11 UE. Los tres astronautas pueden trabajar y cada tarea usa un turno.
 
 ## Reservas entre días
 
-Consulta el [contrato técnico](ARQUITECTURA.md#contrato-de-campaña) para los nombres y el significado de los campos. Los cuidados cuestan 4 UE si se esperó y Teo sigue sin atender, 1 UE en observación o reposo y 0 UE al recuperarse. Después de descontarlos, la batería recibe 9 UE más el número del nuevo día y 2 UE adicionales si se revisaron los paneles. El máximo al amanecer es 24 UE.
+Consulta el [contrato técnico](ARQUITECTURA.md#contrato-de-campaña). Al comenzar el día, la batería recibe 9 UE más el número del nuevo día y 2 UE si se revisaron los paneles. El máximo es 24 UE.
 
 Después del primer día, si las plantas siguen activas o protegidas aportan 2 raciones antes del consumo nocturno. Cada unidad faltante de comida, agua o batería reduce el soporte vital en 12, 15 o 10 puntos, respectivamente.
 
@@ -44,12 +32,12 @@ Después del primer día, si las plantas siguen activas o protegidas aportan 2 r
 
 | Sol | Decisiones y consecuencias |
 | --- | --- |
-| 2 | Procesa el hielo como objetivo obligatorio. El turno restante puede ir a Enfermería o al banco auxiliar. |
-| 3 | Comunica el experimento a Tierra como objetivo obligatorio. Repite el procesamiento como tarea adicional si hace falta agua. |
+| 2 | Procesa el hielo como objetivo obligatorio. El turno restante puede ir a las plantas o al banco auxiliar. |
+| 3 | Comunica a Tierra el resultado del lote del Sol 2. Los turnos adicionales pueden dedicarse al banco auxiliar o al cultivo. |
 | 4 | Durante la alerta solar, Nora pilota a Pluto desde Energía. Activa tres relés exteriores en orden y vuelve a la esclusa para conectar el blindaje. La cosecha vuelve a estar disponible. |
 | 5 | Asegura la última noche y transmite el informe. Completar la misión exige soporte vital y al menos tres datos además de ese informe. |
 
-El relevo añade agua, soporte vital, datos acumulados e informe del día. Los déficits de agua, comida o batería reducen el soporte vital. Dos sesiones médicas devuelven un turno a la tripulación a partir del siguiente sol. La misión completa exige recuperar a Teo, conservar al menos 80% de soporte vital y enviar el último informe con tres datos acumulados. La electrólisis, la construcción con regolito, el escenario lunar y el guardado quedan como candidatos de desarrollo.
+El relevo añade agua, soporte vital, datos acumulados e informe del día. Los déficits de agua, comida o batería reducen el soporte vital. La misión completa exige conservar al menos 80% de soporte vital y enviar el último informe con tres datos acumulados. La electrólisis, la construcción con regolito, el escenario lunar y el guardado quedan como candidatos de desarrollo.
 
 ### Clima y referencias de juego
 
@@ -62,11 +50,11 @@ Umbra es un refugio marciano ficticio. Su distribución separa las funciones par
 
 | Zona en Umbra | Referente |
 | --- | --- |
-| Control, Enfermería y Dormitorio | El análogo Mars Dune Alpha incluye puestos de trabajo, una estación médica y cuatro camarotes. Sus misiones simulan retrasos de comunicación. [NASA, hábitat CHAPEA](https://www.nasa.gov/reference/jsc-analogs-mockups/) · [NASA, misión CHAPEA 1](https://www.nasa.gov/humans-in-space/chapea/chapea-mission-1/) |
+| Control y Dormitorio | El análogo Mars Dune Alpha incluye puestos de trabajo, una estación médica y cuatro camarotes. Sus misiones simulan retrasos de comunicación. [NASA, hábitat CHAPEA](https://www.nasa.gov/reference/jsc-analogs-mockups/) · [NASA, misión CHAPEA 1](https://www.nasa.gov/humans-in-space/chapea/chapea-mission-1/) |
 | Sala de plantas | CHAPEA incluye estaciones de cultivo y ensayos de producción. En el juego las plantas complementan las raciones. [NASA, misión CHAPEA 1](https://www.nasa.gov/humans-in-space/chapea/chapea-mission-1/) |
 | Energía y soporte vital | La EEI utiliza sistemas que controlan el aire, la presión y la recuperación del agua. La dependencia del refugio respecto de los paneles representa un escenario de entrenamiento. [NASA, soporte vital](https://www.nasa.gov/reference/environmental-control-and-life-support-systems-eclss/) · [NASA, polvo y paneles en Marte](https://science.nasa.gov/solar-system/10-things-dust-in-the-wind-on-mars-and-well-beyond/) |
 | Esclusa y taller | La esclusa Quest tiene un espacio para mantenimiento de trajes y otro para entrada y salida. El taller de Umbra separa esa función e incorpora un vehículo de reserva como decisión de diseño. [NASA, esclusa Quest](https://www.nasa.gov/international-space-station/quest-airlock/) · [NASA, vehículos de exploración](https://www.nasa.gov/reference/vehicle-systems-interfaces-structure-environmental-design/) |
-| Laboratorio de agua | Tratar y revisar el agua son funciones reales de soporte vital. Extraer y procesar hielo marciano para abastecer un hábitat es una tecnología en estudio. En Umbra, el filtro retira partículas y el agua pasa por una comprobación de calidad antes de llegar a la reserva. [NASA, soporte vital](https://www.nasa.gov/reference/environmental-control-and-life-support-systems-eclss/) · [NASA, aprovechamiento de recursos locales](https://www.nasa.gov/overview-in-situ-resource-utilization/) |
+| Centro de agua | Tratar y comprobar la calidad del agua son funciones reales de soporte vital. Extraer hielo marciano para abastecer un hábitat es una tecnología en estudio. [NASA, soporte vital](https://www.nasa.gov/reference/environmental-control-and-life-support-systems-eclss/) · [NASA, aprovechamiento de recursos locales](https://www.nasa.gov/overview-in-situ-resource-utilization/) |
 
 ## Ciencia y reto
 

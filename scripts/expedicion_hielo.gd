@@ -1,7 +1,7 @@
 extends RefCounted
 
 enum Accion { EXAMINAR, PERFORAR, RECOGER, CAMINAR, ESPERAR }
-enum Resultado { NINGUNO, EXAMINADO, SECO, SECO_REPETIDO, PERFORANDO, GUARDADO }
+enum Resultado { NINGUNO, EXAMINADO, SECO, SECO_REPETIDO, PERFORANDO, EN_MANO }
 
 const ALCANCE := 23.0
 const LECTURAS := [
@@ -15,14 +15,15 @@ var examinados: Array[int] = []
 var lectura := -1
 var gasto := 0
 var muestra_lista := false
+var muestra_en_mano := false
 var muestra_guardada := false
 
 
-func accion(sitio: int, cerca_caja: bool) -> Accion:
-	if muestra_guardada:
+func accion(sitio: int) -> Accion:
+	if muestra_guardada or muestra_en_mano:
 		return Accion.ESPERAR
 	if muestra_lista:
-		return Accion.RECOGER if cerca_caja else Accion.CAMINAR
+		return Accion.RECOGER if sitio == VETA else Accion.CAMINAR
 	if sitio < 0:
 		return Accion.CAMINAR
 	if not examinados.has(sitio):
@@ -32,8 +33,8 @@ func accion(sitio: int, cerca_caja: bool) -> Accion:
 	return Accion.CAMINAR
 
 
-func interactuar(sitio: int, cerca_caja: bool) -> Resultado:
-	match accion(sitio, cerca_caja):
+func interactuar(sitio: int) -> Resultado:
+	match accion(sitio):
 		Accion.EXAMINAR:
 			examinados.append(sitio)
 			lectura = sitio
@@ -47,6 +48,14 @@ func interactuar(sitio: int, cerca_caja: bool) -> Resultado:
 			gasto = 1
 			return Resultado.SECO
 		Accion.RECOGER:
-			muestra_guardada = true
-			return Resultado.GUARDADO
+			muestra_en_mano = true
+			return Resultado.EN_MANO
 	return Resultado.NINGUNO
+
+
+func guardar_muestra() -> bool:
+	if not muestra_en_mano:
+		return false
+	muestra_en_mano = false
+	muestra_guardada = true
+	return true

@@ -1,26 +1,32 @@
 # Horizonte Rojo
 
-**Horizonte Rojo** es un juego narrativo 2D de cinco días en Marte. Una tormenta de polvo deja al refugio Umbra con energía limitada. Tomas decisiones de rescate y repartes el trabajo de la tripulación para mantener el refugio y avanzar la investigación.
+**Horizonte Rojo** es un proyecto de juego narrativo 2D de cinco días en Marte. La versión principal permite revisar el viaje, la llegada al refugio, las noches y el regreso. Las actividades de gestión se definirán con el equipo.
 
-## Jugar en Godot
+## Estado y ejecución actual
 
-1. Abre Godot 4.7.2. En esta carpeta hay una copia local para Windows.
-2. En el gestor de proyectos, elige **Importar** y selecciona `project.godot`.
-3. Pulsa **F6** con `scenes/umbra.tscn` abierta o **F5** desde cualquier escena.
-4. Pulsa **Iniciar misión** y mira el aterrizaje. En el camino de afuera usa **A/D o izquierda/derecha**. Reúnete con Iris en la puerta y pulsa **E**. En el barranco, examina al menos dos marcas con **E**. Vuelve al punto con hielo y usa **E** o el botón **Perforar aquí**. Al terminar, acércate a la caja turquesa y pulsa **E** para guardar el hielo. El indicador superior confirma que lo llevas. Dentro de la base usa **WASD o flechas** y pulsa **Esc** para salir de un terminal.
-5. Cada día tiene una misión. Sigue el marcador turquesa y usa el terminal de ese módulo. Puedes gastar los turnos sobrantes en cuidados y reservas. Desde Control, toma el pasillo hacia Enfermería y gira hacia arriba donde dice **Dormitorio**. En la sala, pulsa **E** y elige **Descansar y terminar el día** para revisar las reservas y continuar.
+La escena principal es un **recorrido narrativo en revisión**: viaje de ida, llegada, Percy, exploración del refugio, cinco noches y regreso. Las actividades de los días están pendientes de definición. Consulta [Narrativa del equipo](docs/NARRATIVA-EQUIPO.md) para el documento fuente, las adaptaciones y lo que falta.
 
-En superficie, pulsa **Espacio** para dar un salto corto y mira la fuerza del viento. Las rachas pueden hacerte retroceder. Mantén **Shift** para anclarte y aprovecha la tregua para avanzar. Los círculos del terreno indican abrigo. Dentro del refugio, **M** alterna entre el plano general y la cámara de cerca. En la vista de cerca, camina por las puertas para recorrer el interior de cada sala. Desde Energía, sube por la puerta del fondo y gira a la izquierda para llegar al laboratorio. Para llegar al taller, sigue derecho por el corredor que pasa debajo del dormitorio. Para llegar a Plantas desde Control, sal por la puerta este, gira hacia arriba antes de Enfermería y luego a la izquierda. Pulsa **E** en las estaciones señaladas. En Enfermería recoge la férula con **E**, llévala a la camilla y mantén **E** para ajustar la correa. En el Sol 4, **E** activa los relés mientras controlas a Pluto.
+1. Importa `project.godot` en Godot 4.7.2 y pulsa **F5**.
+2. Inicia el viaje. Lee la bienvenida de Percy y avanza con **E**, **Enter** o el botón.
+3. Camina con **A/D o flechas** hacia la derecha hasta entrar al refugio. En el interior usa **WASD/flechas** y **M** para el plano.
+4. Desde Control, cruza la puerta derecha, sube por el corredor y gira a la derecha hacia Dormitorio. Cerca de la marca pulsa **E** o **Descansar**. La pantalla se oscurece durante tres segundos y comienza la siguiente mañana.
+5. Tras la quinta noche, revisa Control, sal por la esclusa y sigue el camino hacia la izquierda hasta la nave. **E** permite subir; en el puesto de pilotaje, **Iniciar vuelo** activa el regreso.
+
+El Centro de agua está al noroeste, pasando por Energía. El taller está inmediatamente al este de Control. Plantas se alcanza por el desvío norte del corredor este, girando a la izquierda. No hay Enfermería ni accidente de Teo.
+
+El recorrido guarda su avance en `user://narrativa.cfg`, separado de las partidas del simulador anterior. Para revisar el inicio usa **Empezar de nuevo** en la portada. Durante una transición se recupera el último punto estable.
+
+El código anterior de actividades sigue disponible para el equipo en `scenes/simulacion_provisional.tscn` (**F6**). No es el guion aprobado ni la versión principal.
 
 ## Jugar en navegador
 
-Instala las plantillas de exportación de **Godot 4.7.2** y ejecuta `./web/exportar.ps1 -Godot "<ruta al ejecutable de consola de Godot>"` en PowerShell. El script exporta el juego, copia la portada y arma `build/Horizonte-Rojo-Web.zip`. Sirve el directorio completo por HTTP. Para probarlo desde PowerShell, ejecuta `python -m http.server 8065 --bind 127.0.0.1 --directory build/web` y abre [Horizonte Rojo en el navegador](http://127.0.0.1:8065/). Pulsa **Iniciar expedición** para comenzar el aterrizaje.
+Instala las plantillas de exportación de **Godot 4.7.2** y ejecuta `./web/exportar.ps1 -Godot "<ruta al ejecutable de consola de Godot>"` en PowerShell. El script exporta el juego, copia la portada y arma `build/Horizonte-Rojo-Web.zip`. Sirve el directorio completo por HTTP. Para probarlo desde PowerShell, ejecuta `python -m http.server 8065 --bind 127.0.0.1 --directory build/web` y abre [Horizonte Rojo en el navegador](http://127.0.0.1:8065/). Pulsa **Entrar al recorrido** y después **Comenzar viaje**. Si el mismo navegador conserva una partida para esa dirección, retoma el último punto guardado.
 
 El preset usa WebGL 2 sin hilos. La página de lanzamiento está en [web/umbra.html](web/umbra.html) y el juego completo corre dentro de ella. Publica juntos el HTML, el motor y el paquete de datos en el alojamiento del equipo.
 
 ## Colaborar
 
-Prueba la versión publicada en [Render](https://horizonte-rojo.onrender.com/). El [repositorio privado](https://github.com/JULINHO-22/horizonte-rojo) contiene el código y las imágenes en `main`. Cada integrante necesita acceso al repositorio e instalar Godot en su equipo.
+Prueba la versión publicada en [Firebase Hosting](https://horizonte-rojo-game.web.app/). El [repositorio privado](https://github.com/JULINHO-22/horizonte-rojo) contiene el código y las imágenes en `main`. Cada integrante necesita acceso al repositorio e instalar Godot en su equipo.
 
 - [AGENTS.md](AGENTS.md) orienta a Codex y fija qué documentación mantener.
 - [Reto NASA](docs/RETO-NASA.md) reúne el enunciado y las propuestas de niveles.

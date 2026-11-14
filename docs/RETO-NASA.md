@@ -50,13 +50,15 @@ Usted puede (pero no está obligado a) considerar lo siguiente:
 
 *Para obtener datos y recursos relacionados con este desafío, consulte la pestaña Recursos en la parte superior de la página. Es posible que se añadan más recursos antes de que comience el hackathon.*
 
+La [guía de datos](DATOS-NASA.md) compara las fuentes y documenta las consultas para la simulación.
+
 ## Propuesta para Horizonte Rojo
 
-- Sol 1. El rescate de Teo cambia el gasto de batería, la disponibilidad de la tripulación y el estado visible de las plantas al día siguiente.
-- Sol 2. Llevar el hielo al laboratorio, procesarlo y decidir cuánto agua guardar para la tripulación y cuánto enviar a las plantas.
-- Sol 3. Ver el resultado del riego y elegir entre recuperar una bandeja o dedicar el turno a Teo. Enviar un mensaje mientras se continúa trabajando. La respuesta llega después de una decisión.
+- Sol 1. Priorizar la energía del aire y la calefacción tras la tormenta y recuperar las plantas con la carga restante.
+- Sol 2. Llevar el hielo a la Centro de agua, procesarlo y decidir cuánto agua guardar para la tripulación y cuánto enviar a las plantas.
+- Sol 3. Ver el resultado del riego y elegir entre recuperar una bandeja o dedicar el turno a energía. Enviar un mensaje mientras se continúa trabajando. La respuesta llega después de una decisión.
 - Sol 4. Usar una alerta solar con un registro archivado. Poner a la tripulación a cubierto y elegir entre ahorrar batería o mandar a Pluto a recoger datos. Registrar fecha, fuente, observación original y adaptación para el juego. El registro de actividad solar no mide por sí solo la dosis dentro del refugio.
 - Sol 5. Resolver una escasez final con las reservas, la cosecha y el tiempo de tripulación que dejaron los soles anteriores.
 - Mostrar como máximo tres indicadores persistentes. Presentar el agua, la comida, la exposición y el estado del mensaje en los lugares o escenas donde importan.
-- Cerrar con una bitácora visual que explique tres consecuencias de esa partida. Permitir volver al punto del rescate para comparar estrategias.
+- Cerrar con una bitácora visual que explique tres consecuencias de esa partida. Permitir volver al punto de reparto de batería para comparar estrategias.
 - Usar diálogos históricos breves y opcionales. Priorizar que el jugador pueda explicar con sus propias palabras qué ganó, qué gastó y qué probaría en otra partida.

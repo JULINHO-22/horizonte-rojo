@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="240" height="160" viewBox="0 0 240 160">
+<defs><linearGradient id="body" x2="0" y2="1"><stop stop-color="#fff2d3"/><stop offset="1" stop-color="#9b987e"/></linearGradient><linearGradient id="deck"><stop stop-color="#dcc7a2"/><stop offset="1" stop-color="#f5e8ca"/></linearGradient></defs>
+<g stroke="#252d37" stroke-width="4" stroke-linejoin="round">
+<path d="M36 119L80 105L118 122L166 103L206 120" fill="none" stroke="#c1bca8" stroke-width="9"/>
+<g fill="#3c4750"><circle cx="40" cy="132" r="21"/><circle cx="117" cy="136" r="21"/><circle cx="204" cy="131" r="21"/></g>
+<g fill="#8f9a9b" stroke-width="3"><circle cx="40" cy="132" r="10"/><circle cx="117" cy="136" r="10"/><circle cx="204" cy="131" r="10"/></g>
+<path d="M27 86L177 75L213 91L194 119L52 121Z" fill="url(#body)"/>
+<path d="M25 84L63 68L185 73L214 91L66 99Z" fill="url(#deck)"/>
+<path d="M71 103L71 115M90 102L90 116M148 97L148 115M169 97L169 114" stroke="#8d8f82" stroke-width="2"/>
+<path d="M166 74L164 33" stroke="#d4d6c7" stroke-width="9"/>
+<path d="M144 14L193 19L192 40L143 37Z" fill="url(#body)"/>
+<g fill="#202e3c" stroke="#a6d7d5" stroke-width="2"><circle cx="155" cy="27" r="7"/><circle cx="180" cy="29" r="7"/></g>
+<path d="M44 75L39 36M39 41L26 33" fill="none" stroke="#c5c9bd" stroke-width="3"/>
+<path d="M204 104L222 121L208 138" fill="none" stroke="#b5b7a7" stroke-width="7"/>
+<rect x="77" y="65" width="41" height="15" rx="3" fill="#ced7cc"/>
+<path d="M81 69H114M81 74H114" stroke-width="2"/>
+<path d="M26 120L32 126M25 137L32 137M46 150L47 143M102 126L109 130M105 148L110 143M127 119L124 127M189 121L196 126M188 140L195 138M211 149L209 141" stroke="#718088" stroke-width="2"/>
+</g></svg>

@@ -1,5 +1,49 @@
 # Cambios
 
+## 2026-11-14 | Guion del equipo, cinco noches y mapa compacto
+
+- Se copia y contrasta el guion de Google Docs en `docs/NARRATIVA-EQUIPO.md`, con alcances y pendientes explícitos.
+- La escena principal pasa a un recorrido narrativo separado de las actividades provisionales; no se añaden actividades diarias.
+- Ida y regreso comparten una trayectoria ilustrativa. Percy recibe al equipo; Pluto guía dentro. Cinco noches con fundido progresivo de tres segundos y despertar automático. Tras la quinta: salida a la nave, pilotaje, regreso y epílogo provisional.
+- Se compactan Centro de agua y Taller, se elimina el resto de Enfermería del terreno y se completa el piso de la unión Control–esclusa. La puerta interior permanece abierta tras presurizar.
+- Guardado narrativo independiente y pruebas de rutas, cinco noches, reanudación y final.
+- Pendiente: lanzamiento orbital detallado y arte/animación de científicos para la escena terrestre. La secuencia actual no es una campaña de actividades terminada.
+
+## 2026-11-14 | Centro de agua y regreso de la tripulación
+
+- El Centro de agua ocupa un módulo propio conectado a Energía. Se retiran Enfermería, el accidente de Teo y la tarea de cuidados.
+- La tormenta corta la generación solar y el equipo vuelve junto. Los tres tripulantes aportan un turno. Los guardados anteriores conservan el progreso.
+
+## 2026-11-14 | Esclusa interior y consultorio
+
+- La cámara de entrada sigue a Nora entre ambas puertas. El encuadre cercano usa el piso interior de Control y conserva abierto el acceso una vez presurizada la esclusa.
+- Soporte vital incorpora un consultorio y tres estaciones de agua. El laboratorio de muestras se retira del mapa, de las interacciones y de la exportación web.
+
+## 2026-11-14 | Publicación en Firebase
+
+- La exportación Web se publica en Firebase Hosting desde `build/web`. La guía de publicación incluye el enlace y el comando de despliegue.
+
+## 2026-11-14 | Recorrido de Pluto y guardado
+
+- Pluto guía a Nora por el terreno. Nora se detiene para comprobar la energía solar y luego continúa hasta Iris.
+- La partida recupera puntos de control locales después de volver a abrir o recargar el juego.
+- La exportación Web excluye ilustraciones en desuso y archivos generados. El lienzo conserva su tamaño interno al recibir un evento de resize que no cambia sus dimensiones.
+
+## 2026-11-14 | Hielo, esclusa y soporte vital
+
+- La camioneta aparece a partir del accidente. En el sondeo, Nora recoge el hielo junto al taladro y lo lleva a la caja.
+- La radio separa el diálogo, la instrucción y el coste. Al llegar al refugio se animan las dos puertas de la esclusa.
+- La estación de agua comparte el módulo de Soporte vital con Enfermería. Solo repone la reserva tras tratar la muestra y aprobar la revisión.
+
+## 2026-11-14 | Rescate en el barranco
+
+- Nora puede caminar al gato eléctrico o al abrigo, escuchar la consecuencia por radio y confirmar con E en el terreno. El viento baja durante la espera y Nora vuelve junto a la camioneta.
+
+## 2026-11-14 | Fuentes para la simulación
+
+- Se documentan los registros de polvo, radiación, comunicaciones, hielo y cultivos que puede usar el equipo.
+- Se verifican los siete recursos del reto y se documentan las consultas de DONKI, RadLab y OSDR, la capa de Mars Trek y las actividades educativas de la CSA.
+
 ## 2026-11-13 | Rescate y avisos en escena
 
 - La rueda dañada se muestra en la escena. El maletín sigue el guante del personaje que lo transporta.

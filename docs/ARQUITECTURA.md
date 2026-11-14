@@ -1,5 +1,20 @@
 # Arquitectura y verificación
 
+## Recorrido narrativo principal
+
+- `scenes/umbra.tscn` ejecuta `guion_inicio_final.gd`: entrada, movimiento, presentación y transiciones del guion.
+- `campana_narrativa.gd` conserva el día y las noches en `user://narrativa.cfg`, valida al cargar y escribe por archivo temporal. No aplica costes ni completa tareas.
+- `viaje_espacial.gd` dibuja la trayectoria resumida en ambas direcciones.
+- `puesto.gd` sigue siendo la única geometría del mapa. Centro de agua al noroeste de Energía, Taller al este de Control. `PASO_AGUA` y `PASO_TALLER` conectan las puertas. La esclusa recorta el casco y extiende el piso interior sin terreno rojo; su puerta interior queda visualmente abierta tras la entrada.
+- `assets/percy.svg` es una ilustración original del guía exterior, inspirada en un rover de seis ruedas. No representa con precisión el Perseverance real.
+- `tests/narrativa_smoke.gd` verifica tramos de paso, ida, entrada, noches, guardado, embarque y regreso; genera capturas en `build/qa/`. Ejecutar en perfil temporal: no usar la partida del jugador.
+
+Flujo: `portada → ida → aterrizaje → percy → camino_base → esclusa → base → noche (3 s) → amanecer → base`. Tras la quinta noche: `base → camino_nave → pilotaje → despegue → regreso → llegada_tierra (1 s) → epilogo (10 s)`. Cada noche se confirma una vez. No se crea un sexto día. La posición al amanecer es el dormitorio.
+
+El simulador anterior permanece en `scenes/simulacion_provisional.tscn`, con `umbra.gd`, `sol_uno.gd` y `guardado_mision.gd`. Los apartados siguientes documentan ese simulador, **no las actividades aprobadas**. La exportación principal abre el recorrido narrativo.
+
+## Simulador provisional conservado
+
 ## Dónde trabajar
 
 | Si vas a cambiar… | Abre primero… |
@@ -10,45 +25,49 @@
 | Costos, límites, objetivos, recuperación o cierre | [scripts/sol_uno.gd](../scripts/sol_uno.gd) |
 | Portada, exportación o paquete web | [web/umbra.html](../web/umbra.html), [web/exportar.ps1](../web/exportar.ps1) y [export_presets.cfg](../export_presets.cfg) |
 
-Los nombres internos `umbra`, `SolUno` y `nido` vienen de versiones anteriores. La interfaz usa Horizonte Rojo y Pluto. El controlador mantiene el estado de la partida en memoria y recrea la presentación al cambiar de fase o menú. Recargar la página reinicia la partida.
+Los nombres internos `umbra`, `SolUno` y `nido` vienen de versiones anteriores. La interfaz usa Horizonte Rojo y Pluto. El controlador recrea la presentación al cambiar de fase o menú. `guardado_mision.gd` escribe una instantánea versionada en `user://mision.cfg`. Se guarda al completar los pasos de apertura, llegar al refugio, completar tareas, cerrar el día y comenzar el siguiente. Recargar recupera el último punto. Una animación o tarea a medias vuelve a empezar desde el punto previo. «Reiniciar» elimina el guardado.
+
+En la fase `chequeo`, `PuestoUmbra` dibuja a Pluto, la ruta del suelo y el avance de la lectura solar. El controlador comprueba si Nora se detiene sobre la marca. Al terminar la lectura, la ruta cambia hacia Iris y el siguiente tramo se abre por cercanía.
 
 ## Flujo de escenas
 
-`inicio → aterrizaje → chequeo → salida → sondeo → taladro → sondeo → hallazgo → exterior → caida → averia → sujetar → decision → extraccion → evacuacion → base → noche → relevo`. En `sondeo`, E y el botón visible ejecutan la misma acción contextual. `expedicion_hielo.gd` decide qué acción está disponible y guarda las lecturas, el gasto de un intento seco y el estado de la muestra. Tras la animación del taladro, la caja se puede usar para recoger el hielo. Al recogerlo, empieza `hallazgo` y sube la intensidad del polvo. La ruta de espera inserta `apagado → abrigo → tregua` antes de `extraccion`. Las dos rutas pasan por `esclusa_entrada` antes de la base. En el navegador se entra al aterrizaje desde el botón de la portada web. Al avanzar de día, Nora despierta en el dormitorio. El cuarto día, la misión de Energía abre la fase exterior `nido` para controlar a Pluto.
+`inicio → aterrizaje → chequeo → salida → sondeo → taladro → sondeo → hallazgo → exterior → averia → evacuacion → esclusa_entrada → base → noche → relevo`. En `sondeo`, E ejecuta la acción del punto cercano. `expedicion_hielo.gd` guarda las lecturas, el gasto de un intento seco y el estado de la muestra. Tras perforar, Nora recoge el núcleo junto al taladro. Cuando lo lleva a la caja empieza `hallazgo` y sube la intensidad del polvo. Durante `averia`, Pluto muestra el efecto del polvo sobre los paneles. Los tres continúan hacia la esclusa. La esclusa se activa al llegar y anima las puertas en orden. En el navegador se entra al aterrizaje desde el botón de la portada web. Al avanzar de día, Nora despierta en el dormitorio. El cuarto día, la misión de Energía abre la fase exterior `nido` para controlar a Pluto.
+
+El mapa usa `PASO_AGUA` para conectar Energía con el Centro de agua. Los puntos de operación están en `EQUIPO_AGUA`.
 
 El sondeo dibuja los cortes de terreno a ras del suelo y marca la caja con un aro y una flecha. Los tres sprites recortados de ImageGen son `caja_hielo_cerrada.png`, `caja_hielo_abierta.png` y `nucleo_hielo.png`. La hoja original se pidió con una caja de campo aislada, la misma caja abierta y un trozo irregular de hielo con costra de tierra. La caja cerrada usa como referencia la posición del personaje que la lleva.
 
 
 En superficie se camina sobre un eje horizontal. El refugio y el barranco tienen panoramas distintos. Dentro, las áreas `ROOMS` y `PASILLOS` permiten el paso, `EQUIPOS` lo bloquea y `TERMINALES` fija dónde interactuar. Al mover un mueble, puerta o panorama, comprueba su posición respecto de esas coordenadas. La cámara sigue al jugador. En una sala, `VISTAS` limita el encuadre al interior de la ilustración. En corredores la cámara sigue la posición con un acercamiento intermedio. **M** muestra el plano general. En superficie, `DISTANCIA_PANORAMA` conecta ambas ilustraciones y compensa la coordenada local al cruzar el tramo compartido. El regreso conserva el mismo reloj al cambiar de panorama. `_dibujar_polvo` usa coordenadas de pantalla para cubrir todo el visor.
 
-El arte está en `assets/`. Los panoramas activos son `refugio_horizonte.png` y `barranco_horizonte.png`. `base.jpg` define la distribución del refugio y las ilustraciones de detalle se superponen en sus salas. Los ciclos de caminata usan hojas de ocho fotogramas. La caída de Teo usa cuatro recortes propios. Conserva los archivos `.import` y `.uid` generados por Godot junto al recurso que corresponda.
+El arte está en `assets/`. Los panoramas activos son `refugio_horizonte.png` y `barranco_horizonte.png`. `base.jpg` aporta el terreno y el patio; `ENCUADRES` define la distribución compacta del refugio y las ilustraciones de detalle se superponen en sus salas. Los ciclos de caminata usan hojas de ocho fotogramas. Conserva los archivos `.import` y `.uid` generados por Godot junto al recurso que corresponda.
 
-Los dos anexos usan `PASO_ANEXOS` para los corredores y amplían `LIMITES_BASE`. Sus zonas de movimiento viven en `ROOMS`. `PRUEBAS_ANEXOS` define las dos comprobaciones opcionales y su resultado vive en memoria durante la partida. Estos resultados quedan fuera de `SolUno.relevo()`.
+El taller usa `PASO_TALLER` para su corredor. `PRUEBAS_ANEXOS` conserva la comprobación opcional del traje. Los guardados anteriores migran al nuevo esquema. Si su posición quedó en un módulo retirado, Nora reaparece en la esclusa.
 
 Control usa la ilustración cenital generada con ImageGen en `assets/control_pasillos.png`. El encargo situó monitores y sillas al norte, dejó un piso continuo entre las puertas laterales y mantuvo la puerta sur hacia la esclusa. Las áreas de paso deben seguir las tres aberturas del dibujo. La entrada a Plantas se alcanza por el corredor este.
 
-Los cuidados de Teo usan el estado temporal de la interacción en `umbra.gd`. El sprite `assets/teo_reposo_cenital.png` se generó con ImageGen con el encargo de un astronauta rubio acostado visto desde arriba, con manta azul y fondo transparente. El dibujo de la férula y la correa acompaña el recorrido y el tiempo que se mantiene E. El turno se consume al terminar la animación.
 
-### Ilustraciones de los anexos
 
-Se crearon con el generador integrado de imágenes, como fondos retro 2D de vista cenital, sin personajes ni texto. Los prompts pidieron una carcasa marfil con bandas naranjas, un pasillo central despejado y equipos al norte y al sur.
+### Ilustraciones interiores
 
-- [Laboratorio de agua](../assets/laboratorio_agua.png) con escotilla al este, cajones helados, filtro transparente, depósitos y núcleo de hielo.
+Se crearon con el generador integrado de imágenes como fondos retro 2D de vista cenital. La cámara cercana de la esclusa sigue a Nora y dibuja el casco sobre una extensión del piso de Control. El contorno exterior del módulo se usa en el plano general.
+
+- [Centro de agua](../assets/laboratorio_agua.png) reutiliza el módulo occidental y alinea el tratamiento y la revisión con sus equipos.
 - [Taller](../assets/taller_umbra.png) con escotilla al oeste, mesa de herramientas, camioneta elevada, repuestos, cascos y comprobador de aire.
 
 ## Contrato de campaña
 
-`SolUno.abrir(ruta)` aplica una sola vez la decisión inicial. `disponible(id)` comprueba batería y turnos, reserva lo necesario para la noche y protege el objetivo obligatorio pendiente. `aplicar(id)` registra la tarea al completarse. Los identificadores de acción son `energia`, `cultivos`, `medicina` y `radio`.
+`SolUno.iniciar_regreso(gasto_taladro)` aplica el perfil de emergencia una vez. `disponible(id)` comprueba batería y turnos, reserva lo necesario para la noche y protege el objetivo obligatorio pendiente. `aplicar(id)` registra la tarea al completarse. Los identificadores de acción son `energia`, `cultivos`, `agua` y `radio`. `agua` se activa en el Sol 2. El controlador aplica la acción después de superar la revisión. `cultivos` se usa para plantas y comida.
 
-`relevo()` calcula un resumen sin avanzar el día. `siguiente_sol()` aplica ese resumen, descuenta los cuidados, añade la carga de la mañana y limpia las acciones del día. `respuesta` indica si se transmitió un informe el día anterior. La recuperación médica se conserva y, tras dos sesiones, hay tres personas operativas a partir del día siguiente.
+`relevo()` calcula un resumen sin avanzar el día. `siguiente_sol()` aplica ese resumen, añade la carga de la mañana y limpia las acciones del día. `respuesta` indica si se transmitió un informe el día anterior. Los tres tripulantes aportan un turno cada día.
 
 | Campo de `relevo()` | Significado |
 | --- | --- |
-| `ruta` | `rescate` o `espera`. |
+
 | `energia`, `raciones`, `agua`, `soporte` | Reservas y estado después del gasto nocturno. |
-| `energia_comprometida` | Batería prevista para cuidar a Teo al avanzar. Está separada de `energia`. |
+
 | `muestras` | Hallazgos acumulados de la campaña. |
-| `cultivo`, `paciente`, `operativos` | Estado visible de las plantas, Teo y la capacidad de trabajo. |
+| `cultivo`, `operativos` | Estado de las plantas y turnos de la tripulación. |
 | `ciencia_enviada`, `informe_hoy` | Si se envió algún informe y si se envió uno en el día que termina. |
 | `acciones` | Copia ordenada de las tareas completadas ese día. |
 
@@ -58,7 +77,16 @@ Acuerda con el equipo cualquier cambio a nombres, tipos o significado de estos c
 
 1. Importa el proyecto en Godot 4.7.2 y ejecuta con F5.
 2. Haz la salida, recoge piedra y hielo en orden y comprueba que se puede regresar con el viento.
-3. Prueba cada decisión de rescate. Comprueba la batería, plantas y cuidados al comienzo del día 2.
-4. Recorre todos los módulos y los puntos de inspección. Desde Control cruza a la derecha, sube por las flechas del desvío y gira a la derecha al llegar a la bifurcación. Comprueba que el mapa, la cámara y los pies de Nora sigan ese recorrido. Entra al laboratorio desde Energía y al taller desde el corredor norte. Prueba ambas respuestas en el filtro y el comprobador del traje, y verifica que no gasten recursos. Verifica que el dormitorio impida descansar antes del objetivo y que aún sea posible completar la misión después de las tareas opcionales permitidas.
-5. Completa el circuito de agua, la sintonización, los tres relés de Pluto y el informe final. Verifica una partida con dos sesiones médicas y otra con cuidados pendientes.
+3. Vuelve con la tripulación, cruza la esclusa y comprueba la batería y los cultivos al despertar.
+4. Desde Control, toma la puerta oeste hacia Energía. Usa el pasillo del fondo para llegar al Centro de agua. Comprueba las tres estaciones y el acceso al dormitorio y al taller.
+5. Completa las misiones de agua, radio y Pluto. Verifica el cierre del Sol 5.
 6. Si cambias la portada o el preset, abre la exportación servida por HTTP. Pulsa **Iniciar expedición** y comprueba que aparece el aterrizaje.
+
+## Resultado de verificación del recorrido narrativo (2026-11-14)
+
+- Godot 4.7.2: importación y ejecución sin errores de script.
+- `tests/narrativa_smoke.gd`: `NARRATIVA_OK`. Comprueba tramos de acceso al Centro de agua, Energía, Taller, Plantas y Dormitorio, obstáculos representativos, cinco fundidos, guardado al despertar, ausencia de sexto día y regreso desde la nave.
+- Las capturas de `build/qa/` se revisaron visualmente: umbral sin terreno rojo lateral, mapa compacto, bienvenida, noche y epílogo. Se corrigió el desbordamiento del texto final. La calidad del arte final sigue pendiente según el documento del equipo.
+- El simulador anterior también pasó regreso durante tormenta, procesamiento de agua, cierre hasta el día 5 y migración del guardado versión 1. Esta prueba solo conserva compatibilidad; no aprueba esas actividades.
+- Exportación Web completada. Se abrió en `http://127.0.0.1:8065/`, se inició con teclado y se observó el aterrizaje. No se registraron errores ni advertencias en la consola del navegador durante esa comprobación. El recorrido completo se comprobó en Godot; no se afirma un playtest completo de cinco días en navegador.
+- Esta entrega es local; no se ha desplegado a Firebase ni enviado al repositorio remoto.

@@ -1,10 +1,9 @@
 extends Control
 
 const ExpedicionHielo := preload("res://scripts/expedicion_hielo.gd")
+const GuardadoMision := preload("res://scripts/guardado_mision.gd")
 
 const EXTERIOR := preload("res://assets/exterior.jpg")
-const IRIS_ORDEN := preload("res://assets/iris_orden.png")
-const TEO_ALARMA := preload("res://assets/teo_alarma.png")
 const FONDO := Color("#241b2c")
 const PANEL := Color("#32283c")
 const LINEA := Color("#6b566c")
@@ -15,7 +14,7 @@ const AMBAR := Color("#ffb46f")
 const MODULOS := {
 	"energia": ["01  /  ENERGÍA", "Usa 3 puntos de batería para conectar la reserva. La reserva aporta 5."],
 	"cultivos": ["02  /  SALA DE PLANTAS", "Consume 4 puntos de batería. Protege las bandejas durante la noche."],
-	"medicina": ["03  /  ENFERMERÍA", "Usa 3 puntos de batería para cuidar a Teo. Aún necesita descansar."],
+	"agua": ["CENTRO DE AGUA", "La muestra del barranco está en el Centro de agua."],
 	"radio": ["04  /  COMUNICACIONES", "Consume 2 puntos de batería. Envía la lectura del polvo y el informe. Respuesta pendiente."],
 }
 const ATERRIZAJE := [
@@ -29,20 +28,23 @@ var modulo := ""
 var pantalla: Control
 var puesto: PuestoUmbra
 var subtitulo: Label
-var hablante: Label
 var aviso: Label
 var pista_exploracion: Label
 var guia_exploracion := ""
 var terminal_pendiente := ""
-var guia_cuidados: Label
-var ferula_recogida := false
-var tecla_cuidados := false
-const TIEMPO_CUIDADOS := 1.6
 var posicion := Vector2(339, 352)
 var reloj := 0.0
 var expedicion := ExpedicionHielo.new()
+var panel_comprobado := false
+var avance_panel := 0.0
+var rotulo_ruta: Label
 var muestra_procesada := false
-var boton_sondeo: Button
+var lectura_radio: Label
+var accion_radio: Label
+var etapa_agua := 0
+var avance_agua := 0.0
+var tecla_agua := false
+var muestra_retenida := false
 var reserva_para_aire := false
 var regreso_distante := false
 var ambiente: AudioStreamPlayer
@@ -57,13 +59,8 @@ var rele_nido := 0
 var regreso_nora := Vector2.ZERO
 var intensidad_ui: ProgressBar
 var fase_renderizada := ""
-var valvulas: Array[int] = [0, 0, 0]
-const CONDUCTOS := [
-	["Depósito", "Cerrado", "A derretir", "Al desagüe"],
-	["Para derretir", "Cerrado", "Al desagüe", "Al filtro"],
-	["Filtro", "Cerrado", "A revisión", "A retorno"],
-]
-const RUTA_AGUA: Array[int] = [1, 2, 1]
+const DURACION_ETAPA_AGUA := 1.55
+const PASOS_AGUA := ["Derretir el hielo", "Tratar el agua", "Comprobar que es segura"]
 const NOCHES := [
 	"El aire y el calor vuelven a funcionar. Mañana probaremos el hielo.",
 	"La muestra ya es agua. Mañana le contaremos a Tierra cómo salió la prueba.",
@@ -72,23 +69,16 @@ const NOCHES := [
 	"El informe final salió. Por primera vez en cinco días, podemos bajar la guardia.",
 ]
 const AREA := Rect2(0, 0, 1280, 720)
-const NOMBRES := {"energia": "Energía", "cultivos": "Sala de plantas", "medicina": "Enfermería", "radio": "Control", "cierre": "Puerta del refugio", "dormitorio": "Dormitorio"}
+const NOMBRES := {"energia": "Energía", "cultivos": "Sala de plantas", "agua": "Centro de agua", "radio": "Control", "cierre": "Puerta del refugio", "dormitorio": "Dormitorio"}
 const DETALLES := {
 	"aire": ["Reciclador de aire", "Este equipo retira del aire lo que soltamos al respirar. Afuera usamos el aire del traje. Con la puerta sellada, el refugio mantiene aire respirable."],
 	"mapa": ["Mapa de la expedición", "El barranco queda lejos del refugio. En el visor comparamos la escarcha con el hielo bajo tierra antes de elegir dónde perforar."],
 	"plantas": ["Jardineras", "Las hojas necesitan luz y agua. Si ahorramos batería apagando las luces, mañana tendremos menos comida."],
-	"teo": ["Cuidados de Teo", "Teo necesita dos sesiones de cuidado. Cuando pueda volver a trabajar, habrá tiempo para una tarea más a partir del día siguiente."],
 	"literas": ["Las literas", "Nora dibujó el barranco en la pared. Iris dejó marcada la hora del próximo mensaje. La manta de Teo está lista para cuando pueda volver."],
-	"muestras_frias": ["Cajones de muestras", "Cada cajón conserva el hielo de un sitio distinto. Si se mezclan, perdemos la pista de dónde estaba el agua."],
-	"capas_hielo": ["Capas del hielo", "Mira las franjas claras y oscuras. Al sacar un trozo entero, podemos ver qué partes tienen más tierra."],
 	"rover_taller": ["Camioneta de repuesto", "Es un vehículo de reserva. Iris lo dejó limpio, con las ruedas en alto, para revisar los ejes dentro del taller."],
 	"repuestos": ["Estante de repuestos", "Las juntas mantienen el polvo fuera. Los guantes gruesos protegen las manos cuando toca cambiar piezas afuera."],
 }
 const PRUEBAS_ANEXOS := {
-	"filtro_lab": ["Banco de filtrado", "El hielo se derritió y dejó granitos de tierra en el agua. ¿Qué hacemos antes de guardarla?",
-		"Pasar el agua por el filtro", "Guardar el agua tal como salió",
-		"El filtro atrapó la tierra. Antes de usar el agua, medimos las sales y buscamos otras impurezas.",
-		"Si la guardamos ahora, la tierra también llega al tanque. Prueba con el filtro."],
 	"sello_traje": ["Probador de trajes", "Este traje pierde aire despacio. ¿Qué revisamos antes de llevarlo afuera?",
 		"Revisar el sello del casco", "Llenar el tanque otra vez",
 		"El cierre del casco tenía una fuga. Cambiamos el sello y volvimos a probar el traje en el banco.",
@@ -102,13 +92,12 @@ var pista_anexo := ""
 var zoom_anterior := 1.0
 var centro_anterior := Vector2(402, 263.5)
 var orientacion_izquierda := false
-var retrato: TextureRect
-
-
 func _ready() -> void:
 	get_window().min_size = Vector2i(800, 450)
 	_preparar_viento()
-	if OS.has_feature("web"):
+	if _recuperar_punto():
+		_render()
+	elif OS.has_feature("web"):
 		_comenzar()
 	else:
 		_render()
@@ -117,42 +106,45 @@ func _ready() -> void:
 func _process(delta: float) -> void:
 	if not is_instance_valid(puesto):
 		return
-	if operacion == "medicina":
-		_actualizar_cuidados(delta)
+	if operacion == "agua":
+		_actualizar_agua(delta)
 		if operacion.is_empty():
 			return
 	if fase == "aterrizaje":
 		reloj += delta
-		subtitulo.text = ATERRIZAJE[0 if reloj < 4.0 else 1 if reloj < 9.5 else 2]
+		subtitulo.text = "Iris · " + ATERRIZAJE[0 if reloj < 4.0 else 1 if reloj < 9.5 else 2]
 		if reloj >= 14.0:
 			_fin_aterrizaje()
 			return
-	elif fase == "tregua":
-		reloj += delta
-		if reloj >= 3.0:
-			fase = "extraccion"
-			_render()
-			return
 	elif fase == "esclusa_entrada":
 		reloj += delta
-		if reloj >= 0.7:
-			subtitulo.text = "Puerta exterior cerrada. Igualando la presión con el refugio."
-		if reloj >= 1.7:
-			posicion = PuestoUmbra.ENTRADA
+		puesto.avance_esclusa = reloj
+		puesto.punto.y = 440.0 - 43.0 * smoothstep(0.68, 1.36, reloj) - 49.0 * smoothstep(2.6, 3.45, reloj)
+		puesto.caminando = (reloj > 0.68 and reloj < 1.36) or (reloj > 2.6 and reloj < 3.45)
+		puesto.paso = fposmod(reloj * 2.5, 1.0)
+		puesto.actualizar_camara(delta)
+		if reloj >= 2.22:
+			lectura_radio.text = "Pluto · Ya hay aire seguro. Se abre la puerta interior."
+		elif reloj >= 1.62:
+			lectura_radio.text = "Pluto · Cerramos la puerta de fuera. Estamos llenando de aire la sala."
+		if reloj >= 3.5:
+			posicion = puesto.punto
 			fase = "base"
+			_guardar_punto()
 			_render()
 			return
 	elif fase == "noche":
 		reloj += delta
 		if reloj >= 3.5:
 			fase = "relevo"
+			_guardar_punto()
 			_render()
 			return
 	elif fase == "taladro":
 		reloj += delta
 		puesto.avance_muestra = clampf(reloj / 3.8, 0.0, 1.0)
 		if reloj >= 1.8:
-			subtitulo.text = "Ahí está el hielo. Guárdalo en la caja abierta antes de volver."
+			lectura_radio.text = "Iris · Salió un trozo de hielo con tierra. Déjame bajarlo al suelo."
 		if reloj >= 3.8:
 			expedicion.muestra_lista = true
 			fase = "sondeo"
@@ -162,46 +154,26 @@ func _process(delta: float) -> void:
 		reloj += delta
 		puesto.frente_polvo = smoothstep(0.4, 5.4, reloj)
 		if reloj >= 2.7:
-			hablante.text = "Iris · Radio de la tripulación"
-			retrato.texture = IRIS_ORDEN
-			subtitulo.text = "¡Miren el cielo! El polvo ya tapó el sol. Regresamos juntos. Teo, trae la caja."
+			lectura_radio.text = "Iris · ¡El polvo está tapando el sol! Teo, trae la caja. Volvemos juntos."
 		if reloj >= 6.7:
 			fase = "exterior"
-			_render()
-			return
-	elif fase == "caida":
-		reloj += delta
-		puesto.tiempo_caida = reloj
-		subtitulo.text = "¡Teo! ¡Agárrate!" if reloj < 1.65 else "¡Nora, ven! La camioneta cayó en una zanja. ¡La rueda rota le aprisionó la bota!"
-		if reloj >= 4.6:
-			posicion.x += 19.0
-			fase = "averia"
-			reloj = 0.0
+			_guardar_punto()
 			_render()
 			return
 	elif fase == "averia":
 		reloj += delta
-		puesto.tiempo_caida = reloj
+		puesto.tiempo_averia = reloj
 		if reloj >= 1.3:
-			subtitulo.text = "Falló la conexión de los paneles. La base ya está usando su batería."
+			lectura_radio.text = "Pluto · El polvo tapó los paneles. La reserva sostiene el aire y el calor. Apagué las luces de cultivo."
 		if reloj >= 4.8:
-			fase = "sujetar"
-			reloj = 0.0
-			_render()
-			return
-	elif fase == "apagado":
-		reloj += delta
-		if reloj >= 3.5:
-			fase = "abrigo"
-			_render()
-			return
-	elif fase == "extraccion":
-		if puesto.tiempo >= 19.8:
+			estado.iniciar_regreso(expedicion.gasto)
 			fase = "evacuacion"
+			regreso_distante = true
+			_guardar_punto()
 			_render()
 			return
-	elif fase not in ["decision", "sujetar", "taladro"] and (modulo.is_empty() or operacion == "medicina"):
-		var inmovil := tecla_cuidados and ferula_recogida and posicion.distance_to(PuestoUmbra.CAMA_TEO) <= 13.0
+	elif modulo.is_empty() or operacion == "agua":
+		var inmovil := tecla_agua and _cerca_equipo_agua()
 		if inmovil:
 			puesto.velocidad = Vector2.ZERO
 		var direccion := Vector2(
@@ -211,6 +183,13 @@ func _process(delta: float) -> void:
 				int(Input.is_physical_key_pressed(KEY_W) or Input.is_action_pressed("ui_up")))
 		puesto.anclado = not puesto.interior and not puesto.chequeo and Input.is_physical_key_pressed(KEY_SHIFT)
 		puesto.avanzar(Vector2.ZERO if inmovil else direccion.normalized(), delta)
+		if fase == "chequeo":
+			_actualizar_panel_solar(delta, direccion.x)
+			if panel_comprobado and absf(puesto.punto.x - PuestoUmbra.ESCLUSA.x) <= 24.0:
+				posicion = puesto.punto
+				_salir_expedicion()
+				return
+			_actualizar_rotulo_ruta()
 		if fase == "salida" and puesto.punto.x > 747:
 			fase = "sondeo"
 			posicion = puesto.punto - Vector2(PuestoUmbra.DISTANCIA_PANORAMA, 0)
@@ -220,15 +199,28 @@ func _process(delta: float) -> void:
 			regreso_distante = false
 			puesto.campo = false
 			puesto.punto.x += PuestoUmbra.DISTANCIA_PANORAMA
-		if fase == "exterior" and puesto.punto.x <= PuestoUmbra.INICIO_CAIDA:
+		if fase == "evacuacion" and not regreso_distante and absf(puesto.punto.x - PuestoUmbra.ESCLUSA.x) <= 12.0:
+			fase = "esclusa_entrada"
+			reloj = 0.0
+			_render()
+			return
+		if fase == "exterior" and puesto.punto.x <= PuestoUmbra.PUNTO_AVISO:
 			posicion = puesto.punto
-			fase = "caida"
+			fase = "averia"
 			reloj = 0.0
 			_render()
 			return
 		posicion = puesto.punto
 		puesto.actualizar_camara(delta)
+		if fase == "sondeo" and expedicion.muestra_en_mano and _cerca_caja():
+			expedicion.guardar_muestra()
+			fase = "hallazgo"
+			reloj = 0.0
+			_render()
+			return
 		_actualizar_aviso()
+		if fase == "evacuacion":
+			_actualizar_regreso()
 	puesto.tiempo += delta
 	if ambiente.playing:
 		ambiente.volume_db = lerpf(-23.0, -4.0, puesto.intensidad_viento())
@@ -240,11 +232,8 @@ func _process(delta: float) -> void:
 func _unhandled_key_input(evento: InputEvent) -> void:
 	if not evento is InputEventKey or evento.echo:
 		return
-	if evento.physical_keycode == KEY_E and operacion == "medicina":
-		tecla_cuidados = evento.pressed
-		if evento.pressed and not ferula_recogida and posicion.distance_to(PuestoUmbra.BOTIQUIN) <= 13.0:
-			ferula_recogida = true
-			puesto.lleva_ferula = true
+	if evento.physical_keycode == KEY_E and operacion == "agua":
+		tecla_agua = evento.pressed and _cerca_equipo_agua()
 		return
 	if not evento.pressed:
 		return
@@ -265,13 +254,6 @@ func _unhandled_key_input(evento: InputEvent) -> void:
 	if evento.physical_keycode != KEY_E:
 		return
 	match fase:
-		"sujetar":
-			_revisar_rueda()
-		"abrigo":
-			if posicion.distance_to(PuestoUmbra.ABRIGO_TEO) <= 24:
-				fase = "tregua"
-				reloj = 0.0
-				_render()
 		"nido":
 			var destino: Vector2 = PuestoUmbra.RELES[rele_nido] if rele_nido < PuestoUmbra.RELES.size() else PuestoUmbra.ESCLUSA
 			if posicion.distance_to(destino) <= 31.0:
@@ -280,21 +262,17 @@ func _unhandled_key_input(evento: InputEvent) -> void:
 					puesto.rele_actual = rele_nido
 				else:
 					_volver_nido(true)
-		"chequeo":
-			if posicion.distance_to(PuestoUmbra.ESCLUSA) <= 42:
-				_salir_expedicion()
 		"sondeo":
 			_interactuar_sondeo()
-		"evacuacion":
-			if not regreso_distante and posicion.distance_to(PuestoUmbra.ESCLUSA) <= 42:
-				fase = "esclusa_entrada"
-				reloj = 0.0
-				_render()
 		"base":
 			var cerca := puesto.terminal_cercana()
 			if cerca.is_empty():
 				cerca = puesto.inspeccion_cercana()
 			if not cerca.is_empty() and modulo.is_empty():
+				if cerca == "agua" and (estado.sol != 2 or muestra_procesada):
+					mensaje = "Aquí tratamos y comprobamos el agua antes de enviarla al tanque."
+					_render()
+					return
 				if _requiere_tarea_principal(cerca):
 					terminal_pendiente = cerca
 					_actualizar_aviso()
@@ -303,23 +281,25 @@ func _unhandled_key_input(evento: InputEvent) -> void:
 				operacion = ""
 				aviso_operacion = ""
 				pista_anexo = ""
-				if cerca == "radio" and estado.disponible(cerca):
+				if cerca in ["radio", "agua"] and estado.disponible(cerca):
 					_abrir_operacion()
 					return
 				_render()
 
 
 func _requiere_tarea_principal(id: String) -> bool:
+	if id == "agua" and estado.sol != 2:
+		return false
 	return SolUno.ACCIONES.has(id) and not estado.mision_cumplida() and id != SolUno.MISIONES[estado.sol - 1]
 
 
 func _actualizar_aviso() -> void:
 	if fase == "sondeo":
-		_actualizar_boton_sondeo()
+		_actualizar_sondeo()
 		return
 	if not is_instance_valid(aviso):
 		return
-	if fase == "base":
+	if fase == "base" and operacion.is_empty():
 		var cerca := puesto.terminal_cercana()
 		var detalle := puesto.inspeccion_cercana()
 		aviso.text = "WASD / flechas · M: plano general"
@@ -338,21 +318,15 @@ func _actualizar_aviso() -> void:
 		elif not detalle.is_empty():
 			var ficha: Array = PRUEBAS_ANEXOS[detalle] if PRUEBAS_ANEXOS.has(detalle) else DETALLES[detalle]
 			aviso.text = "E · " + str(ficha[0]) + "   ·   M: plano general"
-	elif fase == "chequeo":
-		aviso.text = "E · Salir con Iris" if posicion.distance_to(PuestoUmbra.ESCLUSA) <= 42 else "A / D o flechas izquierda y derecha · Ve al refugio"
 	elif fase == "salida":
 		aviso.text = "Derecha · Sal del puesto para llegar al campo de hielo"
-	elif fase == "abrigo":
-		aviso.text = "E · Esperar tras la roca" if posicion.distance_to(PuestoUmbra.ABRIGO_TEO) <= 24 else "Sigue la marca de abrigo"
 	elif fase == "exterior":
 		aviso.text = "Izquierda · Corre hacia el refugio"
-	elif fase == "evacuacion":
-		aviso.text = "Izquierda · Lleva a Teo de vuelta al puesto" if regreso_distante else "E · Abrir la puerta del refugio"
 	elif fase == "nido":
 		var destino: Vector2 = PuestoUmbra.RELES[rele_nido] if rele_nido < PuestoUmbra.RELES.size() else PuestoUmbra.ESCLUSA
 		var objetivo := "PUESTO %d DE %d" % [rele_nido + 1, PuestoUmbra.RELES.size()] if rele_nido < PuestoUmbra.RELES.size() else "VOLVER A LA PUERTA"
 		aviso.text = ("E  /  " if posicion.distance_to(destino) <= 31 else "WASD  /  ") + objetivo + "   ·   Esc: retirar a Pluto"
-	if fase in ["exterior", "evacuacion", "nido"]:
+	if fase in ["exterior", "nido"]:
 		if puesto.intensidad_viento() >= 0.55 and not puesto.bajo_abrigo():
 			aviso.text += "   ·   ¡VIENTO FUERTE! · Mantén Shift para sujetarte"
 		elif puesto.bajo_abrigo():
@@ -361,7 +335,6 @@ func _actualizar_aviso() -> void:
 
 func _render() -> void:
 	var cambio_de_fase := fase != fase_renderizada
-	var tiempo_evacuacion := puesto.tiempo if fase == "esclusa_entrada" and is_instance_valid(puesto) else 0.0
 	fase_renderizada = fase
 	if is_instance_valid(puesto):
 		zoom_anterior = puesto.escala_camara
@@ -373,7 +346,7 @@ func _render() -> void:
 		pantalla.queue_free()
 	pantalla = Control.new()
 	add_child(pantalla)
-	var en_superficie := fase in ["hallazgo", "exterior", "caida", "sujetar", "decision", "averia", "apagado", "abrigo", "tregua", "extraccion", "evacuacion", "nido"]
+	var en_superficie := fase in ["hallazgo", "exterior", "averia", "evacuacion", "nido"]
 	if en_superficie and not ambiente.playing:
 		ambiente.play()
 	elif not en_superficie:
@@ -382,24 +355,24 @@ func _render() -> void:
 	match fase:
 		"inicio":
 			_inicio()
-		"aterrizaje", "chequeo", "salida", "sondeo", "hallazgo", "exterior", "caida", "abrigo", "tregua", "extraccion", "evacuacion", "nido":
+		"chequeo":
+			_recorrido_pluto()
+		"aterrizaje", "salida", "exterior", "nido":
 			_superficie()
 		"averia":
 			_corte_energia()
-		"sujetar", "apagado":
-			_superficie()
-		"taladro":
-			_superficie()
+		"sondeo", "taladro", "hallazgo":
+			_camino_del_hielo()
 		"esclusa_entrada":
+			posicion = Vector2(402, 440)
+			_crear_puesto(true, AREA)
+			puesto.esclusa_activa = true
+			puesto.actualizar_camara(1.5)
+			_radio_de_campo("Pluto · Pasen de la tormenta a la sala de entrada.", 638.0)
+		"evacuacion":
 			_crear_puesto(false, AREA)
-			puesto.tiempo = tiempo_evacuacion
-			_panel(AREA, Color(0.11, 0.09, 0.17, 0.64), Color.TRANSPARENT)
-			_panel(Rect2(340, 300, 600, 113), FONDO)
-			_texto("Pluto · Esclusa del refugio", Rect2(366, 320, 548, 33), 23, CIAN)
-			subtitulo = _texto("Cerrando la puerta exterior. La puerta de adentro sigue cerrada.",
-				Rect2(366, 359, 545, 45), 17)
-		"decision":
-			_apertura()
+			_radio_de_campo("Iris · Seguimos juntos. Teo lleva la muestra. Volvamos al refugio.")
+			_actualizar_regreso()
 		"base":
 			_base()
 		"noche":
@@ -455,8 +428,11 @@ func _preparar_viento() -> void:
 
 
 func _fin_aterrizaje() -> void:
+	panel_comprobado = false
+	avance_panel = 0.0
 	fase = "chequeo"
 	posicion = Vector2(220, PuestoUmbra.SUELO)
+	_guardar_punto()
 	_render()
 
 
@@ -464,18 +440,59 @@ func _salir_expedicion() -> void:
 	expedicion = ExpedicionHielo.new()
 	muestra_procesada = false
 	fase = "salida"
+	_guardar_punto()
 	_render()
+
+
+func _recorrido_pluto() -> void:
+	_crear_puesto(false, AREA)
+	puesto.guia_pluto = true
+	puesto.panel_comprobado = panel_comprobado
+	puesto.pluto_superficie_x = minf(posicion.x + 35.0, PuestoUmbra.ESCLUSA.x - 14.0)
+	rotulo_ruta = _texto("", Rect2(0, 0, 416, 40), 18, MARFIL)
+	rotulo_ruta.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	rotulo_ruta.add_theme_color_override("font_outline_color", Color("#131820"))
+	rotulo_ruta.add_theme_constant_override("outline_size", 6)
+	_actualizar_rotulo_ruta()
+
+
+func _actualizar_panel_solar(delta: float, movimiento: float) -> void:
+	if panel_comprobado:
+		return
+	var sobre_marca := absf(puesto.punto.x - PuestoUmbra.REVISION_SOLAR.x) <= 30.0
+	var leyendo := sobre_marca and is_zero_approx(movimiento)
+	avance_panel = move_toward(avance_panel, 1.0 if leyendo else 0.0, delta / 0.75)
+	puesto.avance_panel = avance_panel
+	if avance_panel >= 1.0:
+		panel_comprobado = true
+		puesto.panel_comprobado = true
+		posicion = puesto.punto
+		_guardar_punto()
+
+
+func _actualizar_rotulo_ruta() -> void:
+	var destino := PuestoUmbra.ESCLUSA if panel_comprobado else PuestoUmbra.REVISION_SOLAR
+	var cerca_panel := panel_comprobado and absf(puesto.punto.x - PuestoUmbra.REVISION_SOLAR.x) < 76.0
+	if cerca_panel:
+		rotulo_ruta.text = "Pluto · Los paneles están dando energía"
+	elif panel_comprobado:
+		rotulo_ruta.text = "Reúnete con Iris"
+	elif absf(puesto.punto.x - destino.x) <= 48.0:
+		rotulo_ruta.text = "Para en la luz. Pluto está revisando los paneles."
+	else:
+		rotulo_ruta.text = "A / D o flechas · Sigue a Pluto"
+	var ancla := PuestoUmbra.REVISION_SOLAR if cerca_panel else destino
+	if not cerca_panel and absf(puesto.punto.x - destino.x) > 140.0:
+		ancla.x = puesto.pluto_superficie_x
+	var punto_rotulo := puesto.proyectar_suelo(ancla - Vector2(0, 96))
+	rotulo_ruta.position = Vector2(clampf(punto_rotulo.x - 208.0, 26.0, 838.0), punto_rotulo.y)
 
 
 func _corte_energia() -> void:
 	_crear_puesto(false, AREA)
 	puesto.corte = true
-	puesto.tiempo_caida = 0.0
-	_panel(Rect2(260, 514, 760, 129), FONDO)
-	_imagen(PuestoUmbra.DRON, Rect2(276, 528, 90, 94), TextureRect.STRETCH_KEEP_ASPECT_CENTERED)
-	_texto("Pluto · Desde el refugio", Rect2(379, 526, 620, 25), 16, CIAN)
-	subtitulo = _texto("La tormenta alcanzó el refugio. ¡Mira el cable de los paneles!",
-		Rect2(379, 554, 620, 71), 20)
+	puesto.tiempo_averia = 0.0
+	_radio_de_campo("Pluto · La tormenta llegó a la base. ¡Mira el cable!")
 
 
 func _crear_puesto(es_interior: bool, area: Rect2) -> void:
@@ -488,18 +505,18 @@ func _crear_puesto(es_interior: bool, area: Rect2) -> void:
 	puesto.interior = es_interior
 	puesto.aterrizaje = fase == "aterrizaje"
 	puesto.hallazgo = fase == "hallazgo"
-	puesto.caida = fase == "caida"
 	puesto.carrera = fase == "exterior"
 	puesto.chequeo = fase in ["chequeo", "salida", "sondeo", "taladro"]
-	puesto.campo = fase in ["sondeo", "taladro", "hallazgo", "exterior", "caida", "sujetar", "apagado", "decision", "abrigo", "tregua", "extraccion"] or (fase == "evacuacion" and regreso_distante)
+	puesto.campo = fase in ["sondeo", "taladro", "hallazgo", "exterior"] or (fase == "evacuacion" and regreso_distante)
 	puesto.sondeo = fase == "sondeo"
 	puesto.perforando = fase == "taladro"
-	if fase in ["exterior", "caida", "sujetar", "decision"]:
+	if fase == "exterior":
 		puesto.frente_polvo = 1.0
-	elif fase in ["apagado", "abrigo", "tregua", "extraccion", "evacuacion", "esclusa_entrada"]:
+	elif fase in ["evacuacion", "esclusa_entrada"]:
 		puesto.frente_polvo = 0.65
 	puesto.sondeos_hechos = expedicion.examinados
 	puesto.caja_abierta = expedicion.muestra_lista and not expedicion.muestra_guardada
+	puesto.hielo_en_mano = expedicion.muestra_en_mano
 	puesto.carga_hielo = expedicion.muestra_guardada
 	puesto.reserva_en_prueba = operacion == "energia"
 	puesto.desvio_energia = reserva_para_aire
@@ -512,19 +529,10 @@ func _crear_puesto(es_interior: bool, area: Rect2) -> void:
 	puesto.ancho_visible = area.size.x / puesto.escala_visual
 	puesto.scale = Vector2.ONE * puesto.escala_visual
 	puesto.evacuacion = fase in ["evacuacion", "esclusa_entrada"]
-	puesto.camilla = estado.ruta == SolUno.ESPERA
-	puesto.refugio_teo = fase in ["abrigo", "tregua"]
-	puesto.extraccion = fase == "extraccion"
-	puesto.usa_gato = estado.ruta == SolUno.RESCATE
-	puesto.decision = fase == "decision"
-	puesto.sujetando_teo = fase in ["sujetar", "apagado"]
 	puesto.punto = Vector2(585, PuestoUmbra.SUELO) if fase == "averia" else posicion
-	puesto.tiempo = 0.0 if fase in ["aterrizaje", "chequeo", "hallazgo"] else 19.3 if fase == "caida" else 17.0
+	puesto.tiempo = 0.0 if fase in ["aterrizaje", "chequeo", "hallazgo"] else 17.0
 	puesto.cultivo_activo = estado.cultivo != "En pausa"
 	puesto.radio_enviada = estado.ciencia_enviada
-	puesto.atendido = estado.recuperacion > 0
-	puesto.teo_en_cama = estado.ruta == SolUno.ESPERA and estado.recuperacion == 0
-	puesto.teo_recuperado = estado.recuperacion >= 2
 	puesto.escala_camara = zoom_anterior
 	puesto.centro_camara = centro_anterior
 	puesto.direccion_izquierda = orientacion_izquierda
@@ -532,6 +540,10 @@ func _crear_puesto(es_interior: bool, area: Rect2) -> void:
 	if es_interior and (zoom_anterior <= 1.0 or puesto.centro_camara.distance_to(posicion) > 100.0):
 		puesto.actualizar_camara(1.5)
 	marco.add_child(puesto)
+	if es_interior and fase == "base" and not puesto.transitable(posicion):
+		posicion = PuestoUmbra.ENTRADA
+		puesto.punto = posicion
+		puesto.actualizar_camara(1.5)
 
 
 func _superficie() -> void:
@@ -539,10 +551,9 @@ func _superficie() -> void:
 	_panel(Rect2(1040, 20, 218, 40), FONDO)
 	if expedicion.muestra_guardada:
 		_panel(Rect2(930, 67, 328, 36), FONDO)
-		var carga := "Nora lleva la caja" if fase == "evacuacion" else "Teo lleva la caja"
-		_texto("Muestra de hielo · " + carga, Rect2(944, 75, 309, 25), 16, CIAN)
+		_texto("Muestra de hielo · Teo lleva la caja", Rect2(944, 75, 309, 25), 16, CIAN)
 	_texto("Marte   ·   Día %d de 5" % estado.sol, Rect2(1061, 29, 180, 24), 16, MARFIL)
-	if fase in ["exterior", "evacuacion", "nido"]:
+	if fase in ["exterior", "nido"]:
 		_panel(Rect2(22, 20, 236, 52), FONDO)
 		_texto("Fuerza del viento", Rect2(35, 26, 208, 21), 14, AMBAR)
 		intensidad_ui = ProgressBar.new()
@@ -552,72 +563,43 @@ func _superficie() -> void:
 		intensidad_ui.add_theme_stylebox_override("background", _estilo(PANEL, LINEA))
 		intensidad_ui.add_theme_stylebox_override("fill", _estilo(AMBAR, AMBAR))
 		_colocar(intensidad_ui, Rect2(35, 50, 209, 9))
-	if fase == "sondeo":
-		_interfaz_sondeo()
-		return
-	_panel(Rect2(260, 514, 760, 129), FONDO)
-	retrato = _imagen(PuestoUmbra.DRON, Rect2(276, 528, 90, 94), TextureRect.STRETCH_KEEP_ASPECT_CENTERED)
-	hablante = _texto("Pluto   /   ASISTENTE DE MISIÓN", Rect2(379, 526, 620, 24), 15, CIAN)
-	subtitulo = _texto("", Rect2(379, 553, 620, 57), 19)
-	if fase == "aterrizaje":
-		hablante.text = "Iris · Jefa de la expedición"
-		retrato.texture = IRIS_ORDEN
-		_boton("Saltar aterrizaje", Rect2(1031, 607, 202, 36), _fin_aterrizaje, AMBAR)
-		return
-	if fase == "taladro":
-		hablante.text = "Iris · Equipo del barranco"
-		retrato.texture = IRIS_ORDEN
-		subtitulo.text = "El taladro atraviesa la tierra y llega al hielo."
-		return
-	if fase in ["hallazgo", "caida"]:
-		hablante.text = "Iris · Radio de la tripulación" if fase == "caida" else "Teo · Radio de la tripulación"
-		retrato.texture = IRIS_ORDEN if fase == "caida" else PuestoUmbra.TEO_NORMAL
-		if fase == "hallazgo":
-			subtitulo.text = "Caja cerrada. Cuando volvamos podemos derretir esto y ver cuánta agua nos da."
-		return
-	if fase == "sujetar":
-		hablante.text = "Iris · Junto a Teo"
-		retrato.texture = IRIS_ORDEN
-		subtitulo.text = "La rueda quedó torcida. Ven a ver dónde podemos levantar la camioneta."
-		_boton("Revisar la rueda  ·  E", Rect2(379, 603, 616, 34), _revisar_rueda, CIAN)
-		return
-	if fase == "apagado":
-		subtitulo.text = "Guardamos la batería para la base. Iris se queda con Teo. Busca abrigo mientras baja el viento."
-		return
-	if fase == "extraccion":
-		subtitulo.text = "El gato levanta la camioneta. Iris libera la bota. Al volver, apagaremos las luces de cultivo para ahorrar batería." if estado.ruta == SolUno.RESCATE else "El viento bajó un poco. Vamos por Teo con la camilla."
-		return
-	if fase == "tregua":
-		subtitulo.text = "Teo sigue atrapado. Iris prepara la camilla. Esperamos a que el viento dé una tregua."
-		return
+	_radio_de_campo("")
+	aviso = accion_radio
 	match fase:
-		"chequeo":
-			subtitulo.text = "Soy Pluto. Sigue el camino hacia la derecha. Iris te espera junto a la puerta del refugio."
+		"aterrizaje":
+			subtitulo = lectura_radio
+			subtitulo.text = "Iris · " + ATERRIZAJE[0]
+			_boton("Saltar aterrizaje", Rect2(1037, 641, 202, 36), _fin_aterrizaje, AMBAR)
 		"salida":
-			retrato.texture = IRIS_ORDEN
-			hablante.text = "Iris · En camino al barranco"
-			subtitulo.text = "Queda media botella de reserva. Sígueme al barranco. Teo lleva una caja para traer hielo."
+			lectura_radio.text = "Iris · Teo trae la caja fría. Busquemos hielo para reponer el agua de las botellas."
 		"exterior":
-			subtitulo.text = "¡Da la vuelta! Teo viene detrás con la muestra. El viento puede empujarte hacia atrás. Si sopla muy fuerte, mantén Shift para sujetarte."
-		"evacuacion":
-			subtitulo.text = "Lleva la camilla al refugio. Teo no puede apoyar el pie." if estado.ruta == SolUno.ESPERA else "Teo puede caminar despacio con ayuda de Iris. Guíalos de vuelta al refugio."
-		"abrigo":
-			subtitulo.text = "Busquemos abrigo tras la roca marcada. Teo sigue junto a la camioneta; no lo moveremos hasta que sea más seguro."
+			lectura_radio.text = "Pluto · Teo viene detrás con la muestra. Volvamos por el camino."
 		"nido":
-			subtitulo.text = "Tienes mi mando. Enciende las tres cajas de energía por orden y tráeme de vuelta. La tripulación espera bajo techo."
-	aviso = _texto("", Rect2(379, 609, 620, 26), 15, CIAN)
+			lectura_radio.text = "Pluto · Enciende las tres cajas en orden. La tripulación espera bajo techo."
 	_actualizar_aviso()
 
 
-func _interfaz_sondeo() -> void:
-	_panel(Rect2(271, 594, 738, 104), FONDO)
-	var titulo := "Iris · Caja de muestras" if expedicion.muestra_lista else "Iris · ¿Dónde hay hielo?"
-	_texto(titulo, Rect2(292, 601, 696, 21), 15, CIAN)
-	var guia := "El hielo ya está fuera. Sigue la flecha hasta la caja." if expedicion.muestra_lista else "Compara dos lugares. Busca hielo debajo de la tierra."
-	subtitulo = _texto(guia, Rect2(292, 623, 696, 30), 16)
-	boton_sondeo = _boton("", Rect2(292, 654, 696, 34), _interactuar_sondeo, CIAN)
-	boton_sondeo.focus_mode = Control.FOCUS_NONE
-	_actualizar_boton_sondeo()
+func _radio_de_campo(frase: String, altura := 572.0) -> void:
+	_panel(Rect2(248, altura, 784, 55), Color("#171c25ed"), Color("#394752"))
+	lectura_radio = _texto(frase, Rect2(270, altura + 5, 740, 43), 19)
+	lectura_radio.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	lectura_radio.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	accion_radio = _texto("", Rect2(210, 645, 860, 36), 17, CIAN)
+	accion_radio.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	accion_radio.add_theme_color_override("font_outline_color", Color("#131820"))
+	accion_radio.add_theme_constant_override("outline_size", 4)
+
+
+func _camino_del_hielo() -> void:
+	_crear_puesto(false, AREA)
+	match fase:
+		"sondeo":
+			_radio_de_campo("Iris · Compara dos sitios. El hielo puede estar bajo la tierra.")
+			_actualizar_sondeo()
+		"taladro":
+			_radio_de_campo("Iris · Voy a perforar donde vimos la veta.")
+		"hallazgo":
+			_radio_de_campo("Teo · Cierro la caja. En la base veremos si podemos usar esa agua.")
 
 
 func _sondeo_cercano() -> int:
@@ -628,88 +610,59 @@ func _sondeo_cercano() -> int:
 
 
 func _cerca_caja() -> bool:
-	return posicion.distance_to(PuestoUmbra.CAJA_HIELO) <= ExpedicionHielo.ALCANCE
+	return posicion.distance_to(PuestoUmbra.CAJA_HIELO) <= 9.0
 
 
-func _actualizar_boton_sondeo() -> void:
+func _actualizar_sondeo() -> void:
+	if expedicion.muestra_en_mano:
+		accion_radio.text = "Camina hasta la caja abierta para guardar la muestra."
+		return
 	var sitio := _sondeo_cercano()
-	var accion := expedicion.accion(sitio, _cerca_caja())
-	boton_sondeo.disabled = accion == ExpedicionHielo.Accion.CAMINAR
-	match accion:
+	match expedicion.accion(sitio):
 		ExpedicionHielo.Accion.EXAMINAR:
-			boton_sondeo.text = "Examinar este suelo  ·  E"
+			accion_radio.text = "Pulsa E junto a la marca para mirar bajo el suelo."
 		ExpedicionHielo.Accion.PERFORAR:
-			boton_sondeo.text = "Perforar aquí  ·  E"
+			accion_radio.text = "Pulsa E para perforar aquí."
 		ExpedicionHielo.Accion.RECOGER:
-			boton_sondeo.text = "Guardar hielo en la caja  ·  E"
+			accion_radio.text = "Pulsa E junto al hielo para recogerlo."
 		_:
 			if expedicion.muestra_lista:
-				boton_sondeo.text = "Camina a la derecha →  Caja de muestras"
-			elif expedicion.examinados.is_empty():
-				boton_sondeo.text = "Camina a la derecha →  Busca los aros blancos"
-			elif expedicion.examinados.size() == 1:
-				boton_sondeo.text = "Camina hasta otro aro blanco para comparar"
+				accion_radio.text = "Acércate al hielo que dejó Iris junto al taladro."
 			else:
-				boton_sondeo.text = "Acércate a una marca para examinar o perforar"
+				accion_radio.text = "Usa A o D, o las flechas, para acercarte a las marcas."
 
 
 func _interactuar_sondeo() -> void:
 	if fase != "sondeo":
 		return
-	var resultado := expedicion.interactuar(_sondeo_cercano(), _cerca_caja())
+	var resultado := expedicion.interactuar(_sondeo_cercano())
 	puesto.corte_suelo = expedicion.lectura
 	match resultado:
 		ExpedicionHielo.Resultado.EXAMINADO:
-			subtitulo.text = ExpedicionHielo.LECTURAS[expedicion.lectura]
+			lectura_radio.text = "Iris · " + ExpedicionHielo.LECTURAS[expedicion.lectura]
 		ExpedicionHielo.Resultado.SECO:
 			puesto.polvo_taladro_hasta = puesto.tiempo + 0.7
-			subtitulo.text = "Solo salió tierra. Gastamos 1 punto de batería. Busca hielo debajo del suelo."
+			lectura_radio.text = "Iris · Salió tierra. El taladro usó un punto de la carga."
 		ExpedicionHielo.Resultado.SECO_REPETIDO:
-			subtitulo.text = "Iris guarda la batería. Prueba en el lugar con la franja de hielo."
+			lectura_radio.text = "Iris · Guardemos la carga. Prueba donde viste la veta de hielo."
 		ExpedicionHielo.Resultado.PERFORANDO:
 			fase = "taladro"
 			reloj = 0.0
 			_render()
 			return
-		ExpedicionHielo.Resultado.GUARDADO:
-			fase = "hallazgo"
-			reloj = 0.0
-			_render()
-			return
-	_actualizar_boton_sondeo()
+		ExpedicionHielo.Resultado.EN_MANO:
+			puesto.hielo_en_mano = true
+			lectura_radio.text = "Iris · Llévalo a la caja fría para que no se mezcle con el polvo."
+	_actualizar_sondeo()
 
 
-func _revisar_rueda() -> void:
-	if fase != "sujetar":
-		return
-	fase = "decision"
-	_render()
-
-
-func _apertura() -> void:
-	_crear_puesto(false, AREA)
-	_panel(Rect2(168, 462, 944, 228), FONDO)
-	_imagen(IRIS_ORDEN, Rect2(188, 471, 53, 53), TextureRect.STRETCH_KEEP_ASPECT_CENTERED)
-	_texto("Iris · Teo sigue atrapado", Rect2(263, 473, 820, 27), 20, CIAN)
-	_texto("La camioneta tiene una rueda rota. Podemos alzarla ya con el gato eléctrico o esperar una tregua y usar el gato manual.",
-		Rect2(263, 504, 817, 48), 18)
-	_boton("Ayudar a Teo ahora", Rect2(195, 558, 429, 43), _elegir.bind(SolUno.RESCATE), CIAN)
-	_boton("Esperar a que baje el viento", Rect2(655, 558, 429, 43), _elegir.bind(SolUno.ESPERA), AMBAR)
-	_texto("Usas 6 puntos de batería. Teo sale antes y las plantas se quedan sin luz.",
-		Rect2(196, 611, 424, 65), 17, MUTED)
-	_texto("Gastas 4 puntos en el equipo y la espera. Las plantas conservan luz. Teo necesita más cuidados.",
-		Rect2(656, 611, 424, 65), 17, MUTED)
-
-
-func _elegir(ruta: String) -> void:
-	if fase != "decision":
-		return
-	estado.abrir(ruta)
-	estado.energia -= expedicion.gasto
-	regreso_distante = true
-	reloj = 0.0
-	fase = "apagado" if ruta == SolUno.ESPERA else "extraccion"
-	_render()
+func _actualizar_regreso() -> void:
+	if not regreso_distante and posicion.distance_to(PuestoUmbra.ESCLUSA) <= 42.0:
+		accion_radio.text = "Acércate a la puerta. La abriremos al llegar."
+	elif puesto.intensidad_viento() >= 0.55 and not puesto.bajo_abrigo():
+		accion_radio.text = "Viento fuerte. Mantén Shift para sujetarte."
+	else:
+		accion_radio.text = "Sigue el camino de vuelta al refugio."
 
 
 func _base() -> void:
@@ -722,8 +675,9 @@ func _base() -> void:
 	if expedicion.muestra_guardada and not muestra_procesada:
 		_panel(Rect2(913, 67, 343, 36), FONDO)
 		_texto("Muestra de hielo · En el refugio", Rect2(929, 74, 312, 26), 16, CIAN)
-	if operacion == "medicina":
-		_mostrar_cuidados()
+	if operacion == "agua":
+		_radio_de_campo("")
+		_actualizar_agua(0.0)
 		return
 	if not modulo.is_empty():
 		_terminal()
@@ -736,12 +690,9 @@ func _base() -> void:
 		objetivo = "Primero · " + objetivo
 		if estado.sol == 1 and expedicion.gasto > 0:
 			pista = "El taladro gastó 1 punto en suelo seco. Ve a Energía y devuelve el aire y el calor."
-	elif estado.disponible("medicina") and estado.recuperacion < 2:
-		objetivo = "Ahora · Elige si dedicas un turno a Teo"
-		pista = "Puedes cuidarlo en Enfermería u operar otro equipo. Si lo dejas para mañana, sus cuidados seguirán usando batería."
 	else:
 		objetivo = "Por último · Descansa en el dormitorio"
-		pista = "Cruza Control hacia Enfermería y gira arriba en el corredor. Revisa las reservas antes de cerrar el día."
+		pista = "Desde Control, toma el corredor este y gira hacia arriba. Revisa las reservas antes de cerrar el día."
 	if not mensaje.is_empty():
 		pista = mensaje
 	_texto("Pluto   /   " + objetivo, Rect2(306, 614, 740, 25), 20, CIAN)
@@ -773,7 +724,7 @@ func _terminal() -> void:
 		_modal("Pluto · Dormitorio", texto)
 		_boton("Descansar y terminar el día", Rect2(308, 389, 660, 48), _cerrar, AMBAR, not listo)
 	elif modulo == "cierre":
-		_modal("Pluto · Puerta del refugio", "Cerramos la puerta exterior y ajustamos la presión antes de abrir la puerta interior. Para ir al dormitorio, cruza Control hacia Enfermería y gira arriba antes de su puerta.")
+		_modal("Pluto · Puerta del refugio", "Cerramos la puerta exterior y ajustamos la presión antes de abrir la puerta interior. Para ir al dormitorio, cruza Control por el corredor este y gira hacia arriba.")
 	elif PRUEBAS_ANEXOS.has(modulo):
 		_mostrar_prueba_anexo()
 	elif DETALLES.has(modulo):
@@ -781,16 +732,14 @@ func _terminal() -> void:
 		_modal(str(ficha[0]), str(ficha[1]))
 	else:
 		_operar_terminal()
-	var salida := Rect2(756, 632, 284, 47) if modulo == "medicina" else Rect2(308, 480, 660, 36)
-	_boton("Volver al mapa  ·  Esc", salida, _salir_terminal, MUTED)
-	if modulo != "medicina":
-		for indice in range(primer_control, pantalla.get_child_count()):
-			var elemento := pantalla.get_child(indice) as Control
-			if elemento.size == AREA.size:
-				continue
-			elemento.position.y = 438 + (elemento.position.y - 193) * 0.73
-			if elemento is Panel:
-				elemento.size.y = 252
+	_boton("Volver al mapa  ·  Esc", Rect2(308, 480, 660, 36), _salir_terminal, MUTED)
+	for indice in range(primer_control, pantalla.get_child_count()):
+		var elemento := pantalla.get_child(indice) as Control
+		if elemento.size == AREA.size:
+			continue
+		elemento.position.y = 438 + (elemento.position.y - 193) * 0.73
+		if elemento is Panel:
+			elemento.size.y = 252
 
 
 func _mostrar_prueba_anexo() -> void:
@@ -808,6 +757,7 @@ func _mostrar_prueba_anexo() -> void:
 func _resolver_prueba_anexo(correcta: bool) -> void:
 	if correcta:
 		pruebas_anexos[modulo] = true
+		_guardar_punto()
 	else:
 		pista_anexo = PRUEBAS_ANEXOS[modulo][5]
 	_render()
@@ -830,23 +780,17 @@ func _operar_terminal() -> void:
 					accion = "Tomar el mando de Pluto"
 					descripcion = "3 puntos de batería. Pilota a Pluto, enciende las tres cajas de energía de afuera y regresa al refugio. Recuperas 6 puntos de batería."
 			"cultivos":
-				accion = "Preparar agua con hielo" if estado.sol <= 3 else "Recoger comida"
-				descripcion = "4 puntos de batería. El hielo del depósito aporta 4 de agua y 1 dato." if estado.sol <= 3 else "4 puntos de batería. Ajusta el cultivo y recoge 4 raciones."
+				accion = "Recoger comida"
+				descripcion = "Usa 4 puntos de carga para cuidar las plantas y recoger 4 raciones."
 			"radio":
 				accion = "Transmitir informe"
 				descripcion = "2 puntos de batería. Alinea la antena para enviar el registro. La confirmación tarda."
-	if id == "medicina":
-		descripcion = "3 puntos de batería. Teo necesita dos sesiones para volver al equipo. Estado actual: " + estado.paciente
+	if id == "agua" and not estado.disponible(id):
+		descripcion = "Quedan pocos turnos o poca carga. Ve a Energía si necesitas recargar para tratar el agua."
 	if estado.acciones.has(id):
 		accion = "Tarea completada"
 	elif not estado.disponible(id):
 		accion = "Reserva batería o turnos para la misión y la noche"
-	if id == "medicina":
-		_panel(Rect2(213, 525, 854, 179), FONDO)
-		_texto("Enfermería · Teo en observación", Rect2(238, 539, 800, 26), 20, CIAN)
-		_texto(descripcion, Rect2(238, 573, 802, 54), 18)
-		_boton(accion, Rect2(238, 632, 500, 47), _abrir_operacion, CIAN, not estado.disponible(id))
-		return
 	_modal("Pluto   /   " + titulo, descripcion)
 	_boton(accion, Rect2(308, 387, 660, 48), _abrir_operacion, CIAN, not estado.disponible(id))
 
@@ -857,9 +801,6 @@ func _abrir_operacion() -> void:
 	if _requiere_tarea_principal(modulo):
 		return
 	operacion = modulo
-	if operacion == "medicina":
-		ferula_recogida = false
-		tecla_cuidados = false
 	if modulo == "energia" and estado.sol == 4:
 		regreso_nora = posicion
 		posicion = PuestoUmbra.ESCLUSA
@@ -870,42 +811,18 @@ func _abrir_operacion() -> void:
 		return
 	paso_operacion = 0
 	reserva_para_aire = false
-	valvulas = [0, 0, 0]
+	etapa_agua = 0
+	avance_agua = 0.0
+	tecla_agua = false
+	muestra_retenida = false
 	ajuste_radio = 0.0
 	aviso_operacion = ""
 	_render()
 
 
-func _mostrar_cuidados() -> void:
-	puesto.juego_cuidados = true
-	puesto.lleva_ferula = ferula_recogida
-	_panel(Rect2(213, 600, 854, 104), FONDO)
-	_texto("Nora · Cuidar a Teo", Rect2(238, 612, 800, 24), 20, CIAN)
-	guia_cuidados = _texto("", Rect2(238, 642, 800, 54), 18)
-	guia_cuidados.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_actualizar_cuidados(0.0)
-
-
-func _actualizar_cuidados(delta: float) -> void:
-	var cerca := posicion.distance_to(PuestoUmbra.CAMA_TEO) <= 13.0
-	if ferula_recogida and cerca and tecla_cuidados:
-		puesto.progreso_cuidados = minf(1.0, puesto.progreso_cuidados + delta / TIEMPO_CUIDADOS)
-		if puesto.progreso_cuidados >= 1.0:
-			_completar_operacion()
-			return
-		var avance := roundi(puesto.progreso_cuidados * 100)
-		guia_cuidados.text = "Nora está cerrando la correa. Mantén E · %d%%" % avance
-	elif ferula_recogida and cerca:
-		guia_cuidados.text = "Mantén E junto a Teo para ajustar la correa. Esc cierra la actividad."
-	elif ferula_recogida:
-		guia_cuidados.text = "Lleva la férula a Teo. Es el soporte que mantiene quieta la pierna."
-	else:
-		guia_cuidados.text = "Ve al botiquín y pulsa E para recoger el soporte de la pierna."
-
-
 func _notification(cambio: int) -> void:
 	if cambio == NOTIFICATION_APPLICATION_FOCUS_OUT:
-		tecla_cuidados = false
+		tecla_agua = false
 
 
 func _volver_nido(completado: bool) -> void:
@@ -922,9 +839,6 @@ func _volver_nido(completado: bool) -> void:
 func _procedimiento(titulo: String) -> void:
 	if operacion == "energia":
 		_tablero_energia()
-		return
-	if operacion == "cultivos" and estado.sol in [2, 3]:
-		_circuito_agua()
 		return
 	var ficha: Array = PLANES[operacion]
 	var pasos: Array = ficha[0]
@@ -982,32 +896,40 @@ func _conectar_reserva() -> void:
 		_completar_operacion()
 
 
-func _circuito_agua() -> void:
-	var aviso_agua := "Conecta las tuberías para derretir el hielo y filtrar el agua. Al final, envíala a revisión antes de que llegue al tanque."
-	if not aviso_operacion.is_empty():
-		aviso_agua = aviso_operacion
-	_modal("Pluto   /   CIRCUITO DE AGUA", aviso_agua)
-	for i in range(CONDUCTOS.size()):
-		var valvula: Array = CONDUCTOS[i]
-		var x := 308 + i * 222
-		_texto(valvula[0], Rect2(x, 365, 207, 23), 16, AMBAR)
-		_boton(valvula[1 + valvulas[i]], Rect2(x, 391, 206, 36), _girar_valvula.bind(i), CIAN)
-	_boton("Probar caudal", Rect2(308, 435, 660, 32), _probar_caudal, CIAN)
+func _cerca_equipo_agua() -> bool:
+	return posicion.distance_to(PuestoUmbra.EQUIPO_AGUA[etapa_agua]) <= PuestoUmbra.ALCANCE_AGUA
 
 
-func _girar_valvula(indice: int) -> void:
-	valvulas[indice] = (valvulas[indice] + 1) % 3
-	aviso_operacion = ""
-	_render()
-
-
-func _probar_caudal() -> void:
-	for i in range(RUTA_AGUA.size()):
-		if valvulas[i] != RUTA_AGUA[i]:
-			aviso_operacion = "La prueba se detuvo en %s. Corrige esa salida y comprueba el caudal otra vez." % CONDUCTOS[i][0].to_lower()
-			_render()
-			return
-	_completar_operacion()
+func _actualizar_agua(delta: float) -> void:
+	var cerca := _cerca_equipo_agua()
+	if cerca and tecla_agua:
+		avance_agua = minf(1.0, avance_agua + delta / DURACION_ETAPA_AGUA)
+		if avance_agua >= 1.0:
+			if etapa_agua == PASOS_AGUA.size() - 1:
+				if muestra_retenida:
+					_completar_operacion()
+					return
+				muestra_retenida = true
+				etapa_agua = 1
+			else:
+				etapa_agua += 1
+			avance_agua = 0.0
+			tecla_agua = false
+			cerca = _cerca_equipo_agua()
+	puesto.agua_en_curso = true
+	puesto.etapa_agua = etapa_agua
+	puesto.avance_agua = avance_agua
+	var explicacion := [
+		"La caja trajo hielo con tierra. Derrítelo en el equipo marcado.",
+		"El agua sigue turbia. Pásala por el equipo que quita las impurezas.",
+		"Se ve clara. Comprueba que sea segura antes de enviarla al tanque.",
+	]
+	var lectura: String = explicacion[etapa_agua]
+	if muestra_retenida and etapa_agua == 1:
+		lectura = "La prueba detectó impurezas. El tanque sigue cerrado. Vuelve a tratar la muestra."
+	lectura_radio.text = "Pluto · " + lectura
+	var instruccion: String = "Mantén E para " + PASOS_AGUA[etapa_agua].to_lower() if cerca else "Camina hasta el equipo marcado."
+	accion_radio.text = instruccion + "   ·   Carga al terminar: %d puntos   ·   Esc para salir" % SolUno.ACCIONES.agua.costo
 
 
 func _ajustar_radio(valor: float) -> void:
@@ -1044,16 +966,17 @@ func _completar_operacion() -> void:
 	match operacion:
 		"energia": mensaje = "El refugio vuelve a tener energía para mantener el aire y el calor."
 		"cultivos":
-			if estado.sol in [2, 3]:
-				muestra_procesada = true
-			mensaje = "El agua pasó el filtro y la revisión de calidad. El depósito tiene 4 unidades más." if estado.sol in [2, 3] else "Sala de plantas estabilizado. Revisa las raciones antes de cerrar."
-		"medicina": mensaje = "Teo volverá al turno en el día siguiente." if estado.recuperacion >= 2 else "Teo descansa. Falta otra sesión para que vuelva al turno."
+			mensaje = "Plantas protegidas. Revisa las raciones antes de cerrar."
+		"agua":
+			muestra_procesada = true
+			mensaje = "La muestra pasó la revisión. El tanque tiene 4 unidades más de agua segura."
 		"radio": mensaje = "Informe transmitido. La respuesta de Tierra llegará con retraso."
+	_guardar_punto()
 	_salir_terminal()
 
 
 func _salir_terminal() -> void:
-	tecla_cuidados = false
+	tecla_agua = false
 	modulo = ""
 	operacion = ""
 	_render()
@@ -1074,14 +997,14 @@ func _relevo() -> void:
 	var titulo := "Resumen del día %d" % estado.sol
 	if final:
 		titulo = "Misión interrumpida" if informe.soporte <= 0 else "La base resistió"
-		if informe.soporte >= 80 and estado.recuperacion >= 2 and informe.muestras >= 3 and informe.informe_hoy:
+		if informe.soporte >= 80 and informe.muestras >= 3 and informe.informe_hoy:
 			titulo = "Misión completada"
 	_imagen(PuestoUmbra.TORMENTA if estado.sol < 5 else EXTERIOR, AREA)
 	var reporte := "Batería %d/24 · Comida %d · Agua %d · Estado del refugio %d%%
-Datos de misión: %d. Teo: %s." % [
-		informe.energia, informe.raciones, informe.agua, informe.soporte, informe.muestras, informe.paciente]
+Datos de misión: %d." % [
+		informe.energia, informe.raciones, informe.agua, informe.soporte, informe.muestras]
 	_modal(titulo, reporte)
-	var nota := "Mañana: %d puntos de batería para los cuidados de Teo." % informe.energia_comprometida
+	var nota := "Mañana comienza un nuevo turno."
 	if estado.cultivo == "En pausa":
 		nota += " Las plantas siguen a oscuras. Mañana comeremos de la reserva."
 	elif estado.sol == 1:
@@ -1090,9 +1013,9 @@ Datos de misión: %d. Teo: %s." % [
 		if informe.soporte <= 0:
 			nota = "Pluto: El refugio agotó su margen de aire y calor."
 		elif titulo == "Misión completada":
-			nota = "Pluto: El informe salió. Teo volvió al turno y el refugio tiene margen para seguir operando."
+			nota = "Pluto: El informe salió. La tripulación y el refugio tienen margen para seguir operando."
 		else:
-			nota = "Pluto: El informe salió. Queda trabajo en cuidados o aire y calor antes de prolongar la misión."
+			nota = "Pluto: El informe salió. Queda trabajo en las reservas o el soporte vital antes de prolongar la misión."
 	_texto(nota, Rect2(308, 378, 661, 59), 18, MUTED)
 	if not final:
 		_boton("Comenzar día %d" % (estado.sol + 1), Rect2(308, 458, 420, 48), _siguiente_sol, CIAN)
@@ -1109,10 +1032,12 @@ func _siguiente_sol() -> void:
 	modulo = ""
 	operacion = ""
 	fase = "base"
+	_guardar_punto()
 	_render()
 
 
 func _reiniciar() -> void:
+	GuardadoMision.borrar()
 	estado = SolUno.new()
 	terminal_pendiente = ""
 	expedicion = ExpedicionHielo.new()
@@ -1124,6 +1049,41 @@ func _reiniciar() -> void:
 	operacion = ""
 	fase = "inicio"
 	_render()
+
+
+func _guardar_punto() -> void:
+	var punto := {
+		"fase": fase,
+		"posicion": posicion,
+		"panel_comprobado": panel_comprobado,
+		"carga_hielo": expedicion.muestra_guardada,
+		"gasto_taladro": expedicion.gasto,
+		"muestra_procesada": muestra_procesada,
+		"regreso_distante": regreso_distante,
+		"pruebas_anexos": pruebas_anexos,
+		"mensaje": mensaje,
+	}
+	if not GuardadoMision.guardar(punto, estado):
+		push_warning("No se pudo guardar el punto de misión.")
+
+
+func _recuperar_punto() -> bool:
+	var punto := GuardadoMision.cargar(estado)
+	if punto.is_empty():
+		return false
+	fase = punto.fase
+	posicion = punto.posicion
+	panel_comprobado = punto.get("panel_comprobado", false) == true
+	expedicion.muestra_guardada = punto.get("carga_hielo", false) == true
+	expedicion.gasto = 1 if punto.get("gasto_taladro", 0) == 1 else 0
+	muestra_procesada = punto.get("muestra_procesada", false) == true
+	regreso_distante = punto.get("regreso_distante", false) == true
+	var pruebas: Variant = punto.get("pruebas_anexos")
+	if pruebas is Dictionary and pruebas.get("sello_traje", false) == true:
+		pruebas_anexos["sello_traje"] = true
+	mensaje = str(punto.get("mensaje", ""))
+	reloj = 0.0
+	return true
 
 
 func _estilo(color: Color, borde: Color) -> StyleBoxFlat:

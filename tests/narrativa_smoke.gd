@@ -1,0 +1,101 @@
+extends SceneTree
+## Ejecutar con perfil temporal para no tocar la partida del jugador.
+func _initialize() -> void:
+	call_deferred("_probar")
+
+func _captura(nombre: String) -> void:
+	await process_frame
+	await RenderingServer.frame_post_draw
+	DirAccess.make_dir_recursive_absolute("res://build/qa")
+	root.get_texture().get_image().save_png("res://build/qa/" + nombre + ".png")
+
+func _tramo(puesto: PuestoUmbra, origen: Vector2, destino: Vector2) -> void:
+	for i in range(int(origen.distance_to(destino)) + 1):
+		var punto := origen.move_toward(destino, float(i))
+		assert(puesto.transitable(punto), "Ruta bloqueada en %s" % punto)
+
+func _probar() -> void:
+	var juego = load("res://scenes/umbra.tscn").instantiate()
+	root.add_child(juego)
+	juego.set_process(false)
+	juego._reiniciar()
+	assert(juego.fase == "ida")
+	juego._process(4.5)
+	await _captura("trayectoria")
+	juego._process(4.6)
+	assert(juego.fase == "aterrizaje")
+	juego._process(10.1)
+	assert(juego.fase == "percy")
+	await _captura("percy")
+	for i in range(3): juego._accion()
+	assert(juego.fase == "camino_base")
+	juego.puesto.punto = PuestoUmbra.ESCLUSA
+	juego._process(0.02)
+	assert(juego.fase == "esclusa")
+	juego._process(3.6)
+	assert(juego.fase == "base")
+	var mapa: PuestoUmbra = juego.puesto
+	_tramo(mapa, Vector2(402, 394), Vector2(402, 245))
+	_tramo(mapa, Vector2(402, 245), Vector2(191, 245))
+	_tramo(mapa, Vector2(191, 245), Vector2(191, 42))
+	_tramo(mapa, Vector2(191, 42), Vector2(25, 42))
+	_tramo(mapa, Vector2(25, 42), PuestoUmbra.EQUIPO_AGUA[0])
+	_tramo(mapa, Vector2(402, 245), Vector2(716, 245))
+	_tramo(mapa, Vector2(538, 245), Vector2(538, 133))
+	_tramo(mapa, Vector2(538, 133), Vector2(681, 133))
+	_tramo(mapa, Vector2(681, 133), Vector2(681, 89))
+	_tramo(mapa, Vector2(538, 133), Vector2(404, 133))
+	_tramo(mapa, Vector2(404, 133), Vector2(404, 97))
+	assert(not mapa.transitable(Vector2(1000, 160)))
+	assert(not mapa.transitable(Vector2(100, 190)))
+	juego.posicion = Vector2(402, 329)
+	juego._mostrar()
+	await _captura("umbral")
+	juego.puesto.plano = true
+	juego.puesto.actualizar_camara(3)
+	juego.puesto.queue_redraw()
+	await _captura("plano")
+	for dia in range(1, 6):
+		assert(juego.campana.sol == dia)
+		juego.posicion = PuestoUmbra.TERMINALES.dormitorio
+		juego._mostrar()
+		juego._accion()
+		assert(juego.fase == "noche")
+		juego._process(1.5)
+		assert(is_equal_approx(juego.velo.color.a, 0.5))
+		if dia == 1: await _captura("noche")
+		juego._process(1.51)
+		assert(juego.fase == "amanecer")
+		assert(juego.campana.noches == dia)
+		var guardado = load("res://scripts/campana_narrativa.gd").new()
+		assert(guardado.cargar().fase == "base" and guardado.noches == dia)
+		juego._process(1.6)
+		assert(juego.fase == "base")
+	assert(juego.campana.sol == 5 and juego.campana.listo_para_regresar())
+	juego._accion()
+	assert(juego.fase == "base", "No debe existir una sexta noche")
+	juego.posicion = PuestoUmbra.TERMINALES.radio
+	juego._mostrar()
+	juego._accion()
+	assert(juego.puesto.objetivo_mision == "cierre")
+	juego.posicion = PuestoUmbra.TERMINALES.cierre
+	juego._mostrar()
+	juego._accion()
+	assert(juego.fase == "camino_nave")
+	juego._accion()
+	assert(juego.fase == "camino_nave", "No se puede embarcar lejos de la nave")
+	juego.posicion = Vector2(220, PuestoUmbra.SUELO)
+	juego._accion()
+	assert(juego.fase == "pilotaje")
+	juego._accion()
+	assert(juego.fase == "despegue")
+	juego._process(6.1)
+	assert(juego.fase == "regreso")
+	juego._process(9.1)
+	juego._process(1.1)
+	assert(juego.fase == "epilogo")
+	juego._process(10.1)
+	assert(juego.boton.visible)
+	await _captura("epilogo")
+	print("NARRATIVA_OK: rutas, ida, esclusa, cinco noches, guardado y regreso verificados.")
+	quit()
