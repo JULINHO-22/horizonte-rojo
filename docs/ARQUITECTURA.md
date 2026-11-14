@@ -14,13 +14,20 @@ Los nombres internos `umbra`, `SolUno` y `nido` vienen de versiones anteriores. 
 
 ## Flujo de escenas
 
-`inicio → aterrizaje → chequeo → briefing → salida → sondeo → taladro → sondeo → hallazgo → exterior → caida → averia → decision → extraccion → evacuacion → base → noche → relevo`. El taladro avanza en tres pasos mediante el botón de acción o E. Tras levantar el hielo, el segundo `sondeo` lleva a la caja. La ruta de espera inserta `apagado → abrigo → tregua` antes de `extraccion`. Las dos rutas pasan por `esclusa_entrada` antes de la base. En el navegador se entra al aterrizaje desde el botón de la portada web. Al avanzar de día, Nora despierta en el dormitorio. El cuarto día, la misión de Energía abre la fase exterior `nido` para controlar a Pluto.
+`inicio → aterrizaje → chequeo → salida → sondeo → taladro → sondeo → hallazgo → exterior → caida → averia → sujetar → decision → extraccion → evacuacion → base → noche → relevo`. En `sondeo`, E y el botón visible ejecutan la misma acción contextual. `expedicion_hielo.gd` decide qué acción está disponible y guarda las lecturas, el gasto de un intento seco y el estado de la muestra. Tras la animación del taladro, la caja se puede usar para recoger el hielo. Al recogerlo, empieza `hallazgo` y sube la intensidad del polvo. La ruta de espera inserta `apagado → abrigo → tregua` antes de `extraccion`. Las dos rutas pasan por `esclusa_entrada` antes de la base. En el navegador se entra al aterrizaje desde el botón de la portada web. Al avanzar de día, Nora despierta en el dormitorio. El cuarto día, la misión de Energía abre la fase exterior `nido` para controlar a Pluto.
+
+El sondeo dibuja los cortes de terreno a ras del suelo y marca la caja con un aro y una flecha. Los tres sprites recortados de ImageGen son `caja_hielo_cerrada.png`, `caja_hielo_abierta.png` y `nucleo_hielo.png`. La hoja original se pidió con una caja de campo aislada, la misma caja abierta y un trozo irregular de hielo con costra de tierra. La caja cerrada usa como referencia la posición del personaje que la lleva.
+
 
 En superficie se camina sobre un eje horizontal. El refugio y el barranco tienen panoramas distintos. Dentro, las áreas `ROOMS` y `PASILLOS` permiten el paso, `EQUIPOS` lo bloquea y `TERMINALES` fija dónde interactuar. Al mover un mueble, puerta o panorama, comprueba su posición respecto de esas coordenadas. La cámara sigue al jugador. En una sala, `VISTAS` limita el encuadre al interior de la ilustración. En corredores la cámara sigue la posición con un acercamiento intermedio. **M** muestra el plano general. En superficie, `DISTANCIA_PANORAMA` conecta ambas ilustraciones y compensa la coordenada local al cruzar el tramo compartido. El regreso conserva el mismo reloj al cambiar de panorama. `_dibujar_polvo` usa coordenadas de pantalla para cubrir todo el visor.
 
 El arte está en `assets/`. Los panoramas activos son `refugio_horizonte.png` y `barranco_horizonte.png`. `base.jpg` define la distribución del refugio y las ilustraciones de detalle se superponen en sus salas. Los ciclos de caminata usan hojas de ocho fotogramas. La caída de Teo usa cuatro recortes propios. Conserva los archivos `.import` y `.uid` generados por Godot junto al recurso que corresponda.
 
 Los dos anexos usan `PASO_ANEXOS` para los corredores y amplían `LIMITES_BASE`. Sus zonas de movimiento viven en `ROOMS`. `PRUEBAS_ANEXOS` define las dos comprobaciones opcionales y su resultado vive en memoria durante la partida. Estos resultados quedan fuera de `SolUno.relevo()`.
+
+Control usa la ilustración cenital generada con ImageGen en `assets/control_pasillos.png`. El encargo situó monitores y sillas al norte, dejó un piso continuo entre las puertas laterales y mantuvo la puerta sur hacia la esclusa. Las áreas de paso deben seguir las tres aberturas del dibujo. La entrada a Plantas se alcanza por el corredor este.
+
+Los cuidados de Teo usan el estado temporal de la interacción en `umbra.gd`. El sprite `assets/teo_reposo_cenital.png` se generó con ImageGen con el encargo de un astronauta rubio acostado visto desde arriba, con manta azul y fondo transparente. El dibujo de la férula y la correa acompaña el recorrido y el tiempo que se mantiene E. El turno se consume al terminar la animación.
 
 ### Ilustraciones de los anexos
 

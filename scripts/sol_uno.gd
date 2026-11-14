@@ -50,7 +50,7 @@ func abrir(ruta_elegida: String) -> void:
 	if ruta_elegida == RESCATE:
 		energia -= 6
 		cultivo = "En pausa"
-		paciente = "A salvo · necesita descanso"
+		paciente = "En pie · bajo observación"
 	elif ruta_elegida == ESPERA:
 		energia -= 4
 		paciente = "La lesión empeoró · necesita cuidados"
@@ -100,7 +100,7 @@ func aplicar(id: String) -> void:
 			cultivo = "Protegido"
 		"medicina":
 			recuperacion += 1
-			paciente = "Recuperado · activo" if recuperacion >= 2 else "Atendido · en reposo"
+			paciente = "Recuperado · activo" if recuperacion >= 2 else "Atendido · bajo observación"
 		"radio":
 			ciencia_enviada = true
 			if sol > 1:

@@ -4,6 +4,7 @@ Horizonte Rojo es un juego de gestión narrativa 2D en Godot 4.7.2 para un equip
 
 1. Lee [README.md](README.md) para ejecutar el juego.
 2. Abre solo la guía que corresponda a tu tarea.
+   - [Reto NASA](docs/RETO-NASA.md) para el enunciado, los criterios y las propuestas de niveles.
    - [Historia](docs/HISTORIA.md) para personajes, escenas y continuidad.
    - [Diseño](docs/DISEÑO.md) para reglas, balance y ciencia.
    - [Arquitectura](docs/ARQUITECTURA.md) para código, arte, contrato de estado y pruebas.
@@ -13,5 +14,7 @@ Horizonte Rojo es un juego de gestión narrativa 2D en Godot 4.7.2 para un equip
 La escena de inicio está en `scenes/umbra.tscn`. `scripts/umbra.gd` maneja el flujo, la guía de Pluto y las operaciones de terminal. `scripts/puesto.gd` dibuja el mapa, anima la tripulación y define cámara, colisiones y terminales. `scripts/sol_uno.gd` concentra los objetivos obligatorios y el estado de campaña. `web/umbra.html` es la plantilla de lanzamiento para el preset Web.
 
 En el mismo PR, registra los cambios relevantes en `CHANGELOG.md` y actualiza la guía afectada. Si cambia la instalación o el punto de entrada, actualiza `README.md`. Mantén esta cabecera breve y revisa su contenido al cambiar el alcance o la arquitectura.
+
+Para mecánicas nuevas, separa las reglas de la entrada, el dibujo y el diálogo. Mantén una sola fuente de verdad para cada estado y usa la misma acción para teclado y botones cuando hagan lo mismo. Comprueba el recorrido normal y los casos de error recuperables.
 
 Trabaja en ramas por tarea y acuerda con el equipo los cambios al contrato de relevo. Antes de integrar, abre el proyecto, prueba ambas rutas y comprueba el estado del Sol 2. Incluye en el PR los archivos de Godot junto a sus `.uid` y `.import` asociados. El binario local y la caché `.godot/` se excluyen.

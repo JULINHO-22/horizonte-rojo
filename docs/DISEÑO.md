@@ -4,13 +4,13 @@ Horizonte Rojo es el nombre del juego. Umbra es el nombre del refugio. Los panor
 
 ## Alcance actual
 
-El [guion y los personajes](HISTORIA.md) tienen su propia guía. La campaña tiene cinco objetivos obligatorios. Pluto guía al jugador y marca el módulo activo. El dormitorio permite terminar el día al cumplir la misión. Las acciones opcionales dejan margen de batería y turnos para la misión pendiente. El gasto se aplica al completar la tarea.
+El [guion y los personajes](HISTORIA.md) tienen su propia guía. La campaña tiene cinco objetivos obligatorios. Pluto guía al jugador y marca el módulo activo. El dormitorio permite terminar el día al cumplir la misión. Las acciones opcionales dejan margen de batería y turnos para la misión pendiente. Pluto guía primero a la tarea del día, luego ofrece dedicar el turno sobrante a otra sala y lleva al dormitorio para revisar el cierre. El gasto se aplica al completar la tarea.
 
 El arte combina las referencias del equipo e ilustraciones generadas para los panoramas, las salas y los personajes. El repositorio conserva los recursos del proyecto. El registro completo de autoría y permisos de las referencias está pendiente.
 
 ### Recorrido y zonas
 
-La esclusa al sur desemboca en Control, el centro de comunicaciones. Control conecta con Energía al oeste y Enfermería al este. Antes de Enfermería, un corredor señalizado sube y se bifurca hacia la sala de plantas a la izquierda y el dormitorio a la derecha. La cámara sigue a Nora por los corredores y encuadra el interior al entrar en una sala. Las salas mantienen su iluminación y **M** muestra el plano general. Control usa una ilustración de alta resolución con los accesos visibles. Los equipos bloquean el paso y los terminales se abren con **E** al acercarse. Iris patrulla Control. En Enfermería, Teo ocupa el colchón a lo largo. El dormitorio queda al noreste y se alcanza por el corredor que sale del paso entre Control y Enfermería. Allí se cierra el día. Los límites y puntos de interacción están en `scripts/puesto.gd`.
+La esclusa al sur desemboca en Control, el centro de comunicaciones. Control conecta con Energía al oeste y Enfermería al este. Antes de Enfermería, un corredor señalizado sube y se bifurca hacia la sala de plantas a la izquierda y el dormitorio a la derecha. La cámara sigue a Nora por los corredores y encuadra el interior al entrar en una sala. Las salas mantienen su iluminación y **M** muestra el plano general. Control tiene puertas al oeste, al este y al sur. La pared norte reúne las consolas. Para llegar a Plantas, cruza la puerta este, gira hacia arriba antes de Enfermería y luego a la izquierda. Los equipos bloquean el paso y los terminales se abren con **E** al acercarse. Iris patrulla Control. Si el objetivo principal está pendiente, las estaciones de trabajo muestran un aviso en la guía inferior y permiten seguir caminando. La radio se maneja desde una franja inferior. En Enfermería, Nora recoge el soporte de pierna en el botiquín y lo lleva a la camilla. Mantener E junto a Teo ajusta la correa y completa el turno de cuidados. El dormitorio queda al noreste y se alcanza por el corredor que sale del paso entre Control y Enfermería. Allí se cierra el día. Los límites y puntos de interacción están en `scripts/puesto.gd`.
 
 El laboratorio de agua está al oeste y se conecta por una puerta al fondo de Energía. Allí se pueden comparar las capas del hielo, leer cómo se conservan las muestras y practicar el filtrado. El taller queda al este, al final del pasillo que pasa bajo el dormitorio. Tiene un banco de reparación, un estante y un probador para encontrar fugas en un traje. Las dos pruebas guiadas son opcionales y permiten reintentar. El Sol 2 sigue usando la sala de plantas para el procesamiento que cuenta para la misión.
 
@@ -23,7 +23,7 @@ Los valores son de diseño y están sujetos a pruebas. **UE** significa unidad a
 | Rescatar ahora | 10 | En pausa | Estable en observación | 2 |
 | Cerrar y esperar | 12 | Estables | Lesión agravada | 2 |
 
-Cada módulo se puede operar una vez por sol. Cada tarea consume un turno de trabajo y respeta la reserva nocturna.
+Si se probó el taladro en suelo seco, ambas rutas disponen de un punto menos de batería. Cada módulo se puede operar una vez por sol. Cada tarea consume un turno de trabajo y respeta la reserva nocturna.
 
 | Módulo | Efecto |
 | --- | --- |

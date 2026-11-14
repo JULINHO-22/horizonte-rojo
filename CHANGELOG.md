@@ -1,5 +1,39 @@
 # Cambios
 
+## 2026-11-13 | Rescate y avisos en escena
+
+- La rueda dañada se muestra en la escena. El maletín sigue el guante del personaje que lo transporta.
+- Control indica los objetivos pendientes sin detener la marcha y abre la radio en una franja inferior cuando se puede usar.
+- Teo está de pie en observación tras el rescate temprano. La ruta de espera lo deja en cama hasta el primer cuidado.
+
+## 2026-11-13 | Pulido del barranco y el rescate
+
+- Los cortes del suelo quedan a la altura de los aros y la flecha señala la caja. Las indicaciones de Iris quedan al pie de la pantalla.
+- La caja abierta, la caja cerrada y el trozo de hielo tienen sprites propios. La caja cerrada se mueve con quien la transporta.
+- La camioneta se inclina al caer en la zanja. La rueda rota explica que quede inmovilizada y el gato permite liberar la bota de Teo.
+
+## 2026-11-13 | Salida y recolección de hielo
+
+- Iris acompaña la salida con diálogo durante el recorrido. El sondeo tiene una sola acción contextual, disponible con E o clic.
+- Guardar la muestra en la caja confirma la carga en pantalla y permite comenzar el regreso.
+
+## 2026-11-13 | Sondeo, pasillos y guía de tareas
+
+- El hielo se elige comparando capas del suelo. Una perforación en seco reduce la batería de llegada y la tripulación participa en la extracción correcta.
+- El cielo se oscurece antes del regreso y Teo lleva la caja. Su pose de reposo se ajusta al lado derecho del colchón.
+- Energía permite cruzar el pasillo oeste entre equipos. Plantas tiene recorridos alrededor de las bandejas.
+- Pluto guía la tarea principal antes de habilitar tareas opcionales. La reserva de Energía se prueba eligiendo qué alimentar y el cierre anticipa el efecto de cuidados y cultivo.
+
+## 2026-11-13 | Circulación, cuidados y rescate
+
+- Control tiene consolas al norte y un paso libre entre las puertas laterales. Los personajes de interior usan una escala intermedia ajustada a las puertas y estaciones y Plantas conserva su acceso por el corredor señalizado.
+- Para cuidar a Teo, se recoge una férula en el botiquín, se lleva a la camilla y se sujeta la correa con E. El panel de trabajo conserva visible la escena.
+- El fallo solar ocurre antes del rescate. Iris pide sujetar la cuerda. El jugador decide si usa la batería portátil del equipo para mover la pieza que atrapó la bota o espera con la cuerda sujeta.
+
+## 2026-11-12 | Enunciado del reto
+
+- Se documenta el reto de NASA Space Apps y su relación con las decisiones de cada sol.
+
 ## 2026-11-03 | Referentes reales de Umbra
 
 - La apertura presenta Umbra como una misión simulada. Pluto explica el ajuste de presión en la esclusa y la comprobación de calidad después de filtrar el agua.
