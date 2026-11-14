@@ -7,8 +7,8 @@ const TINTA := Color("#101c28")
 const PAPEL := Color("#fff1db")
 const CIAN := Color("#83eadc")
 const BIENVENIDA := [
-	"¡Bienvenidos a Marte! Soy Percy. Los acompañaré cuando salgan a explorar.",
-	"Las rocas guardan pistas del pasado de Marte. Aquí prepararemos las muestras para estudiarlas en la Tierra.",
+	"¡Bienvenidos a Marte! Soy Perseverance; pueden llamarme Percy. Llegué en 2021, mucho antes que ustedes.",
+	"Guardo muestras de roca para que podamos estudiar el pasado de Marte. Pluto es otro robot: los espera dentro del refugio.",
 	"Su casa durante cinco días será ese refugio. Pluto los espera dentro. ¡Vamos por el camino!",
 ]
 const FICHAS := {
@@ -50,6 +50,7 @@ func _process(delta: float) -> void:
 		"ida", "regreso":
 			viaje.progreso = clampf(reloj / 9.0, 0, 1)
 			viaje.queue_redraw()
+			titulo.text = viaje.etapa()
 			if reloj >= 9.0:
 				_cambiar("aterrizaje" if fase == "ida" else "llegada_tierra")
 		"aterrizaje":
@@ -288,7 +289,7 @@ func _mostrar() -> void:
 			boton.visible = true
 		"percy":
 			voz.text = "Percy · " + BIENVENIDA[indice_dialogo]
-			pista.text = "Percy es un personaje inspirado en el rover Perseverance."
+			pista.text = "Perseverance es un rover real de la NASA. Su diálogo y esta misión son ficción."
 			boton.visible = true
 		"camino_base":
 			voz.text = "Percy · Voy con ustedes hasta la puerta. Yo me quedo afuera; Pluto los guiará dentro."

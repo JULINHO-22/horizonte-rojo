@@ -1,42 +1,44 @@
 extends Node2D
-## Trayectoria cinematográfica resumida; no es un cálculo orbital.
-const NAVE := preload("res://assets/nave_llegada.png")
+## Montaje de viaje con arte generado. Meses de traslado, no una órbita simulada.
+const TIERRA := preload("res://assets/viaje_tierra.png")
+const MARTE := preload("res://assets/viaje_marte.png")
+const NAVE := preload("res://assets/nave_transferencia.png")
+const TAMANO := Vector2(1280, 720)
+const CAMBIO_PLANO := 0.50
 var progreso := 0.0
 var regreso := false
 
 func punto_ruta(t: float) -> Vector2:
-	var origen := Vector2(265, 466) if not regreso else Vector2(1030, 290)
-	var destino := Vector2(1030, 290) if not regreso else Vector2(265, 466)
-	return origen.bezier_interpolate(Vector2(330, 110), Vector2(890, 100), destino, t)
+	# Dos tomas con trayectoria suave y velocidades compatibles con el montaje.
+	if t < CAMBIO_PLANO:
+		return Vector2(440, 355).bezier_interpolate(Vector2(570, 320), Vector2(720, 250), Vector2(900, 210), smoothstep(0, CAMBIO_PLANO, t))
+	return Vector2(330, 280).bezier_interpolate(Vector2(480, 250), Vector2(650, 260), Vector2(815, 290), smoothstep(CAMBIO_PLANO, 1, t))
+
+func etapa() -> String:
+	if progreso < 0.35:
+		return "Dejamos Marte atrás" if regreso else "Dejamos la Tierra atrás"
+	if progreso < 0.65:
+		return "Meses de viaje después…"
+	return "Nos acercamos a la Tierra" if regreso else "Nos acercamos a Marte"
 
 func _draw() -> void:
-	draw_rect(Rect2(0, 0, 1280, 720), Color("#080f20"))
-	for i in range(170):
-		var punto := Vector2(fposmod(i * 117.31, 1280), fposmod(i * 71.77, 720))
-		draw_circle(punto, 0.6 + float(i % 3) * 0.35, Color(0.7, 0.84, 1.0, 0.25 + (i % 5) * 0.13))
-	_planeta(Vector2(265, 466), 102, Color("#23678f"), true)
-	_planeta(Vector2(1030, 290), 58, Color("#bd6048"), false)
-	var ruta := PackedVector2Array()
-	for i in range(101):
-		ruta.append(punto_ruta(i / 100.0))
-	draw_polyline(ruta, Color("#284357"), 2.0, true)
-	var tramo := PackedVector2Array()
-	for i in range(maxi(2, int(progreso * 100))):
-		tramo.append(punto_ruta(i / 100.0))
-	draw_polyline(tramo, Color("#83eadc"), 3.0, true)
+	var llegada := progreso >= CAMBIO_PLANO
+	var planeta: Texture2D = (TIERRA if regreso else MARTE) if llegada else (MARTE if regreso else TIERRA)
+	var tramo := clampf((progreso - CAMBIO_PLANO) * 2 if llegada else progreso * 2, 0, 1)
+	var escala := lerpf(1.0, 1.10, tramo) if llegada else lerpf(1.10, 1.0, tramo)
+	# Cubrir el visor sin deformar el arte ni exponer bordes durante el paneo.
+	var ajuste := maxf(TAMANO.x / planeta.get_width(), TAMANO.y / planeta.get_height())
+	var dimensiones := planeta.get_size() * ajuste * escala
+	var origen := (TAMANO - dimensiones) * 0.5
+	draw_texture_rect(planeta, Rect2(origen, dimensiones), false)
 	var lugar := punto_ruta(progreso)
-	var rumbo := punto_ruta(minf(progreso + 0.01, 1.0)) - punto_ruta(maxf(progreso - 0.01, 0.0))
-	draw_set_transform(lugar, rumbo.angle() + PI / 2)
-	draw_colored_polygon(PackedVector2Array([Vector2(-7, 15), Vector2(0, 32 + sin(progreso * 240) * 5), Vector2(7, 15)]), Color("#f0af74"))
-	var lado := Vector2(44, 64)
-	draw_texture_rect(NAVE, Rect2(-lado * 0.5, lado), false)
+	var ancho := lerpf(345, 215, tramo) if not llegada else lerpf(340, 230, tramo)
+	var tamano := Vector2(ancho, ancho * NAVE.get_height() / float(NAVE.get_width()))
+	# El módulo de descenso conserva su diseño y viaja acoplado al módulo de servicio.
+	draw_set_transform(lugar, lerpf(-0.10, 0.02, tramo))
+	draw_texture_rect(NAVE, Rect2(-tamano * 0.5, tamano), false)
 	draw_set_transform(Vector2.ZERO)
-
-func _planeta(centro: Vector2, radio: float, color: Color, tierra: bool) -> void:
-	draw_circle(centro, radio + 7, Color(color, 0.14))
-	draw_circle(centro, radio, color)
-	for i in range(7):
-		var x := -radio * 0.55 + i * radio * 0.16
-		var y := sin(i * 2.1) * radio * 0.45
-		draw_circle(centro + Vector2(x, y), radio * (0.13 + (i % 3) * 0.025), Color("#67a7a2") if tierra else Color("#9f4c3c"))
-	draw_arc(centro, radio - 1, PI * 0.7, PI * 1.7, 60, color.lightened(0.32), 3, true)
+	# Corte a negro: separa las localizaciones y representa el tiempo transcurrido.
+	var fundido := smoothstep(0.41, 0.50, progreso) * (1.0 - smoothstep(0.50, 0.59, progreso))
+	if fundido > 0:
+		draw_rect(Rect2(Vector2.ZERO, TAMANO), Color(0.015, 0.025, 0.045, fundido))

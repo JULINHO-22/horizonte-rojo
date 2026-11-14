@@ -1,5 +1,12 @@
 # Cambios
 
+## 2026-11-14 | Arte cinematográfico del viaje
+
+- Se generan fondos orbitales de Tierra y Marte y una nave de transferencia transparente; sustituyen los planetas geométricos y la miniatura de nave del montaje anterior.
+- Dos tomas animadas con paneo, trayectoria suave, escala y corte a negro para representar los meses de viaje. El regreso invierte los escenarios.
+- Percy representa a Perseverance, rover real llegado a Marte en 2021; recibe un sprite generado mecánico, distinto de Pluto.
+- Recursos y prompts íntegros en `docs/ARTE-VIAJE.md`. Se mantiene pendiente el diseño de actividades.
+
 ## 2026-11-14 | Guion del equipo, cinco noches y mapa compacto
 
 - Se copia y contrasta el guion de Google Docs en `docs/NARRATIVA-EQUIPO.md`, con alcances y pendientes explícitos.

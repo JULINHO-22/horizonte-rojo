@@ -2,7 +2,7 @@
 
 ## Fuente vigente
 
-El [guion compartido por el equipo](NARRATIVA-EQUIPO.md) sustituye la apertura anterior. La escena principal presenta viaje, bienvenida de Percy, entrada al refugio, cinco noches y regreso. **Las actividades diarias no están aprobadas ni se ejecutan en este recorrido.** Pluto permanece dentro y Percy fuera. El accidente y Enfermería están retirados.
+El [guion compartido por el equipo](NARRATIVA-EQUIPO.md) sustituye la apertura anterior. La escena principal presenta viaje, bienvenida de Percy, entrada al refugio, cinco noches y regreso. **Las actividades diarias no están aprobadas ni se ejecutan en este recorrido.** Pluto es un robot ficticio y permanece dentro. Percy representa al rover real Perseverance y guía fuera; su diálogo es una personificación para el juego. Llegó a Marte en 2021. El accidente y Enfermería están retirados.
 
 La tabla y el arco de las siguientes secciones se conservan como **historial del simulador provisional**, no como requisitos del equipo. Ver NARRATIVA-EQUIPO.md para la matriz de implementación y pendientes.
 

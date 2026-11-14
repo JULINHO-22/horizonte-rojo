@@ -4,9 +4,9 @@
 
 - `scenes/umbra.tscn` ejecuta `guion_inicio_final.gd`: entrada, movimiento, presentación y transiciones del guion.
 - `campana_narrativa.gd` conserva el día y las noches en `user://narrativa.cfg`, valida al cargar y escribe por archivo temporal. No aplica costes ni completa tareas.
-- `viaje_espacial.gd` dibuja la trayectoria resumida en ambas direcciones.
+- `viaje_espacial.gd` compone los fondos generados `viaje_tierra.png` / `viaje_marte.png` y la capa `nave_transferencia.png`, con curvas, paneo y corte a negro. `etapa()` aporta el título según el progreso.
 - `puesto.gd` sigue siendo la única geometría del mapa. Centro de agua al noroeste de Energía, Taller al este de Control. `PASO_AGUA` y `PASO_TALLER` conectan las puertas. La esclusa recorta el casco y extiende el piso interior sin terreno rojo; su puerta interior queda visualmente abierta tras la entrada.
-- `assets/percy.svg` es una ilustración original del guía exterior, inspirada en un rover de seis ruedas. No representa con precisión el Perseverance real.
+- `assets/percy_perseverance.png` representa artísticamente al rover real. Reemplaza al SVG provisional; Pluto conserva `dron.png`. Prompts y recursos: [Arte del viaje](ARTE-VIAJE.md).
 - `tests/narrativa_smoke.gd` verifica tramos de paso, ida, entrada, noches, guardado, embarque y regreso; genera capturas en `build/qa/`. Ejecutar en perfil temporal: no usar la partida del jugador.
 
 Flujo: `portada → ida → aterrizaje → percy → camino_base → esclusa → base → noche (3 s) → amanecer → base`. Tras la quinta noche: `base → camino_nave → pilotaje → despegue → regreso → llegada_tierra (1 s) → epilogo (10 s)`. Cada noche se confirma una vez. No se crea un sexto día. La posición al amanecer es el dormitorio.
