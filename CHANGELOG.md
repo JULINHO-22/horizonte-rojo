@@ -1,5 +1,11 @@
 # Cambios
 
+## 2026-11-15 | Laboratorio conjunto y pantalla integrada
+
+- Agua y Oxígeno comparten sala y tienen puestos diferenciados frente a sus equipos.
+- Se generan los depósitos verdes y el cristal de Control. Las lecturas se dibujan sobre el cristal de tres secciones.
+- La guía lleva primero a Oxígeno y después al dormitorio.
+
 ## 2026-11-15 | Iconos de Control
 
 - Se sustituyen las máscaras de píxeles por iconos generados con bordes suaves. El nivel del agua se anima dentro de la gota.

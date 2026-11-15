@@ -1,6 +1,6 @@
 # Horizonte Rojo | Contexto para Codex
 
-Horizonte Rojo es un juego narrativo 2D de cinco soles en Godot 4.7.2. El alcance actual es inicio, noches y final según [Narrativa del equipo](docs/NARRATIVA-EQUIPO.md). Las actividades diarias NO están definidas: no implementar nuevas misiones sin acordarlas. Percy guía fuera y Pluto dentro. No hay Enfermería ni accidente; el Centro de agua es independiente.
+Horizonte Rojo es un juego narrativo 2D de cinco soles en Godot 4.7.2. El alcance actual es inicio, noches y final según [Narrativa del equipo](docs/NARRATIVA-EQUIPO.md). Las actividades diarias NO están definidas: no implementar nuevas misiones sin acordarlas. Percy guía fuera y Pluto dentro. No hay Enfermería ni accidente; Agua y Oxígeno comparten un laboratorio.
 
 1. Lee [README.md](README.md) para ejecutar el juego.
 2. Abre solo la guía que corresponda a tu tarea.
