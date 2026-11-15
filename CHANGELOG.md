@@ -31,6 +31,11 @@
 - Se retiran las franjas de interfaz del recorrido principal. Las acciones de exploración aparecen junto a Nora y la cinemática se puede saltar desde la esquina.
 - Se verificaron capturas de portada, salida, desacople, aproximación, descenso y llegada, además del recorrido narrativo completo en Godot.
 
+## 2026-11-14 | Base compartida de mecánicas
+
+- Modelo separado de energía, agua, oxígeno, alimento, cultivos y continuidad entre días. Incluye reglas de noche, registro de decisiones y estado para guardar.
+- Banco de pruebas independiente en Godot y prueba automatizada de recursos. El equipo dispone del contrato y un prompt base para cada día.
+
 ## 2026-11-14 | Cinemática inicial 2D pixel art por etapas
 
 - La dirección visual definitiva del proyecto es 2D pixel art. Se reemplaza la iteración que mezclaba fondos realistas con una nave pixelada.

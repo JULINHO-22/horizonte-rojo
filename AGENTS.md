@@ -4,6 +4,8 @@ Horizonte Rojo es un juego narrativo 2D de cinco soles en Godot 4.7.2. El alcanc
 
 1. Lee [README.md](README.md) para ejecutar el juego.
 2. Abre solo la guía que corresponda a tu tarea.
+   - [Mecánicas básicas](docs/MECANICAS-BASICAS.md) para el banco, el estado y el contrato entre días.
+   - [Prompt para niveles](docs/PROMPT-NIVELES.md) para encargos, ramas por día y archivos compartidos.
    - [Reto NASA](docs/RETO-NASA.md) para el enunciado, los criterios y las propuestas de niveles.
    - [Datos NASA](docs/DATOS-NASA.md) para fuentes verificadas y su uso en el juego.
    - [Finales en la Tierra](docs/FINALES.md) para las dos cinemáticas independientes y su futura integración.
