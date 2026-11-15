@@ -19,15 +19,16 @@ const FICHAS := {
 	"energia": "La energía mantiene funcionando los equipos. Aquí se reparte la reserva del refugio.",
 	"agua": "Aquí se limpia y comprueba el agua antes de usarla. El hielo recién recogido todavía no se puede beber.",
 	"cultivos": "Estas plantas necesitan agua, luz y tiempo para crecer.",
-	"radio": "Control conecta las salas y recibe los mensajes de Tierra. La respuesta tarda en llegar.",
 	"cierre": "Esta sala tiene dos puertas: cerramos una antes de abrir la otra para conservar el aire del refugio.",
 	"taller": "Aquí se revisan los trajes y se guardan herramientas y repuestos.",
 }
 const Recursos := preload("res://scripts/mecanicas/recursos_mision.gd")
 var recursos := Recursos.new()
-const Indicadores := preload("res://scripts/mecanicas/indicadores_refugio.gd")
-var lecturas: Control
-var comida_ui: Control
+const PanelControl := preload("res://scripts/panel_control.gd")
+const MapaNucleo := preload("res://scenes/dias/tramo_final/mapa_tramo.gd")
+var visita_nucleo: MapaNucleo
+var marco_nucleo: Control
+var panel_control: PanelControl
 var estaciones: VBoxContainer
 var estacion := ""
 var campana = Campana.new()
@@ -68,6 +69,11 @@ func _ready() -> void:
 		_mostrar()
 
 func _process(delta: float) -> void:
+	if is_instance_valid(visita_nucleo):
+		visita_nucleo.avanzar(_direccion(), minf(delta, 0.05))
+		visita_nucleo.queue_redraw()
+		boton.visible = _cerca_salida_nucleo()
+		return
 	reloj += delta
 	aviso_tiempo = maxf(0, aviso_tiempo - delta)
 	match fase:
@@ -84,7 +90,7 @@ func _process(delta: float) -> void:
 			if reloj >= DURACION_ATERRIZAJE:
 				_iniciar_caminata()
 		"base":
-			if not estacion.is_empty():
+			if is_instance_valid(panel_control) or not estacion.is_empty():
 				return
 			recursos.avanzar(delta)
 			if not recursos.estado().derrota.is_empty():
@@ -135,6 +141,16 @@ func _process(delta: float) -> void:
 func _unhandled_key_input(event: InputEvent) -> void:
 	if not event is InputEventKey or not event.pressed or event.echo:
 		return
+	if is_instance_valid(visita_nucleo):
+		if event.physical_keycode == KEY_ESCAPE or (event.physical_keycode == KEY_E and _cerca_salida_nucleo()):
+			_cerrar_nucleo()
+		get_viewport().set_input_as_handled()
+		return
+	if is_instance_valid(panel_control):
+		if event.physical_keycode == KEY_ESCAPE:
+			_cerrar_control()
+		get_viewport().set_input_as_handled()
+		return
 	if event.physical_keycode == KEY_E or event.physical_keycode == KEY_ENTER:
 		_accion()
 	elif event.physical_keycode == KEY_M and fase == "base":
@@ -143,11 +159,13 @@ func _unhandled_key_input(event: InputEvent) -> void:
 	elif event.physical_keycode == KEY_ESCAPE and fase in ["ida", "aterrizaje"]:
 		_iniciar_caminata()
 
-func _caminar(delta: float) -> void:
-	var direccion := Vector2(
+func _direccion() -> Vector2:
+	return Vector2(
 		int(Input.is_physical_key_pressed(KEY_D) or Input.is_action_pressed("ui_right")) - int(Input.is_physical_key_pressed(KEY_A) or Input.is_action_pressed("ui_left")),
-		int(Input.is_physical_key_pressed(KEY_S) or Input.is_action_pressed("ui_down")) - int(Input.is_physical_key_pressed(KEY_W) or Input.is_action_pressed("ui_up")))
-	puesto.avanzar(direccion.normalized(), minf(delta, 0.05))
+		int(Input.is_physical_key_pressed(KEY_S) or Input.is_action_pressed("ui_down")) - int(Input.is_physical_key_pressed(KEY_W) or Input.is_action_pressed("ui_up"))).normalized()
+
+func _caminar(delta: float) -> void:
+	puesto.avanzar(_direccion(), minf(delta, 0.05))
 	puesto.actualizar_camara(delta)
 	puesto.tiempo += delta
 	posicion = puesto.punto
@@ -176,15 +194,21 @@ func _actualizar_guia() -> void:
 		return
 	elif fase == "base":
 		pista.text = "WASD o flechas  /  M: plano" if reloj < 6.0 else ""
-		var cerca := puesto.terminal_cercana()
+		var cerca := _estacion_cercana()
 		if cerca == "dormitorio" and not campana.listo_para_regresar():
 			boton.text = "E · Descansar"
 			boton.visible = true
-		elif cerca == "radio" and campana.listo_para_regresar():
-			boton.text = "E · Revisar la ruta de regreso"
+		elif cerca == "radio" and not plano:
+			boton.text = "E · Abrir Control"
+			boton.visible = true
+		elif cerca == "nucleo":
+			boton.text = "E · Bajar al núcleo protegido"
 			boton.visible = true
 		elif cerca == "cierre" and campana.listo_para_regresar():
 			boton.text = "E · Salir hacia la nave"
+			boton.visible = true
+		elif cerca in ["agua", "oxigeno"] and not campana.listo_para_regresar():
+			boton.text = "E · Purificar agua" if cerca == "agua" else "E · Preparar oxígeno"
 			boton.visible = true
 		elif not cerca.is_empty() and FICHAS.has(cerca):
 			boton.text = "E · " + PuestoUmbra.NOMBRES.get(cerca, "Entrada").capitalize()
@@ -192,12 +216,16 @@ func _actualizar_guia() -> void:
 		if boton.visible:
 			_ubicar_accion()
 		if aviso_tiempo <= 0:
-			voz.decir("Pluto", "Asegura el aire en el Centro de agua antes de dormir." if not campana.listo_para_regresar() else "Revisa la ruta en Control antes de salir.")
+			voz.decir("Pluto", "Asegura el aire en el laboratorio de Agua y Oxígeno antes de dormir." if not campana.listo_para_regresar() else "Revisa la ruta en Control antes de salir.")
 			voz.visible = reloj < 6.0
 		else:
 			voz.visible = true
 
 func _accion() -> void:
+	if is_instance_valid(visita_nucleo):
+		if _cerca_salida_nucleo():
+			_cerrar_nucleo()
+		return
 	match fase:
 		"portada":
 			if not restaurado.is_empty():
@@ -208,22 +236,24 @@ func _accion() -> void:
 		"ida", "aterrizaje":
 			_iniciar_caminata()
 		"base":
+			if is_instance_valid(panel_control):
+				return
 			if not estacion.is_empty():
 				_cerrar_estacion()
 				return
-			var cerca := puesto.terminal_cercana()
+			var cerca := _estacion_cercana()
 			if cerca == "dormitorio" and not campana.listo_para_regresar():
 				if recursos.dormir():
 					_cambiar("noche")
 				else:
 					_cambiar("derrota")
 					_guardar()
-			elif cerca in ["agua", "cultivos"] and not campana.listo_para_regresar():
+			elif cerca in ["agua", "oxigeno", "cultivos"] and not campana.listo_para_regresar():
 				_abrir_estacion(cerca)
-			elif cerca == "radio" and campana.listo_para_regresar():
-				voz.decir("Iris", "La ruta está preparada. Salgamos juntos: la nave nos espera a la izquierda del refugio.")
-				puesto.objetivo_mision = "cierre"
-				aviso_tiempo = 9
+			elif cerca == "radio" and not plano:
+				_abrir_control()
+			elif cerca == "nucleo":
+				_abrir_nucleo()
 			elif cerca == "cierre" and campana.listo_para_regresar():
 				posicion = PuestoUmbra.ESCLUSA
 				_cambiar("camino_nave")
@@ -244,6 +274,9 @@ func _accion() -> void:
 		"epilogo":
 			if reloj >= 10:
 				_reiniciar()
+
+func _ver_final(clave: String) -> void:
+	get_tree().change_scene_to_file.call_deferred(VISTAS_FINALES[clave])
 
 func _iniciar_caminata() -> void:
 	posicion = Vector2(240, PuestoUmbra.SUELO)
@@ -278,6 +311,9 @@ func _cambiar(destino: String) -> void:
 	_mostrar()
 
 func _mostrar() -> void:
+	panel_control = null
+	visita_nucleo = null
+	marco_nucleo = null
 	if is_instance_valid(capa):
 		remove_child(capa)
 		capa.queue_free()
@@ -336,6 +372,10 @@ func _mostrar() -> void:
 			boton.visible = true
 			if not restaurado.is_empty():
 				_boton("Empezar de nuevo", Rect2(90, 460, 256, 45), _reiniciar)
+			for i in range(2):
+				var opcion := ["Misión incompleta", "Misión cumplida"][i] as String
+				var clave := ["--final-incompleta", "--final-cumplida"][i] as String
+				_boton("Ver final · " + opcion, Rect2(90 + i * 273, 529, 257, 44), _ver_final.bind(clave))
 		"ida":
 			titulo.text = "Salida de la Tierra"
 			boton.text = "Saltar viaje · Esc"
@@ -343,7 +383,7 @@ func _mostrar() -> void:
 		"regreso", "llegada_tierra":
 			titulo.text = "Marte → Tierra"
 			voz.decir("Iris", "Nos llevamos las preguntas y lo que aprendimos. Percy seguirá explorando Marte.")
-			pista.text = "Meses después · Trayectoria ilustrativa, sin escala"
+			pista.text = ""
 		"aterrizaje":
 			titulo.text = "Aterrizaje en Marte"
 			boton.text = "Saltar viaje · Esc"
@@ -364,12 +404,6 @@ func _mostrar() -> void:
 			boton.text = "Volver a intentar"
 			boton.show()
 		"base":
-			lecturas = Indicadores.new()
-			capa.add_child(lecturas)
-			comida_ui = Indicadores.new()
-			comida_ui.solo_alimento = true
-			comida_ui.position = Vector2(958, 24)
-			capa.add_child(comida_ui)
 			_refrescar_recursos()
 			titulo.text = "Día %d de 5 · Refugio Umbra" % campana.sol
 			_actualizar_guia()
@@ -389,18 +423,73 @@ func _mostrar() -> void:
 
 func _refrescar_recursos() -> void:
 	var datos := recursos.estado()
-	lecturas.actualizar(datos)
-	comida_ui.actualizar(datos)
-	lecturas.visible = not plano and PuestoUmbra.ROOMS.radio.has_point(puesto.punto)
-	# Anclaje sobre el display cian de la computadora en la ilustración de Control.
-	var esquina := puesto.proyectar_suelo(Vector2(370, 198))
-	var borde := puesto.proyectar_suelo(Vector2(436, 198))
-	lecturas.position = esquina
-	lecturas.scale = Vector2.ONE * ((borde.x - esquina.x) / 386.0)
+	if not campana.listo_para_regresar():
+		puesto.objetivo_mision = "dormitorio" if datos.aire_asegurado else "agua"
 	if datos.sin_luz:
 		puesto.modulate = Color("#59697d")
 	else:
 		puesto.modulate = Color.WHITE
+
+func _abrir_control() -> void:
+	boton.hide()
+	panel_control = PanelControl.new()
+	var estado := recursos.estado()
+	var regreso := campana.listo_para_regresar()
+	panel_control.configurar(estado, regreso, 0.0 if regreso else 58.0)
+	panel_control.cerrar_solicitado.connect(_cerrar_control)
+	panel_control.ruta_confirmada.connect(_confirmar_ruta)
+	capa.add_child(panel_control)
+	if not regreso:
+		var tarea := "El aire está asegurado. Ve al dormitorio para descansar." if estado.aire_asegurado else "Prepara el aire en el laboratorio de Agua y Oxígeno antes de descansar."
+		panel_control.mostrar_tarea(tarea)
+
+func _cerrar_control() -> void:
+	capa.remove_child(panel_control)
+	panel_control.queue_free()
+	panel_control = null
+	_actualizar_guia()
+
+func _confirmar_ruta() -> void:
+	_cerrar_control()
+	voz.decir("Iris", "La ruta está preparada. Salgamos juntos: la nave nos espera a la izquierda del refugio.")
+	puesto.objetivo_mision = "cierre"
+	aviso_tiempo = 9
+
+func _abrir_nucleo() -> void:
+	marco_nucleo = Control.new()
+	marco_nucleo.size = AREA.size
+	marco_nucleo.clip_contents = true
+	marco_nucleo.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	capa.add_child(marco_nucleo)
+	visita_nucleo = MapaNucleo.new()
+	marco_nucleo.add_child(visita_nucleo)
+	visita_nucleo.entrar("refugio", MapaNucleo.UMBRAL)
+	var guia := DialogoEscena.new()
+	guia.position = Vector2(49, 120)
+	marco_nucleo.add_child(guia)
+	guia.decir("Pluto", "Este túnel conecta con la esclusa. Si hay radiación afuera, nos reunimos en esta sala protegida.")
+	capa.move_child(boton, -1)
+	var puerta := visita_nucleo.proyectar_suelo(MapaNucleo.UMBRAL)
+	boton.position = puerta + Vector2(-128, 28)
+	boton.text = "E · Volver a la esclusa"
+	boton.show()
+
+func _cerca_salida_nucleo() -> bool:
+	return visita_nucleo.punto.distance_to(MapaNucleo.UMBRAL) < visita_nucleo.alcance_interaccion()
+
+func _cerrar_nucleo() -> void:
+	capa.remove_child(marco_nucleo)
+	marco_nucleo.queue_free()
+	marco_nucleo = null
+	visita_nucleo = null
+	_actualizar_guia()
+
+func _estacion_cercana() -> String:
+	if not plano and puesto.punto.distance_to(PuestoUmbra.ACCESO_NUCLEO) < 13.0:
+		return "nucleo"
+	if puesto.punto.distance_to(PuestoUmbra.ESTACION_OXIGENO) <= 13.0:
+		return "oxigeno"
+	return puesto.terminal_cercana()
 
 func _abrir_estacion(id: String) -> void:
 	estacion = id
@@ -410,9 +499,11 @@ func _abrir_estacion(id: String) -> void:
 	estaciones.custom_minimum_size.x = 384
 	capa.add_child(estaciones)
 	if id == "agua":
-		voz.decir("Pluto", "Primero limpia el hielo para obtener agua. Para preparar aire, el equipo necesita agua y batería.")
+		voz.decir("Pluto", "Aquí limpiamos el hielo. Los depósitos de oxígeno están al lado, en esta misma sala.")
 		_opcion("Recoger hielo de la reserva de prueba", _hielo_prueba)
 		_opcion("Purificar hielo · 2 energía", recursos.purificar_hielo)
+	elif id == "oxigeno":
+		voz.decir("Pluto", "Este equipo usa agua y batería para asegurar el aire de hoy.")
 		_opcion("Asegurar aire · 6 energía y 1 agua", recursos.activar_oxigeno)
 	else:
 		for cultivo: String in Recursos.CULTIVOS:
@@ -454,6 +545,7 @@ func _crear_mapa(interior: bool) -> void:
 	capa.add_child(marco)
 	puesto = PuestoUmbra.new()
 	puesto.interior = interior
+	puesto.laboratorio_activo = fase == "base"
 	puesto.chequeo = not interior
 	puesto.cielo_sereno = true
 	puesto.punto = posicion

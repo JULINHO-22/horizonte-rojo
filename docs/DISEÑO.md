@@ -4,7 +4,7 @@ Horizonte Rojo es el nombre del juego. Umbra es el nombre del refugio. Los panor
 
 ## Alcance vigente
 
-El recorrido principal mantiene [inicio, noches y final](NARRATIVA-EQUIPO.md). El Día 3 tiene un flujo aprobado e independiente en [Día 3](dias/DIA-3.md): revisión del invernadero, fallo eléctrico y elección entre oxígeno e invernadero. Todavía no sustituye el descanso libre del recorrido principal. Las actividades y el balance del simulador anterior siguen separados y no son requisitos aprobados para los demás días.
+El recorrido principal mantiene [inicio, noches y final](NARRATIVA-EQUIPO.md). El Día 3 tiene un flujo aprobado e independiente en [Día 3](dias/DIA-3.md): revisión del invernadero, fallo eléctrico y elección entre oxígeno e invernadero. Todavía no sustituye el descanso libre del recorrido principal. Los días 4 y 5 se revisan en su banco propio; las actividades y el balance del simulador anterior permanecen separados.
 
 ## Simulador anterior
 

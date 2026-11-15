@@ -1,10 +1,10 @@
 # Finales en la Tierra
 
-Las dos cinemáticas son escenas independientes de Godot. Abre la escena elegida y pulsa **F6**. El viaje dura seis segundos y se puede adelantar con **Esc** o con el botón de la esquina. El regreso muestra solo la cápsula. El diálogo usa nombre seguido de dos puntos y texto sobre sombra difuminada, junto a cada interlocutor. **Salir al menú** vuelve a la portada. En el navegador se recarga la portada para poder elegir otra vista previa. Tras la ceremonia, la medalla entra animada y aparece **¡Has ganado!**. Al terminar aparece **Repetir final**. La portada web también permite abrir cada cinemática mediante sus dos botones de vista previa.
+Las dos cinemáticas son escenas independientes de Godot. Abre la escena elegida y pulsa **F6**. El viaje dura seis segundos. **Espacio** avanza al siguiente parlamento o escena. **Omitir** adelanta una escena completa desde la esquina y **Esc** también omite el viaje. El regreso muestra solo la cápsula. El montaje no escribe cuánto tiempo ha pasado. El diálogo usa nombre seguido de dos puntos y texto sobre sombra difuminada, junto a cada interlocutor. **Salir al menú** vuelve a la portada. En el navegador se recarga la portada para poder elegir otra vista previa. Tras la ceremonia, la medalla entra animada y aparece **¡Has ganado!**. Al terminar aparece **Repetir final**. La portada de Godot y la portada web ofrecen dos botones opcionales para ver las cinemáticas. Las vistas previas no alteran la partida. La derrota solo aparece en el juego.
 
 | Escena | Secuencia |
 | --- | --- |
-| `scenes/final_incompleta.tscn` | Regreso a la Tierra, entrada al hangar y recepción de Control. La tripulación vuelve con los suministros justos. Control reconoce que volvieron a salvo y explica que todavía falta comprobar parte de los hallazgos. |
+| `scenes/final_incompleta.tscn` | La directora recibe a la tripulación en el hangar y reconoce la decisión de evacuar. Iris menciona las pruebas pendientes. Un noticiero con imágenes de la llegada comunica que los tres volvieron a salvo y que la misión quedó incompleta. |
 | `scenes/final_cumplida.tscn` | Regreso y recepción en el mismo hangar. Control confirma que el equipo completó la misión. La directora del programa entrega la Medalla Horizonte a Nora, Iris y Teo en una ceremonia. El último diálogo conecta el logro con la siguiente tripulación. |
 
 Las dos escenas comparten `scripts/final_tierra.gd` y la animación de `viaje_espacial.gd`. La propiedad exportada `mision_cumplida` se configura en la escena. Su valor no se calcula dentro de la cinemática. El equipo decidirá los criterios y conectará las escenas cuando estén listas las actividades y las consecuencias de los cinco días. El epílogo provisional sigue siendo el punto de llegada del recorrido actual.
@@ -13,7 +13,7 @@ El tercer final queda como requisito pendiente de diseño. Si el equipo determin
 
 ## Recursos visuales
 
-ImageGen integrado generó cuatro PNG para `assets/Finales/`. El motor anima el regreso, la caminata con las hojas existentes de Nora, Iris y Teo, y la entrega de tres medallas. La directora es un personaje ficticio del programa espacial.
+ImageGen integrado generó los fondos y sprites para `assets/Finales/`. El motor anima el regreso, la caminata con las hojas existentes de Nora, Iris y Teo, y la entrega de tres medallas. La directora es un personaje ficticio del programa espacial.
 
 ### hangar.png
 
@@ -30,3 +30,9 @@ Single isolated full body transparent sprite, hand-crafted detailed 2D pixel art
 ### medalla.png
 
 A single small unobstructed game sprite of a gold space exploration medal hanging from a V-shaped short deep teal ribbon, medallion stamped with a tiny simple relief of two planets. Front facing orthographic. Detailed crisp 2D pixel art with intentional hard pixel clusters and clear gold silhouette for use at 24 pixels high. Transparent alpha background, no lettering, no people, no outline box, no glow, no floor. Single object centered with clear margin.
+
+### noticiero_regreso.png
+
+ImageGen integrado generó la presentadora y el televisor pixel art. Godot compone imágenes del hangar dentro del monitor del estudio.
+
+> A complete 16:9 story cutscene for Horizonte Rojo, a 2D pixel art Mars game. View straight-on at a slightly retro television screen, almost full frame, simple dark burgundy television bezel with rounded screen corners hugging the outer 4 percent edges. Inside the television: restrained, warmly lit terrestrial evening news set, medium close-up of a serious empathetic adult female news presenter with a mid-length dark brown bob and plum blazer seated on the LEFT half (her face centered at 26 percent width, 38 percent height), slight turn toward camera, hands visible resting on the desk. On the RIGHT half place a large blank dark charcoal inset broadcast monitor (x=55–91% and y=22–59%) for the game to insert hangar footage. Keep inside the screen near lower 76–88 percent height dark and quiet for two short lines of closed captioning. Visual language of a polished 1990s game cutscene, deliberate pixel clusters, crisp edge detail, shaded warm cream and terracotta contrasted with restrained blue television lighting. A respectful evening broadcast, no smiles, no sensationalism. No words, no numbers, no captions, no logos, no watermark. This is a 2D pixel art illustration, not a photo or vector graphic.

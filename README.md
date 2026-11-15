@@ -1,10 +1,10 @@
 # Horizonte Rojo
 
-**Horizonte Rojo** es un proyecto de juego narrativo 2D de cinco días en Marte. La versión principal permite revisar el viaje, la llegada al refugio, las noches y el regreso. El Día 3 ya dispone de una escena jugable aislada; las demás actividades se definirán con el equipo.
+**Horizonte Rojo** es un proyecto de juego narrativo 2D de cinco días en Marte. La versión principal permite revisar el viaje, la llegada al refugio, las noches y el regreso. El Día 3 dispone de una escena jugable aislada y los días 4 y 5 tienen un banco propio de revisión.
 
 ## Estado y ejecución actual
 
-La escena principal es un **recorrido narrativo en revisión**: cinemática 2D pixel art de ida, llegada, Percy, exploración del refugio, cinco noches y regreso. La nave sale con el módulo acoplado, lo separa al aproximarse a Marte y conserva ese diseño en el aterrizaje. La secuencia usa imágenes locales de `assets/NarrativaInicio/`; no reproduce video externo ni depende de recursos remotos. Las actividades de los días están pendientes de definición. Consulta [Narrativa del equipo](docs/NARRATIVA-EQUIPO.md) para el documento fuente, las adaptaciones y lo que falta.
+La escena principal es un **recorrido narrativo en revisión**: cinemática 2D pixel art de ida, llegada, Percy, exploración del refugio, cinco noches y regreso. La nave sale con el módulo acoplado, lo separa al aproximarse a Marte y conserva ese diseño en el aterrizaje. La secuencia usa imágenes locales de `assets/NarrativaInicio/`; no reproduce video externo ni depende de recursos remotos. Los días jugables se prueban por separado hasta completar su coordinador de campaña. Consulta [Narrativa del equipo](docs/NARRATIVA-EQUIPO.md) para el documento fuente, las adaptaciones y lo que falta.
 
 1. Importa `project.godot` en Godot 4.7.2 y pulsa **F5**.
 2. Inicia el viaje. Puedes saltarlo con **Esc** o con el botón de la esquina. Percy te saluda mientras ya puedes caminar.
@@ -12,7 +12,9 @@ La escena principal es un **recorrido narrativo en revisión**: cinemática 2D p
 4. Desde Control, cruza la puerta derecha, sube por el corredor y gira a la derecha hacia Dormitorio. Cerca de la marca pulsa **E** o **Descansar**. La pantalla se oscurece durante tres segundos y comienza la siguiente mañana.
 5. Tras la quinta noche, revisa Control, sal por la esclusa y sigue el camino hacia la izquierda hasta la nave. **E** permite subir; en el puesto de pilotaje, **Iniciar vuelo** activa el regreso.
 
-El Centro de agua está al noroeste, pasando por Energía. El taller está inmediatamente al este de Control. Plantas se alcanza por el desvío norte del corredor este, girando a la izquierda. No hay Enfermería ni accidente de Teo.
+Pulsa **E** junto a la computadora de Control para consultar las reservas y la tarea del día. En la esclusa sur, el acceso lateral baja al núcleo protegido que se usa en el Día 5.
+
+El laboratorio de Agua y Oxígeno está al noroeste, pasando por Energía. Purifica agua junto al filtro azul y prepara oxígeno junto a los depósitos verdes. El taller está inmediatamente al este de Control. Plantas se alcanza por el desvío norte del corredor este, girando a la izquierda. No hay Enfermería ni accidente de Teo.
 
 El recorrido guarda su avance en `user://narrativa.cfg`, separado de las partidas del simulador anterior. Para revisar el inicio usa **Empezar de nuevo** en la portada. Durante una transición se recupera el último punto estable.
 
@@ -21,6 +23,10 @@ El código anterior de actividades sigue disponible para el equipo en `scenes/si
 Para ver los dos finales alternativos abre `scenes/final_incompleta.tscn` o `scenes/final_cumplida.tscn` y pulsa **F6**. Consulta [Finales en la Tierra](docs/FINALES.md).
 
 Para probar el flujo aprobado del Día 3 sin depender de los días anteriores, abre `scenes/dias/dia_3/dia_3.tscn` y pulsa **F6**. La escena usa un estado local de prueba; todavía no reemplaza el recorrido principal ni su guardado.
+
+## Probar los días 4 y 5
+
+Abre `scenes/dias/tramo_final/prueba.tscn` y pulsa **F6**. Puedes empezar en el día 4 con diferentes antecedentes o probar directamente los tres desenlaces del día 5. En la prueba, pulsa **Ctrl + Shift + M** para abrir el selector y volver a la partida. Elegir otro escenario inicia una prueba nueva. Los dos niveles comparten las reservas. El banco funciona al margen del guardado de campaña. Consulta [Día 4](docs/dias/DIA-4.md) y [Día 5](docs/dias/DIA-5.md) para el contrato de integración.
 
 ## Probar la base de mecánicas
 

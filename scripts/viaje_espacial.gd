@@ -48,12 +48,12 @@ func etapa() -> String:
 		if progreso < 0.30:
 			return "La cápsula deja atrás Marte"
 		if progreso < 0.68:
-			return "Meses de viaje después…"
+			return ""
 		return "Nos acercamos a la Tierra"
 	if progreso < 0.28:
 		return "Impulso de salida desde la Tierra"
 	if progreso < INICIO_SEPARACION:
-		return "Meses de viaje después…"
+		return ""
 	if progreso < FIN_SEPARACION:
 		return "Separación del módulo de descenso"
 	return "El módulo se acerca a Marte"

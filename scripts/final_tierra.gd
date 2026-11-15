@@ -6,10 +6,31 @@ const HANGAR := preload("res://assets/Finales/hangar.png")
 const SALON := preload("res://assets/Finales/ceremonia.png")
 const DIRECTORA := preload("res://assets/Finales/directora.png")
 const MEDALLA := preload("res://assets/Finales/medalla.png")
+const NOTICIERO := preload("res://assets/Finales/noticiero_regreso.png")
 const TRIPULACION := [PuestoUmbra.TEO_NORMAL, PuestoUmbra.IRIS, PuestoUmbra.NORA]
 const MARCHA := [PuestoUmbra.TEO_PASOS, PuestoUmbra.IRIS_PASOS, PuestoUmbra.NORA_PASOS]
 const TAMANO := Vector2(1280, 720)
 const RECONOCIMIENTO := 7.5
+const LLEGADA := [
+	[2.9, "Directora de misión", "Bienvenidos a casa. Nos alegra que estén a salvo."],
+	[5.7, "Directora de misión", "El equipo confirmó los resultados. Cumplieron la misión."],
+]
+const LLEGADA_EMERGENCIA := [
+	[2.9, "Directora de misión", "Nora, Iris, Teo… bienvenidos a casa. Evacuar fue la decisión correcta."],
+	[5.7, "Iris", "Nos quedaron pruebas pendientes. Cuando estemos listos, explicaremos qué pasó."],
+]
+const ACTO := [
+	[2.5, "Directora de misión", "Cuando las cosas se complicaron, cuidaron el refugio y se cuidaron entre ustedes."],
+	[5.4, "Directora de misión", "En nombre del programa espacial, les entrego la Medalla Horizonte."],
+	[9.0, "Nora", "La próxima tripulación ya sabe por dónde empezar."],
+]
+const NOTICIA := [
+	[0.25, "Presentadora", "Nora, Iris y Teo volvieron a la Tierra. Los tres están a salvo."],
+	[4.95, "Presentadora", "La tormenta obligó a evacuar la base. La misión quedó incompleta."],
+	[10.0, "Presentadora", "Ahora el equipo revisará qué pasó para preparar la próxima expedición."],
+]
+const FIN_NOTICIA := 15.5
+const VENTANA_NOTICIERO := Rect2(696, 133, 523, 277)
 
 @export var mision_cumplida := false
 var fase := "viaje"
@@ -20,6 +41,7 @@ var voz: Control
 var salida: Button
 var accion: Button
 var recortes := {}
+var indicacion: Label
 
 func _ready() -> void:
 	for textura in TRIPULACION + [DIRECTORA, MEDALLA]:
@@ -43,7 +65,7 @@ func _ready() -> void:
 	accion.position = Vector2(1006, 34)
 	accion.custom_minimum_size = Vector2(232, 45)
 	accion.text = "Ir a la llegada"
-	accion.pressed.connect(_avanzar)
+	accion.pressed.connect(_omitir)
 	add_child(accion)
 	salida = Button.new()
 	salida.position = Vector2(1006, 93)
@@ -51,6 +73,7 @@ func _ready() -> void:
 	salida.text = "Salir al menú"
 	salida.pressed.connect(_salir)
 	add_child(salida)
+	indicacion = _etiqueta(Vector2(1007, 150), 17)
 	_presentar()
 
 func _process(delta: float) -> void:
@@ -59,19 +82,26 @@ func _process(delta: float) -> void:
 		regreso.progreso = reloj / 6.0
 		if reloj >= 6.0:
 			_cambiar("hangar")
-	elif fase == "hangar" and mision_cumplida and reloj >= 8.5:
-		_cambiar("ceremonia")
+	elif fase == "hangar" and reloj >= (9.5 if mision_cumplida else 10.8):
+		_escena_despues_del_hangar()
 	elif fase == "ceremonia" and reloj >= 12.4:
 		_cambiar("victoria")
 	_presentar()
 	queue_redraw()
+
+func _input(evento: InputEvent) -> void:
+	if not evento is InputEventKey or not evento.pressed or evento.echo:
+		return
+	if evento.physical_keycode == KEY_SPACE:
+		get_viewport().set_input_as_handled()
+		_avanzar_dialogo()
 
 func _unhandled_key_input(evento: InputEvent) -> void:
 	if evento is InputEventKey and evento.pressed and not evento.echo:
 		if evento.physical_keycode == KEY_ESCAPE and fase != "viaje":
 			_salir()
 		elif evento.physical_keycode in [KEY_E, KEY_ESCAPE] and accion.visible:
-			_avanzar()
+			_omitir()
 
 func _salir() -> void:
 	if OS.has_feature("web"):
@@ -79,13 +109,46 @@ func _salir() -> void:
 	else:
 		get_tree().change_scene_to_file.call_deferred("res://scenes/umbra.tscn")
 
-func _avanzar() -> void:
+func _lineas() -> Array:
+	match fase:
+		"hangar":
+			return LLEGADA if mision_cumplida else LLEGADA_EMERGENCIA
+		"ceremonia":
+			return ACTO
+		"noticia":
+			return NOTICIA
+	return []
+
+func _avanzar_dialogo() -> void:
+	for linea: Array in _lineas():
+		if reloj < float(linea[0]):
+			reloj = float(linea[0])
+			_presentar()
+			queue_redraw()
+			return
+	if fase not in ["victoria", "noticia"] or (fase == "noticia" and reloj < FIN_NOTICIA):
+		_omitir()
+	elif fase == "victoria" and reloj < 2.5:
+		reloj = 2.5
+		_presentar()
+		queue_redraw()
+
+func _escena_despues_del_hangar() -> void:
+	_cambiar("ceremonia" if mision_cumplida else "noticia")
+
+func _omitir() -> void:
 	match fase:
 		"viaje":
 			_cambiar("hangar")
 		"hangar":
-			if mision_cumplida:
-				_cambiar("ceremonia")
+			_escena_despues_del_hangar()
+		"ceremonia":
+			_cambiar("victoria")
+		"noticia":
+			if reloj < FIN_NOTICIA:
+				reloj = FIN_NOTICIA
+				_presentar()
+				queue_redraw()
 			else:
 				_cambiar("viaje")
 		"victoria":
@@ -102,34 +165,34 @@ func _cambiar(destino: String) -> void:
 func _presentar() -> void:
 	voz.hide()
 	salida.visible = fase != "viaje"
+	var en_tv := fase == "noticia"
+	accion.position = Vector2(974, 529) if en_tv else Vector2(1006, 34)
+	salida.position = Vector2(974, 583) if en_tv else Vector2(1006, 93)
+	indicacion.position = Vector2(978, 635) if en_tv else Vector2(1007, 150)
+	indicacion.text = "Espacio · Avanzar"
+	indicacion.visible = fase != "victoria" and not (fase == "noticia" and reloj >= FIN_NOTICIA)
 	titulo.position = Vector2(42, 38)
 	titulo.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 	titulo.add_theme_font_size_override("font_size", 30)
 	titulo.modulate = Color.WHITE
+	accion.visible = true
 	match fase:
 		"viaje":
-			titulo.text = "Meses después"
-			accion.text = "Ir a la llegada  ·  Esc"
-			accion.visible = true
+			titulo.text = ""
+			accion.text = "Omitir viaje · Esc"
 		"hangar":
 			titulo.text = "De vuelta en la Tierra"
-			if reloj >= 2.9 and reloj < 5.7:
-				_decir("Directora de misión", "Bienvenidos a casa. Lo primero era traerlos a salvo.")
-			elif reloj >= 5.7 and mision_cumplida:
-				_decir("Directora de misión", "El equipo confirmó los resultados. Cumplieron la misión.")
-			elif reloj >= 5.7:
-				_decir("Directora de misión", "Volvieron con lo justo. La misión quedó incompleta: aún faltan pruebas.")
-			accion.text = "Ir a la ceremonia" if mision_cumplida else "Repetir final"
-			accion.visible = reloj >= (5.7 if mision_cumplida else 11.5)
+			accion.text = "Omitir llegada"
 		"ceremonia":
 			titulo.text = "Reconocimiento a la tripulación"
-			if reloj >= 2.5 and reloj < 5.4:
-				_decir("Directora de misión", "Cuando las cosas se complicaron, cuidaron el refugio y se cuidaron entre ustedes.")
-			elif reloj >= 5.4 and reloj < 9.0:
-				_decir("Directora de misión", "En nombre del programa espacial, les entrego la Medalla Horizonte.")
-			elif reloj >= 9.0:
-				_decir("Nora", "La próxima tripulación ya sabe por dónde empezar.", Vector2(492, 245))
-			accion.hide()
+			accion.text = "Omitir ceremonia"
+		"noticia":
+			titulo.position = Vector2(693, 65)
+			titulo.text = "Noticias de la Tierra"
+			accion.text = "Omitir noticiero" if reloj < FIN_NOTICIA else "Repetir final"
+			if reloj >= FIN_NOTICIA:
+				_decir("Presentadora", "La tripulación está a salvo. La misión quedó incompleta.", Vector2(100, 585))
+				return
 		"victoria":
 			var entrada := smoothstep(0.55, 1.45, reloj)
 			titulo.text = "¡Has ganado!"
@@ -140,9 +203,22 @@ func _presentar() -> void:
 			titulo.modulate.a = entrada
 			accion.text = "Repetir final"
 			accion.visible = reloj >= 2.5
+	var lineas := _lineas()
+	for i in range(lineas.size() - 1, -1, -1):
+		var linea: Array = lineas[i]
+		if reloj >= float(linea[0]):
+			var origen := Vector2(897, 202)
+			if fase == "noticia":
+				origen = Vector2(100, 585)
+			elif linea[1] in ["Iris", "Nora"]:
+				origen = Vector2(492, 245)
+			_decir(linea[1], linea[2], origen)
+			break
 
 func _decir(nombre: String, texto: String, origen := Vector2(897, 202)) -> void:
 	voz.position = origen
+	var ancho := 790.0 if fase == "noticia" else DialogoEscena.ANCHO
+	voz.frase.size.x = ancho
 	voz.decir(nombre, texto)
 
 func _draw() -> void:
@@ -157,7 +233,18 @@ func _draw() -> void:
 		_dibujar_sprite(MEDALLA, Vector2.ZERO, lerpf(38, 210, entrada_medalla))
 		draw_set_transform(Vector2.ZERO)
 		return
-	var ceremonia := fase == "ceremonia"
+	if fase == "noticia":
+		draw_texture_rect(NOTICIERO, Rect2(Vector2.ZERO, TAMANO), false)
+		draw_set_transform(VENTANA_NOTICIERO.position, 0, VENTANA_NOTICIERO.size / TAMANO)
+		_dibujar_recepcion(false)
+		draw_set_transform(Vector2.ZERO)
+		return
+	_dibujar_recepcion(fase == "ceremonia")
+	var entrada := 1.0 - smoothstep(0.0, 0.42, reloj)
+	if entrada > 0:
+		draw_rect(Rect2(Vector2.ZERO, TAMANO), Color(0.025, 0.04, 0.06, entrada))
+
+func _dibujar_recepcion(ceremonia: bool) -> void:
 	draw_texture_rect(SALON if ceremonia else HANGAR, Rect2(Vector2.ZERO, TAMANO), false)
 	var piso := 605.0 if ceremonia else 568.0
 	var destino_directora := Vector2(865 if ceremonia else 852, piso)
@@ -173,9 +260,6 @@ func _draw() -> void:
 		_dibujar_sprite(textura, pies, 186, paso)
 		if ceremonia:
 			_entregar_medalla(indice, destino_directora, pies)
-	var entrada := 1.0 - smoothstep(0.0, 0.42, reloj)
-	if entrada > 0:
-		draw_rect(Rect2(Vector2.ZERO, TAMANO), Color(0.025, 0.04, 0.06, entrada))
 
 func _entregar_medalla(indice: int, directora: Vector2, astronauta: Vector2) -> void:
 	var inicio := RECONOCIMIENTO - indice * 0.6

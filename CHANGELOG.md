@@ -1,5 +1,54 @@
 # Cambios
 
+## 2026-11-15 | Acceso a las cinemáticas
+
+- La portada de Godot ofrece dos accesos opcionales para ver los finales con cinemática, al igual que la portada web.
+
+## 2026-11-15 | Continuidad entre la campaña y el refugio final
+
+- La campaña usa el mismo panel de Control que el Día 4 y retira las lecturas sobre la máquina.
+- La esclusa marca la entrada lateral al núcleo y ambos recorridos comparten su ilustración.
+
+## 2026-11-15 | Avance de diálogos y noticiero
+
+- Espacio lleva al siguiente parlamento de los finales. El botón Omitir adelanta la escena completa.
+- El regreso de emergencia tiene una recepción propia y un cierre en un noticiero pixel art.
+
+## 2026-11-15 | Entrada y comunicaciones del día 5
+
+- Nora cruza el umbral del núcleo antes de accionar la compuerta desde adentro.
+- La radio y el cierre se accionan junto a los equipos. La tripulación comunica el resultado sobre la escena.
+- El montaje de viaje y las cinemáticas de regreso omiten los rótulos de tiempo transcurrido.
+
+## 2026-11-15 | Control y tareas de los días 4 y 5
+
+- El cielo despejado desactiva también el empuje del viento en el barranco.
+- Las marcas tienen nombre y muestran E junto a la acción disponible.
+- El panel de Control reúne instrumentos, comida y tareas. El recorrido queda libre de la franja de reservas.
+- Baterías y dormitorio confirman desde el equipo con un segundo toque y una indicación de la tripulación.
+
+## 2026-11-15 | Selector del banco de los días 4 y 5
+
+- Se muestran los escenarios por día con nombres claros y antecedentes en lenguaje cotidiano. Ctrl + Shift + M permite abrir el selector y reanudar la prueba.
+
+## 2026-11-15 | Interacción directa y datos solares
+
+- Se actúa sobre los equipos del escenario. La caja y el blindaje se arrastran hasta sus destinos y la compuerta usa un cierre deslizante. Espacio ofrece un control alternativo.
+- El plano identifica el acceso al núcleo protegido desde la esclusa sur.
+- El aviso incluye el evento de DONKI. El indicador del núcleo reproduce cuatro puntos archivados de Curiosity en NASA OSDR/RadLab. El mapa SWIM se puede abrir desde Control en el día 4.
+
+## 2026-11-15 | Días 4 y 5 jugables para revisión
+
+- El Día 4 conecta Control, el barranco, el laboratorio, el taller y el núcleo protegido. La elección entre hielo, refuerzo o las dos tareas cambia el día siguiente.
+- El Día 5 reproduce el impacto de una tormenta solar, explica las pérdidas según el daño previo y el blindaje, y emite uno de tres resultados.
+- Se añade un banco jugable para probar los días y sus cinemáticas mientras se integran los primeros niveles.
+
+## 2026-11-15 | Laboratorio conjunto y pantalla integrada
+
+- Agua y Oxígeno comparten sala y tienen puestos diferenciados frente a sus equipos.
+- Se generan los depósitos verdes y el cristal de Control. Las lecturas se dibujan sobre el cristal de tres secciones.
+- La guía lleva primero a Oxígeno y después al dormitorio.
+
 ## 2026-11-15 | Iconos de Control
 
 - Se sustituyen las máscaras de píxeles por iconos generados con bordes suaves. El nivel del agua se anima dentro de la gota.
@@ -49,7 +98,7 @@
 
 - Se añade una escena independiente para el Día 3: despertar, revisión de Plantas, fallo eléctrico, elección entre oxígeno e invernadero y cierre en el dormitorio.
 - La escena recibe la instancia común de recursos y el estado protegido o dañado del día 2. F6 usa un estado local de prueba sin simular ni reemplazar los días anteriores.
-- El mapa, los indicadores y el arte pixel art existentes se reutilizan sin modificar la escena principal, el guardado general, Firebase ni los finales. Una prueba automatizada cubre ambas decisiones y la sincronización visual de reservas.
+- El mapa, el laboratorio conjunto de Agua y Oxígeno, los indicadores y el arte pixel art existentes se reutilizan sin modificar la escena principal, el guardado general, Firebase ni los finales. Una prueba automatizada cubre ambas decisiones, el relevo al coordinador y la sincronización visual de reservas.
 
 ## 2026-11-14 | Base compartida de mecánicas
 

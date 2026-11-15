@@ -38,7 +38,7 @@ func _probar() -> void:
 	escena_protegida._sembrar("lechuga")
 	escena_protegida._cerrar_panel_plantas()
 	assert(escena_protegida.fase == "ir_oxigeno")
-	escena_protegida.puesto.punto = PuestoUmbra.INSPECCIONES.aire
+	escena_protegida.puesto.punto = PuestoUmbra.ESTACION_OXIGENO
 	escena_protegida._accion()
 	assert(escena_protegida.fase == "decision")
 	escena_protegida._elegir_oxigeno()
@@ -87,7 +87,7 @@ func _probar() -> void:
 	prueba_local.puesto.punto = PuestoUmbra.TERMINALES.cultivos
 	prueba_local._accion()
 	prueba_local._cerrar_panel_plantas()
-	prueba_local.puesto.punto = PuestoUmbra.INSPECCIONES.aire
+	prueba_local.puesto.punto = PuestoUmbra.ESTACION_OXIGENO
 	prueba_local._accion()
 	prueba_local._elegir_invernadero()
 	prueba_local.puesto.punto = PuestoUmbra.TERMINALES.dormitorio

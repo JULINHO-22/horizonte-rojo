@@ -134,6 +134,7 @@ func _crear_mapa() -> void:
 	add_child(capa_mapa)
 	puesto = PuestoUmbra.new()
 	puesto.interior = true
+	puesto.laboratorio_activo = true
 	puesto.cielo_sereno = true
 	puesto.punto = PuestoUmbra.TERMINALES.dormitorio
 	puesto.objetivo_mision = "cultivos"
@@ -225,8 +226,8 @@ func _actualizar_guia() -> void:
 				boton_accion.text = "E · Revisar el invernadero"
 				boton_accion.visible = modal == null
 		"ir_oxigeno":
-			objetivo.text = "OBJETIVO · Revisar el oxígeno"
-			if puesto.inspeccion_cercana() == "aire":
+			objetivo.text = "OBJETIVO · Revisar Agua y Oxígeno"
+			if _oxigeno_cercano():
 				boton_accion.text = "E · Comprobar el oxígeno"
 				boton_accion.visible = modal == null
 		"decision":
@@ -253,7 +254,7 @@ func _accion() -> void:
 			if puesto.terminal_cercana() == "cultivos":
 				_abrir_panel_plantas()
 		"ir_oxigeno":
-			if puesto.inspeccion_cercana() == "aire":
+			if _oxigeno_cercano():
 				_activar_fallo()
 		"cierre":
 			if puesto.terminal_cercana() == "cultivos":
@@ -317,8 +318,8 @@ func _cerrar_panel_plantas() -> void:
 	_cerrar_modal()
 	if fase == "ir_plantas":
 		fase = "ir_oxigeno"
-		puesto.objetivo_mision = "energia"
-		_decir_pluto("Bien. Ahora revisemos el oxígeno antes de continuar con el día.")
+		puesto.objetivo_mision = "agua"
+		_decir_pluto("Bien. Ahora revisemos el oxígeno en el laboratorio conjunto antes de continuar con el día.")
 	_actualizar_guia()
 
 
@@ -364,8 +365,12 @@ func _mostrar_decision() -> void:
 func _volver_desde_decision() -> void:
 	_cerrar_modal()
 	fase = "ir_oxigeno"
-	puesto.objetivo_mision = "energia"
+	puesto.objetivo_mision = "agua"
 	_decir_pluto("El fallo sigue activo. Revisa las reservas y vuelve al sistema de oxígeno para decidir.")
+
+
+func _oxigeno_cercano() -> bool:
+	return puesto.punto.distance_to(PuestoUmbra.ESTACION_OXIGENO) <= 13.0
 
 
 func _elegir_oxigeno() -> void:
