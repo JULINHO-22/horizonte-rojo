@@ -1,5 +1,10 @@
 # Cambios
 
+## 2026-11-15 | Campaña de cinco soles
+
+- Los soles 1–5 usan la misma partida. El daño del Sol 2 afecta los soles 3 y 5, y el blindaje del Sol 4 modifica el desenlace.
+- Ctrl + Shift + M permite ensayar cada sol sin escribir en el guardado de campaña.
+
 ## 2026-11-15 | Acceso a las cinemáticas
 
 - La portada de Godot ofrece dos accesos opcionales para ver los finales con cinemática, al igual que la portada web.
@@ -42,6 +47,12 @@
 - El Día 4 conecta Control, el barranco, el laboratorio, el taller y el núcleo protegido. La elección entre hielo, refuerzo o las dos tareas cambia el día siguiente.
 - El Día 5 reproduce el impacto de una tormenta solar, explica las pérdidas según el daño previo y el blindaje, y emite uno de tres resultados.
 - Se añade un banco jugable para probar los días y sus cinemáticas mientras se integran los primeros niveles.
+## 2026-11-15 | Tutorial del Sol 1
+
+- Pluto sugiere una ruta de introducción. Las estaciones y el descanso están disponibles desde la llegada. Plantas muestra una cuenta regresiva por bandeja y permite recoger y comer en el sitio. Los mensajes aparecen arriba a la izquierda y los controles arriba a la derecha.
+- El menú de Plantas usa botones con fondos opacos y mantiene legibles las cuentas regresivas de los cultivos.
+- Percy señala dos depósitos de hielo al este. Iris usa el taladro y Teo lleva la caja. La elección cambia el gasto de batería y el agua disponible.
+- El guardado conserva la expedición y sus decisiones. Las pruebas recorren el tutorial y el regreso tras la quinta noche.
 
 ## 2026-11-15 | Laboratorio conjunto y pantalla integrada
 

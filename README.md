@@ -1,15 +1,15 @@
 # Horizonte Rojo
 
-**Horizonte Rojo** es un proyecto de juego narrativo 2D de cinco días en Marte. La versión principal permite revisar el viaje, la llegada al refugio, las noches y el regreso. Las actividades de gestión se definirán con el equipo.
+**Horizonte Rojo** es un proyecto de juego narrativo 2D de cinco días en Marte. La versión principal permite recorrer el viaje, explorar el refugio, completar el tutorial de gestión del Sol 1, pasar cinco noches y regresar.
 
 ## Estado y ejecución actual
 
-La escena principal es un **recorrido narrativo en revisión**: cinemática 2D pixel art de ida, llegada, Percy, exploración del refugio, cinco noches y regreso. La nave sale con el módulo acoplado, lo separa al aproximarse a Marte y conserva ese diseño en el aterrizaje. La secuencia usa imágenes locales de `assets/NarrativaInicio/`; no reproduce video externo ni depende de recursos remotos. Las actividades de los días están pendientes de definición. Consulta [Narrativa del equipo](docs/NARRATIVA-EQUIPO.md) para el documento fuente, las adaptaciones y lo que falta.
+La escena principal es un **recorrido narrativo en revisión**. La nave sale con el módulo acoplado, lo separa al aproximarse a Marte y conserva ese diseño en el aterrizaje. La secuencia pixel art usa imágenes locales de `assets/NarrativaInicio/`. Las actividades de los soles 2 a 5 están pendientes de definición. Consulta [Narrativa del equipo](docs/NARRATIVA-EQUIPO.md) para el documento fuente y las adaptaciones.
 
 1. Importa `project.godot` en Godot 4.7.2 y pulsa **F5**.
 2. Inicia el viaje. Puedes saltarlo con **Esc** o con el botón de la esquina. Percy te saluda mientras ya puedes caminar.
 3. Camina con **A/D o flechas** hacia la derecha hasta entrar al refugio. En el interior usa **WASD/flechas** y **M** para el plano.
-4. Desde Control, cruza la puerta derecha, sube por el corredor y gira a la derecha hacia Dormitorio. Cerca de la marca pulsa **E** o **Descansar**. La pantalla se oscurece durante tres segundos y comienza la siguiente mañana.
+4. En el Sol 1, Pluto sugiere empezar en Control y visitar Oxígeno y Plantas. Siembra, recoge y come en Plantas. Puedes salir con Iris a buscar hielo a la derecha del refugio y llevarlo al filtro. Cuando tengas aire asegurado y comida, pulsa **E** o **Descansar** en el dormitorio. El fundido de tres segundos inicia la siguiente mañana. Consulta [Sol 1](docs/dias/DIA-1.md).
 5. Tras la quinta noche, revisa Control, sal por la esclusa y sigue el camino hacia la izquierda hasta la nave. **E** permite subir; en el puesto de pilotaje, **Iniciar vuelo** activa el regreso.
 
 Pulsa **E** junto a la computadora de Control para consultar las reservas y la tarea del día. En la esclusa sur, el acceso lateral baja al núcleo protegido que se usa en el Día 5.

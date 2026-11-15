@@ -1,5 +1,11 @@
 # Arquitectura y verificación
 
+## Campaña de cinco soles
+
+El controlador monta las escenas del Sol 2, 3, 4 y 5 según el calendario. El Sol 1 se juega en el mapa principal. El modelo de recursos permanece en memoria entre escenas. El Sol 3 registra una sola vez las pérdidas heredadas del Sol 2. El resultado del Sol 4 y la instantánea del impacto del Sol 5 se guardan junto con las reservas. Los soles 2 y 3 retoman desde la entrada del nivel al recargar.
+
+Ctrl + Shift + M pausa y abre el selector. Una prueba puede avanzar entre soles con sus propias reservas, sin escribir sobre la partida guardada. El coordinador decide el desenlace y enlaza las dos cinemáticas y la derrota.
+
 ## Recorrido narrativo principal
 
 - `scenes/umbra.tscn` ejecuta `guion_inicio_final.gd`: entrada, movimiento, presentación y transiciones del guion.

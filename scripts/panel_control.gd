@@ -48,7 +48,7 @@ func _ready() -> void:
 	add_child(superficie)
 
 	_etiqueta("Estado del refugio", Rect2(32, 22, 600, 45), 33, TITULO)
-	_etiqueta("Control  /  Día %d de %d" % [_estado.sol, Recursos.ULTIMO_SOL],
+	_etiqueta("Control  /  Sol %d de %d" % [_estado.sol, Recursos.ULTIMO_SOL],
 		Rect2(34, 68, 600, 26), 17, TEXTO)
 	var cerrar := _boton("Cerrar · Esc", Rect2(777, 28, 135, 42), cerrar_solicitado.emit)
 	cerrar.grab_focus()

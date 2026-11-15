@@ -64,8 +64,8 @@ func _elegir_dia(dia: int) -> void:
 	_selector.add_child(sombra)
 	Vista.rotulo(_selector, "Horizonte Rojo", Rect2(64, 42, 730, 78), 55, MARFIL)
 	Vista.rotulo(_selector, "Elige dónde empezar la prueba", Rect2(68, 128, 850, 42), 26, MARFIL)
-	_boton_brief(_selector, "Día 4 · Preparar la base", Rect2(68, 198, 310, 53), _elegir_dia.bind(4), dia == 4)
-	_boton_brief(_selector, "Día 5 · Afrontar la tormenta", Rect2(392, 198, 310, 53), _elegir_dia.bind(5), dia == 5)
+	_boton_brief(_selector, "Sol 4 · Preparar la base", Rect2(68, 198, 310, 53), _elegir_dia.bind(4), dia == 4)
+	_boton_brief(_selector, "Sol 5 · Afrontar la tormenta", Rect2(392, 198, 310, 53), _elegir_dia.bind(5), dia == 5)
 	var resumen := "Trae hielo, instala el blindaje y asegura el aire antes de dormir." if dia == 4 else "Reúne a la tripulación, cierra la compuerta y consulta el resultado."
 	Vista.rotulo(_selector, resumen, Rect2(70, 278, 1140, 52), 24, MARFIL)
 	var columna := 0
@@ -143,7 +143,7 @@ func _mostrar_noche(historial: Dictionary) -> void:
 	_pantalla.color = Color("#0b1620")
 	_pantalla.size = Vector2(1280, 720)
 	add_child(_pantalla)
-	Vista.rotulo(_pantalla, "Fin del día 4", Rect2(410, 247, 500, 72), 44, Vista.PAPEL).horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	Vista.rotulo(_pantalla, "Fin del sol 4", Rect2(410, 247, 500, 72), 44, Vista.PAPEL).horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	var detalle := "El refugio está reforzado." if historial.refugio_reforzado else "La base conserva su protección original."
 	Vista.rotulo(_pantalla, detalle, Rect2(380, 331, 560, 43), 22, Vista.MENTA).horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	Vista.boton(_pantalla, "Comenzar el día 5", Rect2(509, 424, 302, 49), _montar.bind(historial)).grab_focus()

@@ -1,6 +1,6 @@
 # Mecánicas básicas y contrato de los niveles
 
-Esta es la primera entrega común del equipo, basada en **Mecánicas básicas (3)** y **Flujo de los cinco días y finales**. Contiene el modelo, el banco de pruebas y la conexión inicial al recorrido principal. Dentro del refugio se ven las cuatro reservas en tiempo real. Un solo laboratorio de Agua y Oxígeno reúne el filtro azul para purificar hielo y los depósitos verdes para asegurar el aire. Plantas permite sembrar y comer. Hasta que estén listas las expediciones, Centro de agua ofrece una unidad de hielo de prueba por sol. Las actividades de los cinco días y el selector final se integrarán con el equipo.
+Esta entrega se basa en **Mecánicas básicas (3)** y **Flujo de los cinco días y finales**. Contiene el modelo, el banco de pruebas y la conexión al recorrido principal. Dentro del refugio se ven las cuatro reservas en tiempo real. Un solo laboratorio de Agua y Oxígeno reúne el filtro azul para purificar hielo y los depósitos verdes para asegurar el aire. Plantas permite sembrar y comer. El [Sol 1](dias/DIA-1.md) obtiene hielo en la expedición. En los soles 2 a 5, el laboratorio ofrece una unidad de hielo de prueba por sol hasta que se definan las actividades.
 
 ## Cómo probarlo
 
@@ -53,7 +53,7 @@ En campaña, el coordinador crea una instancia por partida, la entrega a cada d�
 | --- | --- |
 | `iniciar_sol()` / `iniciar_sol("tormenta")` | Sin argumento sortea polvo normal. Con argumento fija `bajo`, `medio`, `alto` o `tormenta`. Rechaza iniciar un sol en curso. |
 | `estado()` y señal `cambiado` | Lee una copia del estado. Úsalo para dibujar indicadores, actualizar controles o mostrar la causa de derrota. |
-| `recoger_hielo()` y `purificar_hielo()` | Recoge una unidad de hielo y la convierte en agua en acciones distintas. El nivel es dueño de comprobar cercanía y que la fuente no se recoja dos veces. |
+| `recoger_hielo(cantidad, energia, deposito)` y `purificar_hielo()` | La extracción admite un costo de batería y un identificador de depósito de un solo uso por sol. Cada uso del filtro procesa 1 hielo, cuesta 2 de energía y rinde hasta 3 de agua. El nivel comprueba cercanía y si ya se eligió otro depósito. |
 | `activar_oxigeno(energia, agua, alimento)` | Recarga el aire una vez por sol. Por defecto usa 6, 1 y 0. Los costos alternativos sirven para la decisión del día 3. Confirma el resultado antes de mostrar éxito. |
 | `usar_tanques_emergencia(energia)` | Solo día 3, antes de asegurar el aire. Costo base de 3 energía, 1 agua y 2 oxígeno. Aporta 2 alimento y habilita el descanso si queda oxígeno. |
 | `sembrar(id)` / `comer(id)` | Usa `lechuga`, `rabano`, `tomate` o `papa`. La ficha de costos y tiempos está en `CULTIVOS`. |
