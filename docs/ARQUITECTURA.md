@@ -9,7 +9,7 @@
 - `assets/NarrativaInicio/Percy(robotQueExuisteEnLaLuna).png` representa artísticamente al rover real. El nombre del archivo se conserva por compatibilidad, aunque Percy está en Marte. Reemplaza al SVG provisional; Pluto conserva `dron.png`. Prompts y recursos: [Arte del viaje](ARTE-VIAJE.md).
 - `tests/narrativa_smoke.gd` verifica que el viaje cargue las seis capas `TextureRect` y las rutas exactas de los recursos pixel art, además de tramos de paso, ida, entrada, noches, guardado, embarque y regreso. Genera capturas en `build/qa/` cuando hay un servidor gráfico y omite solo las capturas al ejecutarse en modo `headless`. Ejecutar en perfil temporal: no usar la partida del jugador.
 
-Flujo: `portada → ida → aterrizaje → percy → camino_base → esclusa → base → noche (3 s) → amanecer → base`. Tras la quinta noche: `base → camino_nave → pilotaje → despegue → regreso → llegada_tierra (1 s) → epilogo (10 s)`. Cada noche se confirma una vez. No se crea un sexto día. La posición al amanecer es el dormitorio.
+Flujo: `portada → ida → aterrizaje → camino_base → esclusa → base → noche (3 s) → amanecer → base`. Tras la quinta noche: `base → camino_nave → pilotaje → despegue → regreso → llegada_tierra (1 s) → epilogo (10 s)`. La ida y el descenso suman 8 s. Esc o el botón de la esquina adelantan al tramo jugable. `_ubicar_accion()` proyecta la posición del jugador para colocar acciones cercanas. Cada noche se confirma una vez. No se crea un sexto día. La posición al amanecer es el dormitorio.
 
 El simulador anterior permanece en `scenes/simulacion_provisional.tscn`, con `umbra.gd`, `sol_uno.gd` y `guardado_mision.gd`. Los apartados siguientes documentan ese simulador, **no las actividades aprobadas**. La exportación principal abre el recorrido narrativo.
 

@@ -1,5 +1,13 @@
 # Cambios
 
+## 2026-11-14 | Desacople visible y arranque directo
+
+- Se reduce aproximadamente un 6 % la velocidad normal al caminar dentro y fuera del refugio.
+- Se alinean los aros al inicio y se separan ambas piezas sobre Marte antes del descenso de la cápsula.
+- La ida y el aterrizaje duran 8 s en total. La primera partida web comienza después de cargar. La llegada de Percy ocurre mientras el jugador puede caminar.
+- Se retiran las franjas de interfaz del recorrido principal. Las acciones de exploración aparecen junto a Nora y la cinemática se puede saltar desde la esquina.
+- Se verificaron capturas de portada, salida, desacople, aproximación, descenso y llegada, además del recorrido narrativo completo en Godot.
+
 ## 2026-11-14 | Cinemática inicial 2D pixel art por etapas
 
 - La dirección visual definitiva del proyecto es 2D pixel art. Se reemplaza la iteración que mezclaba fondos realistas con una nave pixelada.

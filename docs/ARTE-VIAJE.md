@@ -34,7 +34,7 @@ Las siete imágenes se generaron con ImageGen integrado, sin CLI ni clave API. E
 
 ## Composición y movimiento
 
-La ida dura nueve segundos. Los fondos se funden con paneo y zoom para evitar una imagen clavada al visor. La nave completa sigue una curva Bézier; la estela cambia de intensidad. Entre 65 % y 86 % del progreso, la etapa y el módulo toman posiciones y giros distintos: el propulsor se aparta y pierde opacidad mientras el módulo aumenta ligeramente de tamaño hacia Marte. El título de escena cambia para señalar impulso, meses de viaje, separación y aproximación.
+La ida dura 5,4 segundos y el aterrizaje 2,6. Los fondos pixel art se funden con paneo limitado al visor. Los aros de acople son los puntos de referencia al colocar las dos piezas. Entre el 49 % y el 73 % del trayecto el propulsor se aparta hacia arriba e izquierda. La cámara vuelve a encuadrar la cápsula, que aumenta de tamaño y continúa sola. Un breve fundido da paso al módulo con patas y escalera del aterrizaje. La cinemática reutiliza las ilustraciones de NarrativaInicio. El texto y el botón de salto aparecen en las esquinas.
 
 Las coordenadas de acople consideran el margen transparente interno de los PNG; no deben sustituirse por una separación visual fija. La revisión Web final comprobó que el módulo sale acoplado y que la llegada muestra el mismo diseño ya aterrizado.
 

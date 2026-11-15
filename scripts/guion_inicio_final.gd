@@ -6,11 +6,9 @@ const AREA := Rect2(0, 0, 1280, 720)
 const TINTA := Color("#101c28")
 const PAPEL := Color("#fff1db")
 const CIAN := Color("#83eadc")
-const BIENVENIDA := [
-	"¡Bienvenidos a Marte! Soy Perseverance; pueden llamarme Percy. Llegué en 2021, mucho antes que ustedes.",
-	"Guardo muestras de roca para que podamos estudiar el pasado de Marte. Pluto es otro robot: los espera dentro del refugio.",
-	"Su casa durante cinco días será ese refugio. Pluto los espera dentro. ¡Vamos por el camino!",
-]
+const DURACION_IDA := 5.4
+const DURACION_ATERRIZAJE := 2.6
+const DURACION_REGRESO := 9.0
 const FICHAS := {
 	"energia": "La energía mantiene funcionando los equipos. Aquí se reparte la reserva del refugio.",
 	"agua": "Aquí se limpia y comprueba el agua antes de usarla. El hielo recién recogido todavía no se puede beber.",
@@ -32,7 +30,6 @@ var pista: Label
 var boton: Button
 var velo: ColorRect
 var nave_salida: TextureRect
-var indice_dialogo := 0
 var plano := false
 var aviso_tiempo := 0.0
 var segundos_guardado := 0.0
@@ -41,22 +38,27 @@ var restaurado := {}
 func _ready() -> void:
 	get_window().min_size = Vector2i(800, 450)
 	restaurado = campana.cargar()
-	_mostrar()
+	if OS.has_feature("web") and restaurado.is_empty():
+		_cambiar("ida")
+	else:
+		_mostrar()
 
 func _process(delta: float) -> void:
 	reloj += delta
 	aviso_tiempo = maxf(0, aviso_tiempo - delta)
 	match fase:
 		"ida", "regreso":
-			viaje.progreso = clampf(reloj / 9.0, 0, 1)
+			var duracion := DURACION_IDA if fase == "ida" else DURACION_REGRESO
+			viaje.progreso = reloj / duracion
 			titulo.text = viaje.etapa()
-			if reloj >= 9.0:
+			if reloj >= duracion:
 				_cambiar("aterrizaje" if fase == "ida" else "llegada_tierra")
 		"aterrizaje":
-			puesto.tiempo = reloj * 1.4
+			puesto.tiempo = minf(reloj / DURACION_ATERRIZAJE, 1.0) * PuestoUmbra.FIN_LLEGADA
+			velo.color.a = 1.0 - smoothstep(0, 0.28, reloj)
 			puesto.queue_redraw()
-			if reloj >= 10.0:
-				_cambiar("percy")
+			if reloj >= DURACION_ATERRIZAJE:
+				_iniciar_caminata()
 		"base", "camino_base", "camino_nave":
 			_caminar(delta)
 		"esclusa":
@@ -104,9 +106,8 @@ func _unhandled_key_input(event: InputEvent) -> void:
 	elif event.physical_keycode == KEY_M and fase == "base":
 		plano = not plano
 		puesto.plano = plano
-	elif event.physical_keycode == KEY_ESCAPE and fase == "percy":
-		indice_dialogo = BIENVENIDA.size() - 1
-		_accion()
+	elif event.physical_keycode == KEY_ESCAPE and fase in ["ida", "aterrizaje"]:
+		_iniciar_caminata()
 
 func _caminar(delta: float) -> void:
 	var direccion := Vector2(
@@ -128,18 +129,20 @@ func _caminar(delta: float) -> void:
 func _actualizar_guia() -> void:
 	boton.visible = false
 	if fase == "camino_base":
-		pista.text = "A / D o flechas · Sigue el camino hacia la puerta del refugio"
+		pista.text = "A / D o flechas   →   Refugio"
+		voz.visible = reloj < 6.0
 	elif fase == "camino_nave":
 		pista.text = "A / D o flechas · Vuelve por el camino hasta la nave"
 		if absf(posicion.x - 220) < 30:
 			boton.visible = true
-			boton.text = "E · Subir a la nave y volver a Tierra"
+			boton.text = "E · Subir a la nave"
+			_ubicar_accion()
 		return
 	elif fase == "base":
-		pista.text = "WASD / flechas · Camina por los pasillos     M · Ver el plano"
+		pista.text = "WASD o flechas  /  M: plano" if reloj < 6.0 else ""
 		var cerca := puesto.terminal_cercana()
 		if cerca == "dormitorio" and not campana.listo_para_regresar():
-			boton.text = "E · Descansar y terminar el día %d" % campana.sol
+			boton.text = "E · Descansar"
 			boton.visible = true
 		elif cerca == "radio" and campana.listo_para_regresar():
 			boton.text = "E · Revisar la ruta de regreso"
@@ -148,10 +151,15 @@ func _actualizar_guia() -> void:
 			boton.text = "E · Salir hacia la nave"
 			boton.visible = true
 		elif not cerca.is_empty() and FICHAS.has(cerca):
-			boton.text = "E · Conocer " + PuestoUmbra.NOMBRES.get(cerca, "la entrada")
+			boton.text = "E · " + PuestoUmbra.NOMBRES.get(cerca, "Entrada").capitalize()
 			boton.visible = true
+		if boton.visible:
+			_ubicar_accion()
 		if aviso_tiempo <= 0:
-			voz.text = "Pluto · Descansemos. El acceso al dormitorio está por el pasillo derecho, hacia arriba." if not campana.listo_para_regresar() else "Pluto · Nuestra estancia terminó. Revisa la ruta en Control y sal por la puerta hacia la nave."
+			voz.text = "Pluto · El dormitorio está por el pasillo derecho, arriba." if not campana.listo_para_regresar() else "Pluto · Revisa la ruta en Control antes de salir."
+			voz.visible = reloj < 6.0
+		else:
+			voz.visible = true
 
 func _accion() -> void:
 	match fase:
@@ -161,14 +169,8 @@ func _accion() -> void:
 				_cambiar(restaurado.fase)
 			else:
 				_cambiar("ida")
-		"percy":
-			indice_dialogo += 1
-			if indice_dialogo < BIENVENIDA.size():
-				voz.text = "Percy · " + BIENVENIDA[indice_dialogo]
-			else:
-				posicion = Vector2(300, PuestoUmbra.SUELO)
-				_cambiar("camino_base")
-				_guardar()
+		"ida", "aterrizaje":
+			_iniciar_caminata()
 		"base":
 			var cerca := puesto.terminal_cercana()
 			if cerca == "dormitorio" and not campana.listo_para_regresar():
@@ -194,11 +196,21 @@ func _accion() -> void:
 			if reloj >= 10:
 				_reiniciar()
 
+func _iniciar_caminata() -> void:
+	posicion = Vector2(240, PuestoUmbra.SUELO)
+	_cambiar("camino_base")
+	_guardar()
+
+func _ubicar_accion() -> void:
+	# La acción sigue al personaje sin taparle el traje.
+	var suelo := puesto.proyectar_suelo(puesto.punto)
+	boton.position = Vector2(clampf(suelo.x - boton.size.x / 2.0, 24, 1256 - boton.size.x),
+		clampf(suelo.y + 18, 240, 650))
+
 func _reiniciar() -> void:
 	campana.borrar()
 	campana = Campana.new()
 	restaurado = {}
-	indice_dialogo = 0
 	posicion = Vector2(220, PuestoUmbra.SUELO)
 	_cambiar("ida")
 
@@ -232,7 +244,7 @@ func _mostrar() -> void:
 				puesto.esclusa_activa = true
 				puesto.punto = Vector2(402, 440)
 				puesto.actualizar_camara(2)
-		"aterrizaje", "percy", "camino_base", "camino_nave":
+		"aterrizaje", "camino_base", "camino_nave":
 			_crear_mapa(false)
 			puesto.aterrizaje = fase == "aterrizaje"
 			puesto.bienvenida_percy = fase != "aterrizaje"
@@ -250,48 +262,43 @@ func _mostrar() -> void:
 			_etiqueta("Las muestras se estudiarían en un laboratorio protegido. Esta es una misión imaginada para aprender.", Rect2(810, 355, 340, 130), 21)
 		_:
 			_imagen(PuestoUmbra.SENDERO, AREA)
-			_sombra(AREA, Color(0.03, 0.07, 0.12, 0.55))
+			_sombra(AREA, Color(0.03, 0.07, 0.12, 0.30))
 			_etiqueta("Horizonte Rojo", Rect2(85, 145, 1100, 100), 64)
 			_etiqueta("Cinco días en Marte", Rect2(90, 255, 900, 60), 32)
-			_etiqueta("Viaja con Nora, Iris y Teo. Conoce el refugio y acompaña su regreso a casa.", Rect2(90, 340, 680, 90), 24)
-	_sombra(Rect2(0, 0, 1280, 63), Color(0.03, 0.07, 0.12, 0.86))
-	titulo = _etiqueta("Horizonte Rojo · Guion en revisión", Rect2(30, 16, 930, 34), 20)
-	_etiqueta("Actividades por definir", Rect2(975, 20, 280, 28), 17)
-	# Texto nativo de Godot: legible, sin rasterizar con el escenario.
-	_sombra(Rect2(0, 564, 1280, 156), Color(0.03, 0.07, 0.12, 0.88))
-	voz = _etiqueta("", Rect2(36, 580, 1208, 64), 23)
-	pista = _etiqueta("", Rect2(36, 666, 790, 32), 17)
-	boton = _boton("Continuar · E", Rect2(820, 653, 424, 47), _accion)
+			_etiqueta("Acompaña a Nora, Iris y Teo hasta el refugio.", Rect2(90, 322, 480, 72), 24)
+	titulo = _etiqueta("", Rect2(34, 26, 590, 36), 23)
+	voz = _etiqueta("", Rect2(34, 82, 410, 105), 20)
+	pista = _etiqueta("", Rect2(34, 653, 445, 35), 17)
+	boton = _boton("", Rect2(986, 28, 256, 45), _accion)
 	boton.visible = false
 	match fase:
 		"portada":
-			voz.text = "Versión para revisar el inicio, las noches y el final. Las misiones diarias todavía no están incluidas."
-			boton.text = "Continuar viaje · E" if not restaurado.is_empty() else "Comenzar viaje · E"
+			boton.position = Vector2(90, 402)
+			boton.text = "Continuar viaje" if not restaurado.is_empty() else "Comenzar viaje"
 			boton.visible = true
 			if not restaurado.is_empty():
-				_boton("Empezar de nuevo", Rect2(36, 653, 245, 47), _reiniciar)
+				_boton("Empezar de nuevo", Rect2(90, 460, 256, 45), _reiniciar)
 		"ida":
-			titulo.text = "Tierra → Marte"
-			voz.text = "Control de misión · ¡Buen viaje! Las rocas de Marte pueden ayudarnos a conocer su pasado."
-			pista.text = "Meses de viaje resumidos · Trayectoria ilustrativa, sin escala"
+			titulo.text = "Salida de la Tierra"
+			boton.text = "Saltar viaje · Esc"
+			boton.visible = true
 		"regreso", "llegada_tierra":
 			titulo.text = "Marte → Tierra"
 			voz.text = "Iris · Nos llevamos las preguntas y lo que aprendimos. Percy seguirá explorando Marte."
 			pista.text = "Meses después · Trayectoria ilustrativa, sin escala"
 		"aterrizaje":
-			voz.text = "Iris · Ahí está el refugio. Pasaremos cinco días aquí antes de volver a casa."
+			titulo.text = "Aterrizaje en Marte"
+			boton.text = "Saltar viaje · Esc"
+			boton.visible = true
 		"pilotaje":
 			titulo.text = "A bordo · Puesto de pilotaje"
 			voz.text = "Iris · Tripulación a bordo, puerta cerrada. Nora, cuando estés lista, inicia el vuelo de regreso."
 			pista.text = "Percy se queda en Marte · Ruta resumida, sin escala"
-			boton.text = "E · Iniciar vuelo de regreso"
-			boton.visible = true
-		"percy":
-			voz.text = "Percy · " + BIENVENIDA[indice_dialogo]
-			pista.text = "Perseverance es un rover real de la NASA. Su diálogo y esta misión son ficción."
+			boton.text = "E · Iniciar vuelo"
 			boton.visible = true
 		"camino_base":
-			voz.text = "Percy · Voy con ustedes hasta la puerta. Yo me quedo afuera; Pluto los guiará dentro."
+			voz.text = "Percy · Soy Perseverance. Síganme al refugio."
+			_actualizar_guia()
 		"camino_nave":
 			voz.text = "Percy · ¡Buen regreso! Yo seguiré aquí, buscando nuevas pistas."
 		"base":
@@ -308,8 +315,8 @@ func _mostrar() -> void:
 			titulo.text = "Tierra · Cierre de la historia"
 			voz.text = "Equipo científico · ¡Gracias, astronautas! Sus preguntas y sus aportes nos ayudan a comprender Marte. ¡Sigan explorando!"
 			boton.text = "Volver al comienzo"
-	if fase in ["noche", "amanecer", "llegada_tierra"]:
-		velo = _sombra(AREA, Color(0, 0, 0, 1 if fase == "amanecer" else 0))
+	if fase in ["noche", "amanecer", "llegada_tierra", "aterrizaje"]:
+		velo = _sombra(AREA, Color(0, 0, 0, 1 if fase in ["amanecer", "aterrizaje"] else 0))
 
 func _crear_mapa(interior: bool) -> void:
 	var marco := Control.new()
@@ -343,6 +350,8 @@ func _etiqueta(texto: String, rect: Rect2, tamano: int) -> Label:
 	etiqueta.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	etiqueta.add_theme_font_size_override("font_size", tamano)
 	etiqueta.add_theme_color_override("font_color", PAPEL)
+	etiqueta.add_theme_color_override("font_outline_color", Color("#0b1320"))
+	etiqueta.add_theme_constant_override("outline_size", 7)
 	etiqueta.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	capa.add_child(etiqueta)
 	etiqueta.size = rect.size

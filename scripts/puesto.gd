@@ -95,6 +95,7 @@ const EQUIPOS := [
 const ALTURA_INTERIOR := 25.0
 const EQUIPO_AGUA := [Vector2(25, 19), Vector2(-1, 19), Vector2(51, 19)]
 const ALCANCE_AGUA := 10.0
+const FIN_LLEGADA := 13.5
 const SUELO := 351.0
 const DISTANCIA_PANORAMA := 700.0
 const MUESTRA := Vector2(659, SUELO)
@@ -169,7 +170,7 @@ func avanzar(direccion: Vector2, delta: float) -> void:
 		direccion.y = 0.0
 		direccion = direccion.normalized()
 		punto.y = SUELO
-	var rapidez := 79.0 if interior else 176.0
+	var rapidez := 74.0 if interior else 165.0
 	if evacuacion:
 		rapidez = 135.0
 	elif mando_nido:
@@ -363,7 +364,7 @@ func _dibujar_exterior() -> void:
 		draw_rect(Rect2(0, 0, ancho_visible, 385), Color(0.16, 0.11, 0.18, frente_polvo * 0.56))
 		draw_set_transform(origen, 0, Vector2.ONE * zoom)
 	var llegada := smoothstep(0.45, 5.2, tiempo) if aterrizaje else 1.0
-	var nave := Vector2(182, lerpf(35.0, SUELO - 21, llegada))
+	var nave := Vector2(182, lerpf(-20.0, SUELO - 21, llegada))
 	if aterrizaje and llegada < 1.0:
 		for i in range(23):
 			var x := sin(i * 8.31 + tiempo * 9.0) * (12.0 + llegada * 45.0)
@@ -382,9 +383,9 @@ func _dibujar_exterior() -> void:
 	var teo := MUESTRA if campo else Vector2(695, SUELO)
 	var salida := smoothstep(7.0, 9.6, tiempo)
 	if aterrizaje:
-		nora = Vector2(lerpf(194, 220, salida), lerpf(SUELO - 21.0, SUELO, salida))
+		nora = Vector2(lerpf(194, 240, salida), lerpf(SUELO - 21.0, SUELO, salida))
 		iris.x = lerpf(194, 284, smoothstep(5.6, 8.7, tiempo))
-		teo.x = lerpf(194, MUESTRA.x, smoothstep(9.3, 13.5, tiempo))
+		teo.x = lerpf(194, 205, smoothstep(9.3, FIN_LLEGADA, tiempo))
 	elif sondeo or perforando or hallazgo:
 		iris.x = MUESTRA.x - 37
 		teo.x = MUESTRA.x + 35
@@ -409,7 +410,7 @@ func _dibujar_exterior() -> void:
 		var corriendo := carrera and caminando
 		var iris_x := iris.x
 		if aterrizaje:
-			iris_x = lerpf(194.0, 284.0, smoothstep(5.6, 8.7, tiempo))
+			iris_x = lerpf(194.0, 275.0, smoothstep(5.6, 8.7, tiempo))
 		elif chequeo and not campo and not guia_pluto and not bienvenida_percy:
 			iris_x = lerpf(284.0, 717.0, smoothstep(0.0, 5.0, tiempo))
 		iris.x = iris_x

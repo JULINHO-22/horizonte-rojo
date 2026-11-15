@@ -76,8 +76,8 @@
   new ResizeObserver(fitCanvas).observe(canvas);
   play.addEventListener("click", async () => {
     play.disabled = true;
-    play.textContent = "Preparando el aterrizaje…";
-    status.textContent = "La nave se acerca a Marte.";
+    play.textContent = "Cargando el juego…";
+    status.textContent = "Descargando ilustraciones y motor.";
     progreso.hidden = false;
     try {
       if (!Engine.isWebGLAvailable()) throw new Error("Activa la aceleración gráfica del navegador o prueba con otro navegador.");

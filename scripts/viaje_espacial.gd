@@ -20,6 +20,9 @@ var regreso := false:
 			_asignar_fondos()
 			_actualizar_toma()
 
+const INICIO_SEPARACION := 0.49
+const FIN_SEPARACION := 0.73
+
 var fondo_salida: TextureRect
 var fondo_espacio: TextureRect
 var fondo_llegada: TextureRect
@@ -49,9 +52,9 @@ func etapa() -> String:
 		return "Nos acercamos a la Tierra"
 	if progreso < 0.28:
 		return "Impulso de salida desde la Tierra"
-	if progreso < 0.64:
+	if progreso < INICIO_SEPARACION:
 		return "Meses de viaje después…"
-	if progreso < 0.86:
+	if progreso < FIN_SEPARACION:
 		return "Separación del módulo de descenso"
 	return "El módulo se acerca a Marte"
 
@@ -77,8 +80,8 @@ func _actualizar_toma() -> void:
 		return
 	var salida_a_espacio := smoothstep(0.22, 0.38, progreso)
 	var espacio_a_llegada := smoothstep(0.58, 0.75, progreso)
-	fondo_salida.modulate.a = 1.0 - salida_a_espacio
-	fondo_espacio.modulate.a = salida_a_espacio * (1.0 - espacio_a_llegada)
+	fondo_salida.modulate.a = 1.0
+	fondo_espacio.modulate.a = salida_a_espacio
 	fondo_llegada.modulate.a = espacio_a_llegada
 
 	# El encuadre cambia de forma visible; las estrellas y los planetas no quedan clavados al visor.
@@ -86,7 +89,7 @@ func _actualizar_toma() -> void:
 	_colocar_fondo(fondo_espacio, lerpf(1.02, 1.16, progreso), Vector2(-82, 18) * progreso)
 	_colocar_fondo(fondo_llegada, lerpf(1.01, 1.22, progreso), Vector2(-94, -32) * progreso)
 
-	var separacion := 1.0 - smoothstep(0.10, 0.31, progreso) if regreso else smoothstep(0.65, 0.86, progreso)
+	var separacion := 1.0 - smoothstep(0.10, 0.31, progreso) if regreso else smoothstep(INICIO_SEPARACION, FIN_SEPARACION, progreso)
 	var escala_conjunto := lerpf(0.78, 1.07, smoothstep(0.0, 0.66, progreso))
 	if regreso:
 		escala_conjunto = lerpf(1.07, 0.82, smoothstep(0.30, 1.0, progreso))
@@ -98,29 +101,22 @@ func _actualizar_toma() -> void:
 	var control_b := Vector2(720, 235)
 	var final := Vector2(930, 315)
 	var centro_ruta := inicio.bezier_interpolate(control_a, control_b, final, progreso)
-	var centro_transferencia := centro_ruta + Vector2(-145, -66) * separacion
-	# Los aros coinciden antes del desacople. Después cada etapa toma una trayectoria distinta.
-	var aro_transferencia := centro_transferencia + Vector2(tam_transferencia.x * 0.43, 0)
-	# El PNG del módulo conserva margen transparente a la izquierda. Este ajuste alinea
-	# el aro visible con la etapa de transferencia mientras separacion sea cero.
-	var centro_modulo := aro_transferencia + Vector2(tam_modulo.x * 0.15, 0)
-	centro_modulo += Vector2(285, 118) * separacion
-	var giro_base := lerpf(-0.055, 0.025, progreso)
+	var avance_descenso := smoothstep(FIN_SEPARACION, 1.0, progreso) if not regreso else 0.0
+	var centro_transferencia := centro_ruta + Vector2(-270, -68) * separacion - Vector2(400, 95) * avance_descenso
+	var giro_base := lerpf(-0.09, 0.02, progreso)
 	var giro_transferencia := giro_base - 0.13 * separacion
-	var giro_modulo := giro_base + 0.12 * separacion
-
-	var visible_general := smoothstep(0.01, 0.06, progreso) * (1.0 - smoothstep(0.97, 1.0, progreso))
-	var opacidad_transferencia := visible_general
-	if not regreso:
-		opacidad_transferencia *= 1.0 - smoothstep(0.86, 0.99, progreso)
-	var opacidad_modulo := visible_general
-	if regreso:
-		opacidad_modulo *= smoothstep(0.01, 0.10, progreso)
-
+	var giro_modulo := giro_base + 0.20 * separacion - 0.25 * avance_descenso
+	# Los puntos de anclaje corresponden al centro de los aros en cada PNG.
+	var aro_transferencia := Vector2(0.31, 0.07) * tam_transferencia
+	var aro_modulo := Vector2(-0.29, 0.08) * tam_modulo
+	var centro_modulo := centro_transferencia + aro_transferencia.rotated(giro_transferencia) - aro_modulo.rotated(giro_modulo)
+	centro_modulo += Vector2(370, 180) * separacion
+	centro_modulo = centro_modulo.lerp(Vector2(615, 365), avance_descenso)
+	var visible_general := smoothstep(0.0, 0.04, progreso)
 	_colocar_capa(transferencia, centro_transferencia, tam_transferencia, giro_transferencia)
-	_colocar_capa(modulo, centro_modulo, tam_modulo * lerpf(1.0, 1.30, separacion), giro_modulo)
-	transferencia.modulate.a = opacidad_transferencia
-	modulo.modulate.a = opacidad_modulo
+	_colocar_capa(modulo, centro_modulo, tam_modulo * lerpf(1.0, 1.34, avance_descenso), giro_modulo)
+	transferencia.modulate.a = visible_general * (1.0 - avance_descenso)
+	modulo.modulate.a = visible_general * (1.0 - smoothstep(0.97, 1.0, progreso) if regreso else 1.0)
 
 	# La estela aparece en los impulsos y palpita levemente; se apaga al separar el módulo.
 	var potencia := 0.24
@@ -133,7 +129,7 @@ func _actualizar_toma() -> void:
 	var tam_estela := Vector2(tam_transferencia.x * 0.47, tam_transferencia.y * 0.62)
 	var centro_estela := centro_transferencia - Vector2(tam_transferencia.x * 0.59, 0)
 	_colocar_capa(estela, centro_estela, tam_estela, giro_transferencia)
-	estela.modulate.a = opacidad_transferencia * potencia * (0.84 + 0.16 * sin(progreso * 92.0))
+	estela.modulate.a = transferencia.modulate.a * potencia * (0.84 + 0.16 * sin(progreso * 92.0))
 
 func _colocar_capa(capa: TextureRect, centro: Vector2, dimensiones: Vector2, giro: float) -> void:
 	if regreso:
@@ -146,5 +142,6 @@ func _colocar_capa(capa: TextureRect, centro: Vector2, dimensiones: Vector2, gir
 
 func _colocar_fondo(imagen: TextureRect, zoom: float, paneo: Vector2) -> void:
 	var dimensiones := TAMANO * zoom
-	imagen.position = (TAMANO - dimensiones) * 0.5 + paneo
+	var margen := (dimensiones - TAMANO) * 0.5
+	imagen.position = -margen + paneo.clamp(-margen, margen)
 	imagen.size = dimensiones

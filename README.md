@@ -7,7 +7,7 @@
 La escena principal es un **recorrido narrativo en revisión**: cinemática 2D pixel art de ida, llegada, Percy, exploración del refugio, cinco noches y regreso. La nave sale con el módulo acoplado, lo separa al aproximarse a Marte y conserva ese diseño en el aterrizaje. La secuencia usa imágenes locales de `assets/NarrativaInicio/`; no reproduce video externo ni depende de recursos remotos. Las actividades de los días están pendientes de definición. Consulta [Narrativa del equipo](docs/NARRATIVA-EQUIPO.md) para el documento fuente, las adaptaciones y lo que falta.
 
 1. Importa `project.godot` en Godot 4.7.2 y pulsa **F5**.
-2. Inicia el viaje. Lee la bienvenida de Percy y avanza con **E**, **Enter** o el botón.
+2. Inicia el viaje. Puedes saltarlo con **Esc** o con el botón de la esquina. Percy te saluda mientras ya puedes caminar.
 3. Camina con **A/D o flechas** hacia la derecha hasta entrar al refugio. En el interior usa **WASD/flechas** y **M** para el plano.
 4. Desde Control, cruza la puerta derecha, sube por el corredor y gira a la derecha hacia Dormitorio. Cerca de la marca pulsa **E** o **Descansar**. La pantalla se oscurece durante tres segundos y comienza la siguiente mañana.
 5. Tras la quinta noche, revisa Control, sal por la esclusa y sigue el camino hacia la izquierda hasta la nave. **E** permite subir; en el puesto de pilotaje, **Iniciar vuelo** activa el regreso.
@@ -20,7 +20,7 @@ El código anterior de actividades sigue disponible para el equipo en `scenes/si
 
 ## Jugar en navegador
 
-Instala las plantillas de exportación de **Godot 4.7.2** y ejecuta `./web/exportar.ps1 -Godot "<ruta al ejecutable de consola de Godot>"` en PowerShell. El script exporta el juego, copia la portada y arma `build/Horizonte-Rojo-Web.zip`. Sirve el directorio completo por HTTP. Para probarlo desde PowerShell, ejecuta `python -m http.server 8065 --bind 127.0.0.1 --directory build/web` y abre [Horizonte Rojo en el navegador](http://127.0.0.1:8065/). Pulsa **Entrar al recorrido** y después **Comenzar viaje**. Si el mismo navegador conserva una partida para esa dirección, retoma el último punto guardado.
+Instala las plantillas de exportación de **Godot 4.7.2** y ejecuta `./web/exportar.ps1 -Godot "<ruta al ejecutable de consola de Godot>"` en PowerShell. El script exporta el juego, copia la portada y arma `build/Horizonte-Rojo-Web.zip`. Sirve el directorio completo por HTTP. Para probarlo desde PowerShell, ejecuta `python -m http.server 8065 --bind 127.0.0.1 --directory build/web` y abre [Horizonte Rojo en el navegador](http://127.0.0.1:8065/). Pulsa **Entrar al recorrido**. La primera partida inicia el viaje automáticamente después de cargar. Si ya hay una partida, puedes continuarla o comenzar de nuevo. Si el mismo navegador conserva una partida para esa dirección, retoma el último punto guardado.
 
 El preset usa WebGL 2 sin hilos. La página de lanzamiento está en [web/umbra.html](web/umbra.html) y el juego completo corre dentro de ella. Publica juntos el HTML, el motor y el paquete de datos en el alojamiento del equipo.
 
