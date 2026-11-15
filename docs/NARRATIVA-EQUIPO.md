@@ -87,7 +87,7 @@ SPEECH
 | Trayectoria interior | Entrada → Control; oeste → Energía → Centro de agua; este → Taller; desvío norte → Plantas/Dormitorio. Colisiones verificadas por tramos. |
 | Regreso | Control orienta hacia la salida; recorrido hasta la nave; puesto de pilotaje permite iniciar el despegue; trayectoria de vuelta y fundido de 1 s. |
 | Final terrestre | Epílogo de 10 s con la tripulación y agradecimiento; fondo de laboratorio reutilizado. Quedan pendientes el arte propio del laboratorio, los tres científicos animados y la revisión de signos vitales. No presentar este epílogo provisional como la escena final terminada. |
-| Actividades | No se activan tareas de hielo, radio, tormenta, agua ni balance de recursos. El simulador anterior se conserva en una escena separada. |
+| Actividades | El [tutorial del Sol 1](dias/DIA-1.md) recorre Control, Oxígeno, Plantas y la expedición por hielo. Los demás soles conservan las estaciones comunes y el simulador anterior permanece en una escena separada. |
 
 ## Finales alternativos
 

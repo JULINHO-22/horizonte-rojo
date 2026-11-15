@@ -107,12 +107,18 @@ const SONDEOS := [Vector2(555, SUELO), Vector2(607, SUELO), MUESTRA]
 const PUNTO_AVISO := 416.0
 const ALTURA_TRAJE := 49.0
 const ESCLUSA := Vector2(732, SUELO)
+const LIMITE_EXPEDICION := 1400.0
 const REVISION_SOLAR := Vector2(460, SUELO)
 const RELES := [Vector2(633, SUELO), Vector2(490, SUELO), Vector2(312, SUELO)]
 const ABRIGOS := [Vector2(463, SUELO), Vector2(590, SUELO), Vector2(731, SUELO)]
 
 var interior := false
 var laboratorio_activo := false
+var guia_sol_uno := false
+var expedicion_sol_uno := false
+var hielo_sol_uno := false
+var depositos_sol_uno: Array = []
+var taladro_sol_uno_x := -1.0
 var cielo_sereno := false
 var bienvenida_percy := false
 var chequeo := false
@@ -276,6 +282,8 @@ func en_esclusa() -> bool:
 
 func transitable(destino: Vector2) -> bool:
 	if not interior:
+		if expedicion_sol_uno:
+			return destino.x >= ESCLUSA.x and destino.x <= LIMITE_EXPEDICION and is_equal_approx(destino.y, SUELO)
 		return destino.x >= 42.0 and destino.x <= 756.0 and is_equal_approx(destino.y, SUELO)
 	for equipo: Rect2 in EQUIPOS:
 		if equipo.grow(3).has_point(destino):
@@ -311,6 +319,12 @@ func _draw() -> void:
 
 func proyectar_suelo(sitio: Vector2) -> Vector2:
 	return (_origen_mundo() + sitio * _zoom_mundo()) * escala_visual
+
+func posicion_percy() -> Vector2:
+	return Vector2(punto.x + 70 if expedicion_sol_uno else minf(punto.x + 85, ESCLUSA.x - 44), SUELO)
+
+func posicion_pluto() -> Vector2:
+	return punto + Vector2(20, -9) if guia_sol_uno else Vector2(340, 260)
 
 
 func _origen_mundo() -> Vector2:
@@ -404,8 +418,10 @@ func _dibujar_exterior() -> void:
 		iris.x = ESCLUSA.x - 10.0
 		teo.x = 205.0
 	elif bienvenida_percy:
-		iris.x = clampf(punto.x + 35, 38, 780)
-		teo.x = clampf(punto.x - 35, 38, 780)
+		iris.x = punto.x + 35 if expedicion_sol_uno else clampf(punto.x + 35, 38, 780)
+		teo.x = punto.x - 35 if expedicion_sol_uno else clampf(punto.x - 35, 38, 780)
+		if taladro_sol_uno_x >= 0:
+			iris.x = taladro_sol_uno_x + 20
 
 	elif carrera or evacuacion:
 		var sentido := -1.0 if direccion_izquierda else 1.0
@@ -441,7 +457,12 @@ func _dibujar_exterior() -> void:
 		_sprite(DRON, pluto, 31, 0.0, false)
 		draw_circle(pluto - Vector2(6, 32), 2.2, LUZ, true, -1.0, true)
 	if bienvenida_percy:
-		_sprite(PERCY, Vector2(minf(punto.x + 85, ESCLUSA.x - 44), SUELO), 39)
+		_sprite(PERCY, posicion_percy(), 39)
+	if taladro_sol_uno_x >= 0:
+		var sitio := Vector2(taladro_sol_uno_x, SUELO)
+		_dibujar_extraccion(sitio, sitio + Vector2(37, 0))
+	elif hielo_sol_uno:
+		_dibujar_maletin(teo, caminando)
 	if perforando:
 		_dibujar_extraccion()
 	elif caja_abierta:
@@ -483,6 +504,12 @@ func _dibujar_exterior() -> void:
 		_marca_sondeo(destino, LUZ, punto.distance_to(destino) <= 30.0)
 		if not panel_comprobado and avance_panel > 0.0:
 			draw_arc(destino + Vector2(0, -8), 14.0, -PI * 0.5, TAU * avance_panel - PI * 0.5, 32, LUZ, 2.0, true)
+	elif expedicion_sol_uno:
+		for deposito: Dictionary in depositos_sol_uno:
+			var sitio := Vector2(deposito.x, SUELO)
+			_marca_sondeo(sitio, LUZ, absf(punto.x - sitio.x) <= 32.0)
+			_baliza(sitio - Vector2(0, 91), deposito.nombre.to_upper(), LUZ)
+		_baliza(ESCLUSA - Vector2(0, 102), "REFUGIO", LUZ)
 	elif chequeo and not campo:
 		_baliza(ESCLUSA + Vector2(0, -102), "REFUGIO", LUZ)
 	elif carrera or evacuacion:
@@ -557,9 +584,7 @@ func _dibujar_objeto(textura: Texture2D, apoyo: Vector2, ancho: float) -> void:
 	draw_texture_rect(textura, Rect2(apoyo - Vector2(ancho * 0.5, alto), Vector2(ancho, alto)), false)
 
 
-func _dibujar_extraccion() -> void:
-	var sitio := MUESTRA + Vector2(5, -2)
-	var caja := CAJA_HIELO - Vector2(0, 1)
+func _dibujar_extraccion(sitio := MUESTRA + Vector2(5, -2), caja := CAJA_HIELO - Vector2(0, 1)) -> void:
 	_dibujar_objeto(CAJA_ABIERTA, caja, 25)
 	var profundidad := 19 * smoothstep(0.0, 0.44, avance_muestra)
 	draw_line(sitio + Vector2(-11, 0), sitio + Vector2(0, -27), OSCURO, 3.0, true)
@@ -770,7 +795,7 @@ func _dibujar_interior() -> void:
 	var iris_camina := (patrulla > 0.5 and patrulla < 2.7) or (patrulla > 4.1 and patrulla < 6.3)
 	_sprite(IRIS_PASOS if iris_camina else IRIS, Vector2(iris_x, 218), ALTURA_INTERIOR, 0.0,
 		patrulla >= 4.1, int(fposmod(iris_x / 20.0, 1.0) * 8) if iris_camina else -1)
-	_sprite(DRON, Vector2(340, 260), 17, sin(tiempo * 4.5))
+	_sprite(DRON, posicion_pluto(), 17, sin(tiempo * 4.5))
 	var terminal := terminal_cercana()
 	if laboratorio_activo and punto.distance_to(ESTACION_OXIGENO) <= 13.0:
 		terminal = "agua"
@@ -811,13 +836,22 @@ func _dibujar_interior() -> void:
 		var entrada_control := _origen_mundo() + Vector2(CENTRO_ESCLUSA_X, 338) * escala_camara
 		entrada_control.y = maxf(entrada_control.y, 70.0)
 		_baliza(entrada_control, "↑ CONTROL", LUZ)
-	elif not plano and not agua_en_curso and terminal != objetivo_mision and (TERMINALES.has(objetivo_mision) or objetivo_mision == "agua"):
+	elif not plano and not agua_en_curso and terminal != objetivo_mision and (TERMINALES.has(objetivo_mision) or objetivo_mision in ["agua", "oxigeno"]):
+		var oeste := objetivo_mision in ["agua", "oxigeno"]
 		var destino: Vector2 = TERMINALES.get(objetivo_mision, EQUIPO_AGUA[0])
-		if objetivo_mision == "agua" and laboratorio_activo:
+		if objetivo_mision == "oxigeno" or (objetivo_mision == "agua" and laboratorio_activo and not guia_sol_uno):
 			destino = ESTACION_OXIGENO
-		if objetivo_mision == "agua" and punto.x > 222.0:
+		if guia_sol_uno and punto.y < 150 and punto.x < 173 and not oeste:
+			destino = ENTRADA_AGUA
+		elif guia_sol_uno and punto.y < 224 and punto.x < 223 and not oeste:
+			destino = Vector2(191, 245)
+		elif guia_sol_uno and punto.y < 234 and punto.x >= 299 and objetivo_mision in ["agua", "oxigeno", "cierre"] and not ROOMS.radio.has_point(punto):
+			destino = Vector2(538, 133) if punto.x < 526 else Vector2(538, 245)
+		elif guia_sol_uno and objetivo_mision == "cierre" and absf(punto.x - CENTRO_ESCLUSA_X) > 8:
+			destino = Vector2(CENTRO_ESCLUSA_X, maxf(245, punto.y))
+		elif oeste and punto.x > 222.0:
 			destino = Vector2(202, 245)
-		elif objetivo_mision == "agua" and punto.x > 172.0:
+		elif oeste and punto.x > 172.0:
 			destino = ENTRADA_AGUA
 		elif objetivo_mision in ["cultivos", "dormitorio"] and punto.y >= 149.0 and punto.x < 528.0:
 			destino = Vector2(528, 245)
@@ -830,7 +864,7 @@ func _dibujar_interior() -> void:
 			var hacia := (marca - visible).normalized()
 			draw_line(visible - hacia * 18, visible, LUZ, 2.2, true)
 			draw_circle(visible, 3, LUZ, true, -1, true)
-		_baliza(visible, NOMBRES[objetivo_mision], LUZ)
+		_baliza(visible, NOMBRES.get(objetivo_mision, "OXÍGENO" if oeste else "ESCLUSA"), LUZ)
 
 
 func _sprite(textura: Texture2D, ancla: Vector2, alto: float, balanceo := 0.0,

@@ -1,5 +1,12 @@
 # Cambios
 
+## 2026-11-15 | Tutorial del Sol 1
+
+- Pluto sugiere una ruta de introducción. Las estaciones y el descanso están disponibles desde la llegada. Plantas muestra una cuenta regresiva por bandeja y permite recoger y comer en el sitio. Los mensajes aparecen arriba a la izquierda y los controles arriba a la derecha.
+- El menú de Plantas usa botones con fondos opacos y mantiene legibles las cuentas regresivas de los cultivos.
+- Percy señala dos depósitos de hielo al este. Iris usa el taladro y Teo lleva la caja. La elección cambia el gasto de batería y el agua disponible.
+- El guardado conserva la expedición y sus decisiones. Las pruebas recorren el tutorial y el regreso tras la quinta noche.
+
 ## 2026-11-15 | Laboratorio conjunto y pantalla integrada
 
 - Agua y Oxígeno comparten sala y tienen puestos diferenciados frente a sus equipos.

@@ -99,10 +99,14 @@ func usar_tanques_emergencia(energia := 3) -> bool:
 	cambiado.emit()
 	return true
 
-func recoger_hielo() -> bool:
-	if not _en_curso:
+func recoger_hielo(cantidad := 1, energia := 0, deposito := "") -> bool:
+	if cantidad < 1 or energia < 0 or (not deposito.is_empty() and _decisiones.has(deposito)):
 		return false
-	_hielo += 1
+	if not _aplicar({"energia": -energia}):
+		return false
+	_hielo += cantidad
+	if not deposito.is_empty():
+		_decisiones[deposito] = true
 	cambiado.emit()
 	return true
 

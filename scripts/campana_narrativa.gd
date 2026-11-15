@@ -44,7 +44,9 @@ func cargar() -> Dictionary:
 		return {}
 	if descanso == SOLES and dia != SOLES:
 		return {}
-	if not lugar.is_finite() or fase not in ["base", "camino_base", "camino_nave", "epilogo", "derrota"]:
+	if not lugar.is_finite() or fase not in ["base", "camino_base", "camino_nave", "epilogo", "derrota", "expedicion_sol_1"]:
+		return {}
+	if fase == "expedicion_sol_1" and (dia != 1 or lugar.x < PuestoUmbra.ESCLUSA.x or lugar.x > PuestoUmbra.LIMITE_EXPEDICION):
 		return {}
 	sol = dia
 	noches = descanso
