@@ -1,6 +1,6 @@
 # Mecánicas básicas y contrato de los niveles
 
-Esta es la primera entrega común del equipo, basada en **Mecánicas básicas (3)** y **Flujo de los cinco días y finales**. Contiene reglas y un banco de pruebas. La integración con la campaña, las actividades de los cinco días y sus condiciones de victoria se hacen en entregas separadas.
+Esta es la primera entrega común del equipo, basada en **Mecánicas básicas (3)** y **Flujo de los cinco días y finales**. Contiene el modelo, el banco de pruebas y la conexión inicial al recorrido principal. Dentro del refugio se ven las cuatro reservas en tiempo real. Centro de agua permite asegurar aire y purificar hielo. Plantas permite sembrar y comer. Hasta que estén listas las expediciones, Centro de agua ofrece una unidad de hielo de prueba por sol. Las actividades de los cinco días y el selector final se integrarán con el equipo.
 
 ## Cómo probarlo
 

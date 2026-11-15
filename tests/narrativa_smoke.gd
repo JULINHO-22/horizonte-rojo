@@ -78,6 +78,8 @@ func _probar() -> void:
 	await _captura("plano")
 	for dia in range(1, 6):
 		assert(juego.campana.sol == dia)
+		assert(juego.recursos.aplicar_decision("insumos_de_prueba", {"energia": 12, "agua": 6}))
+		assert(juego.recursos.activar_oxigeno())
 		juego.posicion = PuestoUmbra.TERMINALES.dormitorio
 		juego._mostrar()
 		juego._accion()
