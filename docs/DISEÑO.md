@@ -4,7 +4,7 @@ Horizonte Rojo es el nombre del juego. Umbra es el nombre del refugio. Los panor
 
 ## Alcance vigente
 
-Se implementa únicamente el recorrido de [inicio, noches y final](NARRATIVA-EQUIPO.md). Las actividades y el balance siguientes son un prototipo anterior separado. No son requisitos aprobados. En el recorrido narrativo se puede descansar sin tareas previas para revisar las cinco noches, sin descontar suministros ni simular éxitos que no se jugaron.
+El recorrido principal mantiene [inicio, noches y final](NARRATIVA-EQUIPO.md). El Día 3 tiene un flujo aprobado e independiente en [Día 3](dias/DIA-3.md): revisión del invernadero, fallo eléctrico y elección entre oxígeno e invernadero. Todavía no sustituye el descanso libre del recorrido principal. Las actividades y el balance del simulador anterior siguen separados y no son requisitos aprobados para los demás días.
 
 ## Simulador anterior
 

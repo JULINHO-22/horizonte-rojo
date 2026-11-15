@@ -1,6 +1,6 @@
 # Horizonte Rojo | Contexto para Codex
 
-Horizonte Rojo es un juego narrativo 2D de cinco soles en Godot 4.7.2. El alcance actual es inicio, noches y final según [Narrativa del equipo](docs/NARRATIVA-EQUIPO.md). Las actividades diarias NO están definidas: no implementar nuevas misiones sin acordarlas. Percy guía fuera y Pluto dentro. No hay Enfermería ni accidente; el Centro de agua es independiente.
+Horizonte Rojo es un juego narrativo 2D de cinco soles en Godot 4.7.2. El alcance actual es inicio, noches y final según [Narrativa del equipo](docs/NARRATIVA-EQUIPO.md). El Día 3 tiene un flujo aprobado y aislado en [Día 3](docs/dias/DIA-3.md); las actividades de los otros días no deben inventarse sin acuerdo. Percy guía fuera y Pluto dentro. No hay Enfermería ni accidente; el Centro de agua es independiente.
 
 1. Lee [README.md](README.md) para ejecutar el juego.
 2. Abre solo la guía que corresponda a tu tarea.
@@ -11,11 +11,12 @@ Horizonte Rojo es un juego narrativo 2D de cinco soles en Godot 4.7.2. El alcanc
    - [Finales en la Tierra](docs/FINALES.md) para las dos cinemáticas independientes y su futura integración.
    - [Historia](docs/HISTORIA.md) para personajes, escenas y continuidad.
    - [Diseño](docs/DISEÑO.md) para reglas, balance y ciencia.
+   - [Mecánicas de campaña](docs/MECANICAS-CAMPANA.md) para decisiones, misiones especiales, recursos y cálculo de finales.
    - [Arquitectura](docs/ARQUITECTURA.md) para código, arte, contrato de estado y pruebas.
    - [Publicación](docs/PUBLICACION.md) para GitHub, exportación Web y Render.
 3. Revisa [CHANGELOG.md](CHANGELOG.md) y el diff de Git antes de modificar un sistema compartido.
 
-La escena principal `scenes/umbra.tscn` usa `guion_inicio_final.gd`. `campana_narrativa.gd` conserva noches y días; `viaje_espacial.gd` presenta el viaje con seis capas de imagen pixel art de `assets/NarrativaInicio/`: tres fondos, estela, etapa de transferencia y módulo de descenso. `puesto.gd` comparte mapa, cámara y colisiones y muestra el mismo módulo ya aterrizado. Las actividades anteriores quedan aisladas en `scenes/simulacion_provisional.tscn` (`umbra.gd` + `sol_uno.gd`), como referencia provisional. La portada web está en `web/umbra.html`.
+La escena principal `scenes/umbra.tscn` usa `guion_inicio_final.gd`. `campana_narrativa.gd` conserva noches y días; `viaje_espacial.gd` presenta el viaje con seis capas de imagen pixel art de `assets/NarrativaInicio/`: tres fondos, estela, etapa de transferencia y módulo de descenso. `puesto.gd` comparte mapa, cámara y colisiones y muestra el mismo módulo ya aterrizado. `scenes/dias/dia_3/dia_3.tscn` implementa el Día 3 sobre el modelo común de recursos y se prueba de forma aislada hasta que exista el coordinador de campaña. Las actividades anteriores quedan aisladas en `scenes/simulacion_provisional.tscn` (`umbra.gd` + `sol_uno.gd`), como referencia provisional. La portada web está en `web/umbra.html`.
 
 En el mismo PR, registra los cambios relevantes en `CHANGELOG.md` y actualiza la guía afectada. Si cambia la instalación o el punto de entrada, actualiza `README.md`. Mantén esta cabecera breve y revisa su contenido al cambiar el alcance o la arquitectura.
 

@@ -1,6 +1,6 @@
 # Horizonte Rojo
 
-**Horizonte Rojo** es un proyecto de juego narrativo 2D de cinco días en Marte. La versión principal permite revisar el viaje, la llegada al refugio, las noches y el regreso. Las actividades de gestión se definirán con el equipo.
+**Horizonte Rojo** es un proyecto de juego narrativo 2D de cinco días en Marte. La versión principal permite revisar el viaje, la llegada al refugio, las noches y el regreso. El Día 3 ya dispone de una escena jugable aislada; las demás actividades se definirán con el equipo.
 
 ## Estado y ejecución actual
 
@@ -19,6 +19,8 @@ El recorrido guarda su avance en `user://narrativa.cfg`, separado de las partida
 El código anterior de actividades sigue disponible para el equipo en `scenes/simulacion_provisional.tscn` (**F6**). No es el guion aprobado ni la versión principal.
 
 Para ver los dos finales alternativos abre `scenes/final_incompleta.tscn` o `scenes/final_cumplida.tscn` y pulsa **F6**. Consulta [Finales en la Tierra](docs/FINALES.md).
+
+Para probar el flujo aprobado del Día 3 sin depender de los días anteriores, abre `scenes/dias/dia_3/dia_3.tscn` y pulsa **F6**. La escena usa un estado local de prueba; todavía no reemplaza el recorrido principal ni su guardado.
 
 ## Probar la base de mecánicas
 

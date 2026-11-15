@@ -45,10 +45,22 @@
 - Se retiran las franjas de interfaz del recorrido principal. Las acciones de exploración aparecen junto a Nora y la cinemática se puede saltar desde la esquina.
 - Se verificaron capturas de portada, salida, desacople, aproximación, descenso y llegada, además del recorrido narrativo completo en Godot.
 
+## 2026-11-14 | Día 3: oxígeno o invernadero
+
+- Se añade una escena independiente para el Día 3: despertar, revisión de Plantas, fallo eléctrico, elección entre oxígeno e invernadero y cierre en el dormitorio.
+- La escena recibe la instancia común de recursos y el estado protegido o dañado del día 2. F6 usa un estado local de prueba sin simular ni reemplazar los días anteriores.
+- El mapa, los indicadores y el arte pixel art existentes se reutilizan sin modificar la escena principal, el guardado general, Firebase ni los finales. Una prueba automatizada cubre ambas decisiones y la sincronización visual de reservas.
+
 ## 2026-11-14 | Base compartida de mecánicas
 
 - Modelo separado de energía, agua, oxígeno, alimento, cultivos y continuidad entre días. Incluye reglas de noche, registro de decisiones y estado para guardar.
 - Banco de pruebas independiente en Godot y prueba automatizada de recursos. El equipo dispone del contrato y un prompt base para cada día.
+
+## 2026-11-14 | Diseño de decisiones y finales
+
+- Se documenta en `docs/MECANICAS-CAMPANA.md` el flujo de los cinco días, las misiones especiales y los efectos numéricos de cada decisión.
+- La campaña conserva únicamente energía, oxígeno, agua y alimento como recursos visibles; la preparación del refugio se guarda como una decisión, no como otra barra.
+- Se define un cálculo transparente para misión completada, regreso de emergencia y final malo.
 
 ## 2026-11-14 | Cinemática inicial 2D pixel art por etapas
 

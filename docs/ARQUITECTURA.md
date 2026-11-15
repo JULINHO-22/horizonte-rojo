@@ -11,6 +11,12 @@
 
 Flujo: `portada → ida → aterrizaje → camino_base → esclusa → base → noche (3 s) → amanecer → base`. Tras la quinta noche: `base → camino_nave → pilotaje → despegue → regreso → llegada_tierra (1 s) → epilogo (10 s)`. La ida y el descenso suman 8 s. Esc o el botón de la esquina adelantan al tramo jugable. `_ubicar_accion()` proyecta la posición del jugador para colocar acciones cercanas. Cada noche se confirma una vez. No se crea un sexto día. La posición al amanecer es el dormitorio.
 
+## Día 3 aislado
+
+`scenes/dias/dia_3/dia_3.tscn` reutiliza `PuestoUmbra` para el recorrido interior y recibe una instancia de `scripts/mecanicas/recursos_mision.gd` abierta en el sol 3. La campaña debe pasar además `sistemas_danados`; la escena aplica una sola vez las pérdidas heredadas, ofrece las acciones existentes de Plantas y ejecuta `activar_oxigeno()` o `usar_tanques_emergencia()` según la decisión. `indicadores_refugio.gd` observa esa misma instancia y `dialogo_escena.gd` presenta la guía de Pluto sin duplicar reglas ni estado. Al llegar al dormitorio emite `descanso_solicitado`; solo la prueba local llama directamente a `dormir()`.
+
+La escena no modifica `project.godot`, el guardado narrativo ni el selector de finales. `tests/dia_3_smoke.gd` comprueba entrada protegida y dañada, siembra previa, ambas decisiones, sincronización de los indicadores y el estado local de F6. El contrato completo y los pasos manuales están en [Día 3](dias/DIA-3.md).
+
 El simulador anterior permanece en `scenes/simulacion_provisional.tscn`, con `umbra.gd`, `sol_uno.gd` y `guardado_mision.gd`. Los apartados siguientes documentan ese simulador, **no las actividades aprobadas**. La exportación principal abre el recorrido narrativo.
 
 ## Simulador provisional conservado
