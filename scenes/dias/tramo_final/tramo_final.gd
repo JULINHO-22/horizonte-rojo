@@ -9,6 +9,7 @@ const Reglas := preload("res://scenes/dias/tramo_final/reglas.gd")
 const Mapa := preload("res://scenes/dias/tramo_final/mapa_tramo.gd")
 const Vista := preload("res://scenes/dias/tramo_final/vista.gd")
 const ArchivoNASA := preload("res://scenes/dias/tramo_final/archivo_nasa.gd")
+const Sostener := preload("res://scripts/mecanicas/accion_sostenida.gd")
 const RADIO := Vector2(402, 251)
 const ESCLUSA := Vector2(400, 382)
 const TALLER := Vector2(660, 245)
@@ -36,6 +37,8 @@ var _objetivo := ""
 var _confirmacion := ""
 var _ocupado := false
 var _fin := false
+var _gesto := Sostener.new()
+var _equipo_sostenido := ""
 
 func configurar(partida: Recursos, antecedentes: Dictionary) -> void:
 	recursos = partida
@@ -78,11 +81,13 @@ func _ready() -> void:
 func _process(delta: float) -> void:
 	if _fin:
 		return
+	if _gesto.activa():
+		_avanzar_gesto(delta)
 	var direccion := Vector2(
 		float(Input.is_physical_key_pressed(KEY_D) or Input.is_action_pressed("ui_right")) - float(Input.is_physical_key_pressed(KEY_A) or Input.is_action_pressed("ui_left")),
 		float(Input.is_physical_key_pressed(KEY_S) or Input.is_action_pressed("ui_down")) - float(Input.is_physical_key_pressed(KEY_W) or Input.is_action_pressed("ui_up"))
 	)
-	if not _ocupado and not vista.abierta() and mapa.arrastre.is_empty():
+	if not _ocupado and not _gesto.activa() and not vista.abierta() and mapa.arrastre.is_empty():
 		mapa.avanzar(direccion.normalized(), minf(0.05, delta))
 		mapa.actualizar_camara(delta)
 	mapa.ubicar_huerto()
@@ -96,13 +101,19 @@ func _process(delta: float) -> void:
 	mapa.queue_redraw()
 
 func _unhandled_key_input(evento: InputEvent) -> void:
-	if not evento is InputEventKey or not evento.pressed or evento.echo or _fin:
+	if not evento is InputEventKey or evento.echo or _fin:
+		return
+	var tecla: Key = evento.keycode if evento.keycode != KEY_NONE else evento.physical_keycode
+	if not evento.pressed:
+		if tecla in [KEY_E, KEY_SPACE]:
+			_soltar_gesto(&"teclado")
 		return
 	if evento.physical_keycode == KEY_ESCAPE and vista.abierta():
 		vista.cerrar()
-	elif evento.physical_keycode in [KEY_E, KEY_SPACE] and mapa.arrastre.is_empty():
-		_interactuar()
-	elif evento.physical_keycode == KEY_M and mapa.interior and not vista.abierta() and not _ocupado and mapa.arrastre.is_empty():
+	elif tecla in [KEY_E, KEY_SPACE] and mapa.arrastre.is_empty():
+		if not _iniciar_gesto(_cercana(), &"teclado"):
+			_interactuar()
+	elif evento.physical_keycode == KEY_M and mapa.interior and not vista.abierta() and not _ocupado and not _gesto.activa() and mapa.arrastre.is_empty():
 		mapa.plano = not mapa.plano
 		vista.mostrar_plano(mapa.plano)
 	else:
@@ -135,6 +146,8 @@ func _apuntado(posicion: Vector2) -> String:
 
 func _puntero_inicio(posicion: Vector2) -> void:
 	var id := _apuntado(posicion)
+	if _iniciar_gesto(id, &"puntero"):
+		return
 	if etapa in ["purificar", "blindaje"] and not mapa.carga.is_empty():
 		if mapa.ancla_carga().distance_to(posicion) < 55.0:
 			mapa.arrastre = "objeto"
@@ -144,12 +157,54 @@ func _puntero_inicio(posicion: Vector2) -> void:
 		_interactuar(id)
 
 func _puntero_fin(posicion: Vector2) -> void:
+	_soltar_gesto(&"puntero")
 	var gesto := mapa.arrastre
 	mapa.arrastre = ""
 	if gesto == "objeto":
 		var id := _apuntado(posicion)
 		if not id.is_empty():
 			_interactuar(id)
+
+func _notification(que: int) -> void:
+	if que in [NOTIFICATION_DISABLED, NOTIFICATION_APPLICATION_FOCUS_OUT] and is_node_ready():
+		_soltar_gesto(&"")
+
+func _iniciar_gesto(id: String, fuente: StringName) -> bool:
+	if _ocupado or _fin or vista.abierta() or mapa.plano or id.is_empty():
+		return false
+	var cierre := id == "sello" and etapa == "sellar"
+	var riego := id == "plantas" and _confirmacion == "plantas"
+	if not cierre and not riego:
+		return false
+	if _gesto.iniciar(fuente, 1.45 if cierre else 1.1):
+		_equipo_sostenido = id
+		mapa.velocidad = Vector2.ZERO
+		mapa.caminando = false
+	return true
+
+func _avanzar_gesto(delta: float) -> void:
+	if _gesto.avanzar(delta):
+		var equipo := _equipo_sostenido
+		_equipo_sostenido = ""
+		if equipo == "sello":
+			mapa.compuerta = 1.0
+			_tormenta()
+		else:
+			mapa.riego_huerto = -1.0
+			_regar_huerto()
+	elif _equipo_sostenido == "sello":
+		mapa.compuerta = _gesto.progreso
+	else:
+		mapa.riego_huerto = _gesto.progreso
+
+func _soltar_gesto(fuente: StringName) -> void:
+	if not _gesto.soltar(fuente):
+		return
+	if _equipo_sostenido == "sello":
+		mapa.compuerta = 0.0
+	mapa.riego_huerto = -1.0
+	_equipo_sostenido = ""
+	mapa.queue_redraw()
 
 func _paso(id: String, objetivo: String, guias: Dictionary) -> void:
 	etapa = id
@@ -177,6 +232,8 @@ func _cercana() -> String:
 	return seleccion
 
 func _texto_accion(id: String) -> String:
+	if not id.is_empty() and id == _equipo_sostenido:
+		return "%s · %d%%" % ["Sellando" if id == "sello" else "Regando", floori(_gesto.progreso * 100)]
 	if id == "plantas":
 		return _accion_huerto(recursos.estado().bandejas)
 	if not id.is_empty() and id == _confirmacion:
@@ -197,12 +254,12 @@ func _texto_accion(id: String) -> String:
 		"refugio": "Entrar al núcleo protegido", "montaje": "Colocar blindaje",
 		"ventilacion": "Comprobar el paso del aire", "aire": "Revisar oxígeno",
 		"descanso": "Cerrar el día", "carga": "Esperar carga solar",
-		"sello": "Cerrar desde dentro", "emisora": "Revisar la señal de Tierra",
+		"sello": "Mantén para sellar", "emisora": "Revisar la señal de Tierra",
 		"volver_capsula": "Abrir paso a la cápsula",
 	}.get(id, "")
 
 func _interactuar(id := "") -> void:
-	if _ocupado or _fin or vista.abierta() or mapa.plano:
+	if _ocupado or _gesto.activa() or _fin or vista.abierta() or mapa.plano:
 		return
 	var accion := _cercana() if id.is_empty() else id
 	if accion.is_empty():
@@ -255,8 +312,6 @@ func _interactuar(id := "") -> void:
 			_preparar_salida()
 		"volver_capsula":
 			_salir_del_nucleo()
-		"sellar":
-			_tormenta()
 
 func _preparar_aviso() -> void:
 	_paso("aviso4", "Consulta el aviso de radiación en Control.", {"control": RADIO, "aire": AIRE,
@@ -318,17 +373,26 @@ func _sondear(id: String) -> void:
 
 func _purificar() -> void:
 	_ocupado = true
-	mapa.agua_en_curso = true
-	mapa.etapa_agua = 2
-	await create_tween().tween_property(mapa, "avance_agua", 1.0, 1.1).finished
-	mapa.agua_en_curso = false
 	mapa.carga = ""
+	mapa.agua_en_curso = true
+	_etapa_filtro(0, "El calor derrite el hielo de la muestra.")
+	var ciclo := create_tween()
+	ciclo.tween_property(mapa, "avance_agua", 1.0, 0.5)
+	ciclo.tween_callback(_etapa_filtro.bind(2, "El filtro aparta el polvo del agua."))
+	ciclo.tween_property(mapa, "avance_agua", 1.0, 0.6).from(0.0)
+	await ciclo.finished
+	mapa.agua_en_curso = false
 	_ocupado = false
 	if plan == "ambas":
 		vista.decir("Pluto", "Muestra limpia. Terminemos el refuerzo y haremos el recuento de las dos tareas.")
 		_ir_taller()
 	else:
 		_completar_preparacion()
+
+func _etapa_filtro(indice: int, texto: String) -> void:
+	mapa.etapa_agua = indice
+	mapa.avance_agua = 0.0
+	vista.decir("Pluto", texto)
 
 func _mostrar_soportes() -> void:
 	var puntos := {"ventilacion": AIRE_PROTEGIDO}
@@ -434,7 +498,7 @@ func _accion_huerto(bandejas: Dictionary) -> String:
 		return "Recoger y comer"
 	if bandejas.has("lechuga"):
 		return "Brote en crecimiento · %d s" % ceili(bandejas.lechuga)
-	return "Regar la semilla" if _confirmacion == "plantas" else "Colocar semilla de lechuga"
+	return "Mantén para regar" if _confirmacion == "plantas" else "Colocar semilla de lechuga"
 
 func _atender_huerto() -> void:
 	var estado := recursos.estado()
@@ -451,11 +515,15 @@ func _atender_huerto() -> void:
 		vista.decir("Iris", "Sembrar necesita 1 de agua y 1 de energía.")
 	elif _confirmacion != "plantas":
 		_confirmacion = "plantas"
-		vista.decir("Iris", "Semilla en tierra. Riega la bandeja con 1 de agua y 1 de energía.")
-	elif recursos.sembrar("lechuga"):
+		vista.decir("Iris", "Semilla en tierra. Mantén E o la marca para regar la bandeja.")
+
+func _regar_huerto() -> void:
+	if recursos.sembrar("lechuga"):
 		_confirmacion = ""
 		mapa.mostrar_huerto(recursos.estado().bandejas)
 		vista.decir("Iris", "Ya regamos la lechuga. Dale tiempo mientras recargas la batería en Energía.")
+	else:
+		vista.decir("Iris", "Riega cuando tengas 1 de agua y 1 de energía.")
 
 func _consultar_descanso() -> void:
 	var estado := recursos.estado()
@@ -507,7 +575,7 @@ func _entrar_al_nucleo() -> void:
 	await cruzar.finished
 	velo.queue_free()
 	_ocupado = false
-	_paso("sellar", "Cierra la compuerta detrás de la tripulación.", {"sello": PUERTA_PROTEGIDA})
+	_paso("sellar", "Mantén E o la marca para sellar la compuerta.", {"sello": PUERTA_PROTEGIDA})
 
 func _tormenta() -> void:
 	_paso("impacto", "Compuerta cerrada. Mantente en el núcleo protegido.", {})

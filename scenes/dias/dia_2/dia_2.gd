@@ -1,10 +1,11 @@
 extends Control
 
 signal finalizado(resultado: Dictionary)
-signal avance_plantas_guardado
+signal avance_guardado
 
 const Recursos := preload("res://scripts/mecanicas/recursos_mision.gd")
 const Invernadero := preload("res://scripts/invernadero_umbra.gd")
+const Laboratorio := preload("res://scripts/laboratorio_umbra.gd")
 const HUD := preload("res://scenes/dias/dia_2/dia_2_hud.gd")
 const PanelControl := preload("res://scripts/panel_control.gd")
 var panel_control: PanelControl
@@ -47,6 +48,7 @@ const OBJETIVOS := {
 
 var taller: Taller
 var huerto: Invernadero
+var laboratorio: Laboratorio
 var salida_pendiente := false
 var recursos: Recursos
 var puesto: PuestoUmbra
@@ -195,7 +197,7 @@ func _ir_al_cierre(estado: Dictionary, hacia_aire: Array, hacia_este: Array) -> 
 		_ir(Paso.AIRE, hacia_aire + [CRUCE_OESTE, GIRO_AGUA, ENTRADA_AGUA])
 
 func juego_activo() -> bool:
-	return abierto and not concluido and not en_pausa and not is_instance_valid(panel_control) and not puesto.plano and (not taller.visible or taller.jugando)
+	return abierto and not concluido and not en_pausa and not is_instance_valid(panel_control) and not is_instance_valid(laboratorio) and not puesto.plano and (not taller.visible or taller.jugando)
 
 func _process(delta: float) -> void:
 	if abierto and not concluido:
@@ -217,7 +219,7 @@ func _process(delta: float) -> void:
 	_actualizar()
 
 func _unhandled_key_input(event: InputEvent) -> void:
-	if is_instance_valid(huerto) or not event is InputEventKey or not event.pressed or event.echo:
+	if is_instance_valid(huerto) or is_instance_valid(laboratorio) or not event is InputEventKey or not event.pressed or event.echo:
 		return
 	var codigo: Key = event.keycode if event.keycode != KEY_NONE else event.physical_keycode
 	if is_instance_valid(panel_control):
@@ -280,6 +282,9 @@ func _actuar() -> void:
 	if not juego_activo() or taller.visible or is_instance_valid(huerto):
 		return
 	var estado := recursos.estado()
+	if _puede_usar_filtro(estado):
+		_abrir_filtro()
+		return
 	if _cerca_del_aire(estado):
 		_abrir_taller("aire")
 		_actualizar()
@@ -374,16 +379,11 @@ func _alternativa() -> void:
 	if not juego_activo() or taller.visible:
 		return
 	var estado := recursos.estado()
-	if puesto.interior and _cerca(AGUA) and estado.reservas.agua == 0 and estado.hielo > 0:
-		if recursos.purificar_hielo():
-			audio.sonar_oxigeno()
-			aviso = "Hielo purificado. Ya dispones de agua para activar el oxígeno."
-		else:
-			audio.sonar_error()
-			aviso = "Hacen falta 2 de energía para purificar el hielo."
+	if _puede_usar_filtro(estado):
+		_abrir_filtro()
 	elif _cerca_del_aire(estado) and estado.reservas.agua == 0 and estado.hielo > 0:
 		ruta.assign([AGUA])
-		aviso = "Sigue la marca hasta el filtro azul. Pulsa F para purificar el hielo."
+		aviso = "Sigue la marca hasta el filtro azul. Pulsa E para usarlo."
 	elif paso == Paso.REPARAR and _cerca(PuestoUmbra.ESCLUSA):
 		audio.sonar_esclusa()
 		_mundo(true, SALIDA)
@@ -412,6 +412,28 @@ func _alternativa() -> void:
 		_ir(Paso.DESCANSO, [GIRO_PLANTAS, GIRO_CAMA])
 	_actualizar()
 
+func _puede_usar_filtro(estado: Dictionary) -> bool:
+	return puesto.interior and _cerca(AGUA) and estado.reservas.agua == 0 and estado.hielo > 0
+
+func _abrir_filtro() -> void:
+	laboratorio = Laboratorio.new()
+	laboratorio.recursos = recursos
+	laboratorio.cerrar_solicitado.connect(_cerrar_filtro)
+	laboratorio.trabajo_completado.connect(_registrar_filtro)
+	interfaz.hide()
+	add_child(laboratorio)
+
+func _registrar_filtro(_ganancia: int) -> void:
+	audio.sonar_oxigeno()
+	aviso = "Ya tienes agua. Vuelve a los tanques para preparar el aire."
+	avance_guardado.emit()
+
+func _cerrar_filtro() -> void:
+	remove_child(laboratorio)
+	laboratorio.queue_free()
+	laboratorio = null
+	interfaz.show()
+
 func _abrir_huerto() -> void:
 	huerto = Invernadero.new()
 	huerto.recursos = recursos
@@ -425,7 +447,7 @@ func _registrar_cultivo(cosechado: bool) -> void:
 	audio.sonar_clic()
 	if cosechado and paso == Paso.PLANTAS:
 		aviso = "Recuperaste comida. Ahora puedes volver al dormitorio."
-	avance_plantas_guardado.emit()
+	avance_guardado.emit()
 
 func _cerrar_huerto() -> void:
 	remove_child(huerto)
@@ -437,6 +459,8 @@ func _terminar(estado: Dictionary, derrota: String) -> void:
 	concluido = true
 	if is_instance_valid(huerto):
 		_cerrar_huerto()
+	if is_instance_valid(laboratorio):
+		_cerrar_filtro()
 	taller.hide()
 	if derrota.is_empty():
 		audio.sonar_alerta()
@@ -473,7 +497,7 @@ func _actualizar() -> void:
 		_terminar(estado, estado.derrota)
 		if is_queued_for_deletion():
 			return
-	if is_instance_valid(huerto):
+	if is_instance_valid(huerto) or is_instance_valid(laboratorio):
 		return
 
 	var ficha: Array = OBJETIVOS[paso]
@@ -525,12 +549,13 @@ func _actualizar() -> void:
 		accion = "Consultar tareas"
 		cerca = true
 
-	if puesto.interior and _cerca(AGUA) and estado.reservas.agua == 0 and estado.hielo > 0:
+	if _puede_usar_filtro(estado):
 		lugar = "Filtro azul · Prepara agua"
 		detalle = "Convierte tu hielo en agua para el aire.\nCuesta 2 de energía. Recibes hasta 3 de agua."
-		opcion = "Purificar hielo · 2 energía"
-		cerca = false
-		puede_elegir = true
+		accion = "Usar filtro"
+		opcion = ""
+		cerca = true
+		puede_elegir = false
 		destino = AGUA
 
 	if puesto.interior and _cerca(PLANTAS):

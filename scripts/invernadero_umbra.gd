@@ -1,23 +1,22 @@
-extends Control
+extends "res://scripts/estacion_umbra.gd"
 ## Banco de Plantas. El sol activo controla el reloj y Recursos conserva las bandejas.
 
 signal cerrar_solicitado
 signal cultivo_atendido(cosechado: bool)
 
 const Recursos := preload("res://scripts/mecanicas/recursos_mision.gd")
-const AccionEscena := preload("res://scripts/accion_escena.gd")
+const Sostener := preload("res://scripts/mecanicas/accion_sostenida.gd")
 const CultivoPixel := preload("res://scripts/cultivo_pixel.gd")
+const Equipo := preload("res://scripts/equipo_pixel.gd")
 const Indicadores := preload("res://scripts/mecanicas/indicadores_refugio.gd")
 const CULTIVOS := ["lechuga", "rabano", "tomate", "papa"]
 const NOMBRES := ["Lechuga", "Rábano", "Tomate", "Papa"]
 const CENTROS := [230.0, 506.0, 777.0, 1058.0]
 const SUELO := 429.0
-const PAPEL := Color("#fff1db")
 const VERDE := Color("#c8ef9b")
-const AGUA := Color("#a2e5ff")
-const ORO := Color("#ffcd91")
 const CLARO := Color("#dec6b4")
 const APAGADO := Color("#d6c1b6")
+const DURACION_RIEGO := 1.1
 
 var recursos: Recursos
 var semillas_disponibles := CULTIVOS
@@ -29,14 +28,19 @@ var detalles: Label
 var plantas_visuales: Array[CultivoPixel] = []
 
 var _rotulos: Array[Label] = []
+var _medidores: Array[ProgressBar] = []
 var _seleccion := 0
 var _semilla := ""
 var _ocupado := ""
 var _titulo_accion: Label
 var _nota: Label
 var _aviso := ""
-var _gota := AtlasTexture.new()
 var _semilla_pixel: TextureRect
+var _riego := Sostener.new()
+var _boquilla: TextureRect
+var _gotas: Array[TextureRect] = []
+var _avance_riego := _estilo_medidor(AGUA)
+var _avance_cultivo := _estilo_medidor(VERDE)
 
 
 func _ready() -> void:
@@ -51,6 +55,7 @@ func _ready() -> void:
 
 	var margen := StyleBoxEmpty.new()
 	margen.content_margin_top = 164
+	var fondo_medidor := _estilo_medidor(Color("#2c1c1b"))
 	for i in CULTIVOS.size():
 		var x: float = CENTROS[i]
 		var planta := CultivoPixel.new()
@@ -61,27 +66,64 @@ func _ready() -> void:
 			25, _tocar_bandeja.bind(i))
 		for estilo in ["normal", "hover", "pressed"]:
 			bandeja.add_theme_stylebox_override(estilo, margen)
+		bandeja.button_down.connect(_regar_bandeja.bind(i))
+		bandeja.button_up.connect(_interrumpir_riego.bind(&"puntero"))
 		bandejas.append(bandeja)
-		_rotulos.append(_texto("", Rect2(x - 126, 518, 252, 34), 20, PAPEL, HORIZONTAL_ALIGNMENT_CENTER))
+		_rotulos.append(_texto("", Rect2(x - 126, 516, 252, 34), 20, PAPEL, HORIZONTAL_ALIGNMENT_CENTER))
+		var medidor := ProgressBar.new()
+		medidor.position = Vector2(x - 58, 552)
+		medidor.max_value = 1.0
+		medidor.step = 0.01
+		medidor.show_percentage = false
+		medidor.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		medidor.add_theme_stylebox_override("background", fondo_medidor)
+		medidor.add_theme_stylebox_override("fill", _avance_cultivo)
+		add_child(medidor)
+		medidor.size = Vector2(116, 5)
+		_medidores.append(medidor)
 
 	detalles = _texto("", Rect2(76, 632, 716, 36), 19, CLARO)
 	_nota = _texto("", Rect2(76, 668, 1132, 32), 18, AGUA)
 	accion = _boton("", Rect2(798, 601, 411, 52), 25, _atender)
 	accion.alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	accion.add_theme_color_override("font_color", ORO)
+	accion.button_down.connect(_iniciar_riego.bind(&"puntero"))
+	accion.button_up.connect(_interrumpir_riego.bind(&"puntero"))
 	_titulo_accion = _texto("", Rect2(76, 584, 716, 46), 30, PAPEL)
-	_gota.atlas = Indicadores.ICONOS
-	var volumen := Indicadores.ICONOS.get_size()
-	_gota.region = Rect2(Indicadores.GOTA.position * volumen, Indicadores.GOTA.size * volumen)
-	_gota.filter_clip = true
+	var gota := Equipo.indicador(Indicadores.GOTA)
+	for i in 7:
+		var sprite := _imagen(gota, Rect2(0, 0, 13, 18))
+		sprite.hide()
+		_gotas.append(sprite)
+	_boquilla = _imagen(Equipo.boquilla(), Rect2(0, 0, 116, 103))
+	_boquilla.hide()
 	_refrescar(false)
 	recursos.cambiado.connect(_refrescar)
 
 
+func _process(delta: float) -> void:
+	if not _riego.activa():
+		return
+	if _riego.avanzar(delta):
+		_ocultar_riego()
+		_regar(_semilla)
+	else:
+		_mostrar_riego()
+
+
+func _notification(que: int) -> void:
+	if que in [NOTIFICATION_DISABLED, NOTIFICATION_APPLICATION_FOCUS_OUT] and is_node_ready():
+		_interrumpir_riego(&"")
+
+
 func _unhandled_key_input(evento: InputEvent) -> void:
-	if not evento is InputEventKey or not evento.pressed or evento.echo:
+	if not evento is InputEventKey or evento.echo:
 		return
 	var tecla: Key = evento.keycode if evento.keycode != KEY_NONE else evento.physical_keycode
+	if not evento.pressed:
+		if tecla in [KEY_E, KEY_ENTER]:
+			_interrumpir_riego(&"teclado")
+		return
 	if tecla not in [KEY_ESCAPE, KEY_1, KEY_2, KEY_3, KEY_4, KEY_E, KEY_ENTER]:
 		return
 	get_viewport().set_input_as_handled()
@@ -91,10 +133,14 @@ func _unhandled_key_input(evento: InputEvent) -> void:
 		KEY_1, KEY_2, KEY_3, KEY_4:
 			_elegir(tecla - KEY_1)
 		KEY_E, KEY_ENTER:
-			_atender()
+			if _semilla == CULTIVOS[_seleccion]:
+				_iniciar_riego(&"teclado")
+			else:
+				_atender()
 
 
 func _elegir(indice: int) -> void:
+	_interrumpir_riego(&"")
 	_seleccion = indice
 	_aviso = ""
 	_refrescar()
@@ -125,15 +171,17 @@ func _refrescar(animar := true) -> void:
 			plantas_visuales[i].mostrar(cultivo, etapa, animar)
 		var rotulo := "Tierra lista"
 		var color := CLARO
+		var regando := cultivo == _semilla and _riego.activa()
 		if cultivo == cosecha_guardada or restante == 0.0:
 			rotulo = "Lista para recoger"
 			color = VERDE
 		elif restante > 0.0:
 			var fase := "Brote" if plantas_visuales[i].etapa <= 0 else "En crecimiento"
-			if cultivo == _ocupado:
-				fase = "Regando"
 			rotulo = "%s · 00:%02d" % [fase, ceili(restante)]
-			color = AGUA if fase == "Regando" else VERDE
+			color = VERDE
+		elif regando:
+			rotulo = "Regando · %d%%" % floori(_riego.progreso * 100)
+			color = AGUA
 		elif cultivo == _semilla:
 			rotulo = "Semilla colocada"
 			color = AGUA
@@ -143,7 +191,12 @@ func _refrescar(animar := true) -> void:
 		if _rotulos[i].text != rotulo:
 			_rotulos[i].text = rotulo
 			_rotulos[i].add_theme_color_override("font_color", color)
-			bandejas[i].tooltip_text = "%s · %s" % [NOMBRES[i], rotulo]
+		_medidores[i].visible = restante >= 0.0 or regando
+		if _medidores[i].visible:
+			var estilo := _avance_riego if regando else _avance_cultivo
+			if _medidores[i].get_theme_stylebox("fill") != estilo:
+				_medidores[i].add_theme_stylebox_override("fill", estilo)
+			_medidores[i].value = _riego.progreso if regando else 1.0 - restante / Recursos.CULTIVOS[cultivo].segundos
 		var color_nombre := ORO if i == _seleccion else PAPEL
 		if bandejas[i].get_theme_color("font_color") != color_nombre:
 			bandejas[i].add_theme_color_override("font_color", color_nombre)
@@ -174,7 +227,7 @@ func _actualizar_accion(estado: Dictionary) -> void:
 		disponibles = "Comida al máximo. Deja la cosecha en la bandeja." if espacio == 0 else ""
 		habilitada = habilitada and espacio > 0
 	elif restante > 0.0:
-		etapa = "Regando" if cultivo == _ocupado else "Creciendo"
+		etapa = "Creciendo"
 		texto_accion = ""
 		detalles.text = "Quedan %d s. Puedes volver al pasillo mientras crece." % ceili(restante)
 		disponibles = ""
@@ -185,9 +238,9 @@ func _actualizar_accion(estado: Dictionary) -> void:
 		disponibles = ""
 	else:
 		if cultivo == _semilla:
-			etapa = "La semilla necesita agua"
-			texto_accion = "Regar la bandeja"
-			disponibles = "Toca la tierra o pulsa E para regar."
+			etapa = "Regando la tierra" if _riego.activa() else "La semilla necesita agua"
+			texto_accion = "Mantén para regar"
+			disponibles = "Mantén E o presiona la tierra hasta completar el riego."
 		if estado.reservas.agua < 1 or estado.reservas.energia < ficha.energia:
 			disponibles = "Revisa las reservas. Esta bandeja necesita %d energía y 1 agua." % ficha.energia
 			habilitada = false
@@ -206,9 +259,7 @@ func _atender() -> void:
 	_aviso = ""
 	if cultivo == cosecha_guardada or estado.bandejas.get(cultivo, -1.0) == 0.0:
 		_recoger(cultivo, estado)
-	elif cultivo == _semilla:
-		_regar(cultivo)
-	else:
+	elif cultivo != _semilla:
 		_colocar_semilla(cultivo)
 
 
@@ -227,34 +278,51 @@ func _colocar_semilla(cultivo: String) -> void:
 	_refrescar()
 
 
+func _regar_bandeja(indice: int) -> void:
+	if indice == _seleccion:
+		_iniciar_riego(&"puntero")
+
+
+func _iniciar_riego(fuente: StringName) -> void:
+	if not accion.disabled and _semilla == CULTIVOS[_seleccion] and _riego.iniciar(fuente, DURACION_RIEGO):
+		_aviso = ""
+		_mostrar_riego()
+
+
+func _interrumpir_riego(fuente: StringName) -> void:
+	if _riego.soltar(fuente):
+		_ocultar_riego()
+		_refrescar()
+
+
+func _mostrar_riego() -> void:
+	var x: float = CENTROS[_seleccion] + lerpf(-44.0, 56.0, _riego.progreso)
+	_boquilla.position = Vector2(x, SUELO - 170)
+	_boquilla.show()
+	for i in _gotas.size():
+		var gota := _gotas[i]
+		var caida := fposmod(_riego.progreso * 3.5 + i * 0.16, 1.0)
+		gota.position = Vector2(x + 14.0 - caida * 32.0, SUELO - 76.0 + caida * 65.0)
+		gota.modulate.a = 1.0 - smoothstep(0.72, 1.0, caida)
+		gota.show()
+	_refrescar()
+
+
+func _ocultar_riego() -> void:
+	_boquilla.hide()
+	for gota in _gotas:
+		gota.hide()
+
+
 func _regar(cultivo: String) -> void:
-	var x: float = CENTROS[_seleccion]
-	_ocupado = cultivo
 	if not recursos.sembrar(cultivo):
-		_ocupado = ""
 		_aviso = "Revisa que tengas agua, energía y una bandeja libre."
 		_refrescar()
 		return
 	_semilla = ""
 	_retirar_semilla()
-	var chorro := create_tween().set_parallel()
-	for i in 6:
-		var inicio := Vector2(x - 30 + (i % 3) * 22.0, SUELO - 72.0)
-		var gota := _imagen(_gota, Rect2(inicio, Vector2(17, 23)))
-		gota.modulate.a = 0.0
-		var demora := i * 0.055
-		chorro.tween_property(gota, "modulate:a", 1.0, 0.05).set_delay(demora)
-		chorro.tween_property(gota, "position:y", SUELO - 3.0, 0.22).set_delay(demora)
-		chorro.tween_property(gota, "modulate:a", 0.0, 0.10).set_delay(demora + 0.22).from(1.0)
-		chorro.tween_callback(gota.queue_free).set_delay(demora + 0.32)
-	chorro.finished.connect(_terminar_riego)
 	_refrescar()
 	cultivo_atendido.emit(false)
-
-
-func _terminar_riego() -> void:
-	_ocupado = ""
-	_refrescar()
 
 
 func _recoger(cultivo: String, anterior: Dictionary) -> void:
@@ -288,51 +356,7 @@ func _retirar_semilla() -> void:
 		_semilla_pixel.queue_free()
 
 
-func _sombra_superior() -> void:
-	var degradado := Gradient.new()
-	degradado.colors = PackedColorArray([Color("#160f16e8"), Color("#160f1600")])
-	var textura := GradientTexture2D.new()
-	textura.gradient = degradado
-	textura.fill_to = Vector2(0, 1)
-	_imagen(textura, Rect2(0, 0, size.x, 154))
-
-
-func _imagen(textura: Texture2D, marco: Rect2) -> TextureRect:
-	var imagen := TextureRect.new()
-	imagen.texture = textura
-	imagen.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	imagen.position = marco.position
-	imagen.size = marco.size
-	imagen.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(imagen)
-	return imagen
-
-
-func _texto(contenido: String, marco: Rect2, tamano: int, color: Color,
-		alineacion := HORIZONTAL_ALIGNMENT_LEFT) -> Label:
-	var rotulo := Label.new()
-	rotulo.text = contenido
-	rotulo.position = marco.position
-	rotulo.size = marco.size
-	rotulo.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	rotulo.horizontal_alignment = alineacion
-	rotulo.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	rotulo.add_theme_font_size_override("font_size", tamano)
-	rotulo.add_theme_color_override("font_color", color)
-	rotulo.add_theme_color_override("font_outline_color", Color("#1b1114"))
-	rotulo.add_theme_constant_override("outline_size", 7)
-	add_child(rotulo)
-	return rotulo
-
-
-func _boton(contenido: String, marco: Rect2, tamano: int, al_pulsar: Callable) -> Button:
-	var control := Button.new()
-	control.text = contenido
-	control.position = marco.position
-	control.size = marco.size
-	control.focus_mode = Control.FOCUS_NONE
-	control.add_theme_font_size_override("font_size", tamano)
-	AccionEscena.aplicar(control)
-	control.pressed.connect(al_pulsar)
-	add_child(control)
-	return control
+func _estilo_medidor(color: Color) -> StyleBoxFlat:
+	var estilo := StyleBoxFlat.new()
+	estilo.bg_color = color
+	return estilo

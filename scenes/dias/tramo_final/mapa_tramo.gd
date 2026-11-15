@@ -4,6 +4,7 @@ const REFUGIO_SOLAR := preload("res://assets/dias/dia_5/nucleo_radiacion.png")
 const PUERTA_ABIERTA := preload("res://assets/dias/dia_5/nucleo_paso_abierto.png")
 const CultivoPixel := preload("res://scripts/cultivo_pixel.gd")
 const Recursos := preload("res://scripts/mecanicas/recursos_mision.gd")
+const Equipo := preload("res://scripts/equipo_pixel.gd")
 const BANDEJAS := {"lechuga": Vector2(338, 77), "rabano": Vector2(372, 77),
 	"tomate": Vector2(442, 77), "papa": Vector2(476, 77)}
 const SUELO_PROTEGIDO := 319.0
@@ -26,7 +27,9 @@ var lecturas: Array[String] = []
 var compuerta := 0.0
 var entrada_nucleo := 1.0
 var huerto: Node2D
+var riego_huerto := -1.0
 var _cultivos: Dictionary = {}
+var _gota := Equipo.indicador(Equipo.Indicadores.GOTA)
 
 func mostrar_huerto(bandejas: Dictionary) -> void:
 	if huerto == null:
@@ -102,6 +105,12 @@ func _draw() -> void:
 			draw_circle(apoyo - Vector2(0, 9), 2.4, LUZ, true, -1.0, true)
 	if plano:
 		return
+	if riego_huerto >= 0.0 and zona == "base":
+		var bandeja := proyectar_suelo(BANDEJAS.lechuga) / escala_visual
+		for i in 5:
+			var caida := fposmod(riego_huerto * 3.7 + i * 0.2, 1.0)
+			var punto_gota := bandeja + Vector2(-14 + i * 6, lerpf(-35, -6, caida))
+			draw_texture_rect(_gota, Rect2(punto_gota, Vector2(8, 11)), false)
 	if not fase_radiacion.is_empty():
 		_dibujar_radiacion()
 	if not permite_tocar:

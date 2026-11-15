@@ -12,7 +12,7 @@ El día empieza con una alerta en Control. Pluto avisa si los sistemas quedaron 
 
 **Blindaje.** Recoge las protecciones en el Taller y trasládalas al núcleo, cuyo acceso se encuentra en la esclusa. Arrastra una pieza de blindaje a cada uno de los tres soportes junto a la compuerta. Si pruebas en la rejilla, Teo explica por qué debe seguir libre. Comprueba el aire al terminar. En el plan combinado las dos tareas concluyen antes de registrar las reservas y el refuerzo, de modo que se aplica el precio del plan completo.
 
-**Cierre.** Agua y Oxígeno permite preparar el aire antes de salir o después de terminar. Cerca de las baterías puedes esperar un intervalo solar y ver cambiar las reservas. En Plantas, toca la bandeja o pulsa **E** para colocar la semilla de lechuga y vuelve a interactuar para regarla. Al esperar en Energía, la planta crece y se actualiza el tiempo restante. Recoge y come junto a la bandeja madura. El dormitorio avisa de las consecuencias de descansar con hambre o sin aire preparado. El anfitrión ejecuta el descanso mediante el modelo compartido.
+**Cierre.** Agua y Oxígeno permite preparar el aire antes de salir o después de terminar. Cerca de las baterías puedes esperar un intervalo solar y ver cambiar las reservas. En Plantas, toca la bandeja o pulsa **E** para colocar la semilla de lechuga. Mantén el mando para regarla en el escenario. Al esperar en Energía, la planta crece y se actualiza el tiempo restante. Recoge y come junto a la bandeja madura. El dormitorio avisa de las consecuencias de descansar con hambre o sin aire preparado. El anfitrión ejecuta el descanso mediante el modelo compartido.
 
 ## Contrato de entrada y salida
 

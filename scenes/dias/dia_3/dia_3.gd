@@ -11,6 +11,7 @@ const PanelControl := preload("res://scripts/panel_control.gd")
 const DialogoEscena := preload("res://scripts/dialogo_escena.gd")
 const AccionEscena := preload("res://scripts/accion_escena.gd")
 const Invernadero := preload("res://scripts/invernadero_umbra.gd")
+const Diagnostico := preload("res://scripts/diagnostico_umbra.gd")
 const AREA := Rect2(0, 0, 1280, 720)
 const TINTA_CLARA := Color("#2a1c17")
 const PAPEL := Color("#fff1db")
@@ -35,6 +36,7 @@ var pista: Label
 var boton_accion: Button
 var panel_control: PanelControl
 var huerto: Invernadero
+var diagnostico: Diagnostico
 var plano := false
 
 
@@ -75,7 +77,7 @@ func _process(delta: float) -> void:
 
 
 func _unhandled_key_input(event: InputEvent) -> void:
-	if is_instance_valid(huerto) or not event is InputEventKey or not event.pressed or event.echo:
+	if is_instance_valid(huerto) or is_instance_valid(diagnostico) or not event is InputEventKey or not event.pressed or event.echo:
 		return
 	if is_instance_valid(panel_control):
 		if event.physical_keycode == KEY_ESCAPE:
@@ -320,29 +322,32 @@ func _mostrar_decision(aviso := "") -> void:
 	var costo_oxigeno_energia := 7 if sistemas_danados else 6
 	var costo_oxigeno_agua := 2 if sistemas_danados else 1
 	var costo_tanques := 4 if sistemas_danados else 3
-	var columna := _crear_modal("Fallo eléctrico")
 	_decir_pluto("Espera… el regulador no responde. La energía disponible solo puede mantener uno de los circuitos: oxígeno o invernadero.")
-	_texto_modal(columna, "Elige después de revisar el costo y la consecuencia.", 17)
-	if not aviso.is_empty():
-		_texto_modal(columna, aviso, 17, ROJO)
+	_cerrar_modal()
+	diagnostico = Diagnostico.new()
+	diagnostico.rutas = [
+		{"id": "oxigeno", "titulo": "Priorizar oxígeno",
+			"costo": "%d energía + %d agua + 2 comida" % [costo_oxigeno_energia, costo_oxigeno_agua],
+			"efecto": "Tanques llenos. Se pierde la cosecha.",
+			"posible": datos.reservas.energia >= costo_oxigeno_energia and
+				datos.reservas.agua >= costo_oxigeno_agua and datos.reservas.alimento >= 2},
+		{"id": "invernadero", "titulo": "Priorizar invernadero",
+			"costo": "%d energía + 1 agua + 2 oxígeno" % costo_tanques,
+			"efecto": "Tanques de emergencia. Conservas la cosecha y ganas 2 comida.",
+			"posible": datos.reservas.energia >= costo_tanques and datos.reservas.agua >= 1 and datos.reservas.oxigeno > 2},
+	]
+	diagnostico.aviso = aviso
+	diagnostico.confirmada.connect(_aplicar_ruta)
+	diagnostico.cerrar_solicitado.connect(_volver_desde_decision)
+	boton_accion.hide()
+	add_child(diagnostico)
 
-	var oxigeno := _boton_fila(columna,
-		"PRIORIZAR OXÍGENO · -%d energía · -%d agua · -2 alimento\nLlena y estabiliza el oxígeno; activación diaria cumplida." % [costo_oxigeno_energia, costo_oxigeno_agua],
-		_elegir_oxigeno)
-	oxigeno.custom_minimum_size.y = 72
-	oxigeno.disabled = (datos.reservas.energia < costo_oxigeno_energia
-		or datos.reservas.agua < costo_oxigeno_agua or datos.reservas.alimento < 2)
 
-	var invernadero := _boton_fila(columna,
-		"PRIORIZAR INVERNADERO · -%d energía · -1 agua · -2 oxígeno · +2 alimento\nActiva los tanques de emergencia y asegura el aire de esta noche." % costo_tanques,
-		_elegir_invernadero)
-	invernadero.custom_minimum_size.y = 72
-	invernadero.disabled = (datos.reservas.energia < costo_tanques
-		or datos.reservas.agua < 1 or datos.reservas.oxigeno <= 2)
-
-	if oxigeno.disabled and invernadero.disabled:
-		_texto_modal(columna, "Las reservas actuales no permiten completar ninguna activación. El aire seguirá sin asegurar.", 17, ROJO)
-	_boton_fila(columna, "Volver al recorrido y revisar las reservas", _volver_desde_decision)
+func _aplicar_ruta(id: String) -> void:
+	if id == "oxigeno":
+		_elegir_oxigeno()
+	else:
+		_elegir_invernadero()
 
 
 func _volver_desde_decision() -> void:
@@ -510,6 +515,10 @@ func _crear_modal(encabezado: String) -> VBoxContainer:
 
 
 func _cerrar_modal() -> void:
+	if is_instance_valid(diagnostico):
+		remove_child(diagnostico)
+		diagnostico.queue_free()
+		diagnostico = null
 	if modal != null:
 		modal.queue_free()
 		modal = null

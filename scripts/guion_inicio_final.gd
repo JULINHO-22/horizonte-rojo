@@ -5,6 +5,8 @@ const Viaje := preload("res://scripts/viaje_espacial.gd")
 const DialogoEscena := preload("res://scripts/dialogo_escena.gd")
 const AccionEscena := preload("res://scripts/accion_escena.gd")
 const Invernadero := preload("res://scripts/invernadero_umbra.gd")
+const Laboratorio := preload("res://scripts/laboratorio_umbra.gd")
+const AccionSostenida := preload("res://scripts/mecanicas/accion_sostenida.gd")
 const DerrotaUmbra := preload("res://scripts/derrota_umbra.gd")
 const VISTAS_FINALES := {
 	"--final-recursos": "res://scenes/pruebas/banco_recursos.tscn",
@@ -55,10 +57,10 @@ var sol_anunciado := 0
 var anuncio_sol: Control
 var escena_descanso: TextureRect
 var extraccion_hasta := 0.0
-var estaciones: VBoxContainer
-var sombra_estacion: TextureRect
+var taladro := AccionSostenida.new()
 var estacion := ""
 var huerto: Invernadero
+var laboratorio: Laboratorio
 var campana = Campana.new()
 var fase := "portada"
 var reloj := 0.0
@@ -145,8 +147,16 @@ func _process(delta: float) -> void:
 		"expedicion_sol_1":
 			if not _avanzar_recursos(delta):
 				return
+			if taladro.activa():
+				puesto.tiempo += delta
+				if taladro.avanzar(delta):
+					_completar_taladro()
+				else:
+					puesto.avance_muestra = taladro.progreso
+					boton.text = "Perforando · %d%%" % floori(taladro.progreso * 100)
+				puesto.queue_redraw()
+				return
 			if reloj < extraccion_hasta:
-				puesto.avance_muestra = 1.0 - (extraccion_hasta - reloj) / 1.5
 				puesto.queue_redraw()
 				return
 			puesto.taladro_sol_uno_x = -1.0
@@ -195,6 +205,7 @@ func _input(evento: InputEvent) -> void:
 		return
 	if evento.ctrl_pressed and evento.shift_pressed and evento.physical_keycode == KEY_M:
 		get_viewport().set_input_as_handled()
+		_soltar_taladro(&"")
 		if is_instance_valid(interfaz_tablet):
 			_cerrar_tablet()
 		_cerrar_anuncio_sol()
@@ -211,9 +222,14 @@ func _input(evento: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 
 func _unhandled_key_input(event: InputEvent) -> void:
-	if is_instance_valid(nivel_activo) or is_instance_valid(menu_soles) or is_instance_valid(anuncio_sol) or is_instance_valid(huerto):
+	if is_instance_valid(nivel_activo) or is_instance_valid(menu_soles) or is_instance_valid(anuncio_sol) or is_instance_valid(interfaz_tablet) or is_instance_valid(huerto) or is_instance_valid(laboratorio):
 		return
-	if not event is InputEventKey or not event.pressed or event.echo:
+	if not event is InputEventKey or event.echo:
+		return
+	var codigo: Key = event.keycode if event.keycode != KEY_NONE else event.physical_keycode
+	if not event.pressed:
+		if codigo in [KEY_E, KEY_ENTER]:
+			_soltar_taladro(&"teclado")
 		return
 	if is_instance_valid(visita_nucleo):
 		if event.physical_keycode == KEY_ESCAPE or (event.physical_keycode == KEY_E and _cerca_salida_nucleo()):
@@ -225,15 +241,18 @@ func _unhandled_key_input(event: InputEvent) -> void:
 			_cerrar_control()
 		get_viewport().set_input_as_handled()
 		return
-	if event.physical_keycode == KEY_E or event.physical_keycode == KEY_ENTER:
-		_accion()
+	if codigo in [KEY_E, KEY_ENTER]:
+		if not _iniciar_taladro(&"teclado"):
+			_accion()
 	elif event.physical_keycode == KEY_M and fase == "base":
 		plano = not plano
 		puesto.plano = plano
 	elif event.physical_keycode == KEY_ESCAPE and fase in ["ida", "aterrizaje"]:
 		_iniciar_caminata()
-	elif event.physical_keycode == KEY_ESCAPE and not estacion.is_empty():
-		_cerrar_estacion()
+
+func _notification(que: int) -> void:
+	if que == NOTIFICATION_APPLICATION_FOCUS_OUT:
+		_soltar_taladro(&"")
 
 func _direccion() -> Vector2:
 	return Vector2(
@@ -285,8 +304,8 @@ func _guia_expedicion() -> void:
 		if aviso_tiempo <= 0:
 			voz.decir("Percy", "Aquí ahorras batería. Más a la derecha hay más hielo." if sitio.hielo == 1 else
 				"Aquí hay más hielo. La caminata cansa y procesar dos muestras usa más batería.")
-		boton.text = "E · %s · hasta +%d agua" % [Tutorial.etiqueta_deposito(sitio), agua]
-		pista.text = "El total incluye el filtrado en el laboratorio."
+		boton.text = "%s · hasta +%d agua" % [Tutorial.etiqueta_deposito(sitio), agua]
+		pista.text = "Mantén E o la indicación del depósito para perforar."
 	else:
 		return
 	boton.show()
@@ -294,27 +313,49 @@ func _guia_expedicion() -> void:
 	_ubicar_accion()
 
 func _accion_expedicion() -> void:
-	if reloj < extraccion_hasta:
-		return
-	var datos := recursos.estado()
-	if absf(posicion.x - PuestoUmbra.ESCLUSA.x) < 28:
+	if not taladro.activa() and reloj >= extraccion_hasta and absf(posicion.x - PuestoUmbra.ESCLUSA.x) < 28:
 		posicion = PuestoUmbra.ENTRADA
 		_cambiar("esclusa")
-		return
-	if not Tutorial.deposito(datos).is_empty():
-		return
+
+func _iniciar_taladro(fuente: StringName) -> bool:
+	if fase != "expedicion_sol_1" or is_instance_valid(interfaz_tablet):
+		return false
 	var sitio := _deposito_cercano()
-	if sitio.is_empty():
-		return
-	if not recursos.recoger_hielo(sitio.hielo, sitio.energia, sitio.id, sitio.alimento):
+	var datos := recursos.estado()
+	if sitio.is_empty() or not Tutorial.deposito(datos).is_empty():
+		return false
+	if datos.reservas.energia < sitio.energia or datos.reservas.alimento < sitio.alimento:
 		voz.decir("Iris", "Revisa la energía y la comida en la tablet. Los paneles recargan la batería poco a poco.")
 		aviso_tiempo = 6
-		return
+		return true
+	if not taladro.iniciar(fuente, 1.5):
+		return true
 	puesto.taladro_sol_uno_x = sitio.x
+	puesto.avance_muestra = 0.0
+	puesto.velocidad = Vector2.ZERO
+	puesto.caminando = false
+	voz.decir("Iris", "Sostén el taladro hasta sacar una muestra de hielo.")
+	aviso_tiempo = 3
+	return true
+
+func _soltar_taladro(fuente: StringName) -> void:
+	if taladro.soltar(fuente):
+		puesto.taladro_sol_uno_x = -1.0
+		puesto.avance_muestra = 0.0
+		puesto.queue_redraw()
+		_actualizar_guia()
+
+func _completar_taladro() -> void:
+	var sitio := _deposito_cercano()
+	if not recursos.recoger_hielo(sitio.hielo, sitio.energia, sitio.id, sitio.alimento):
+		puesto.taladro_sol_uno_x = -1.0
+		voz.decir("Iris", "Revisa la energía y la comida antes de volver a perforar.")
+		aviso_tiempo = 6
+		return
 	puesto.depositos_sol_uno = []
 	puesto.hielo_sol_uno = true
-	puesto.avance_muestra = 0
-	extraccion_hasta = reloj + 1.5
+	puesto.avance_muestra = 1.0
+	extraccion_hasta = reloj + 0.28
 	boton.hide()
 	voz.decir("Iris", "Con el taladro sacamos %d de hielo. Ahora toca llevarlo al filtro." % sitio.hielo)
 	aviso_tiempo = 5
@@ -495,7 +536,7 @@ func _montar_sol() -> void:
 						_guardar("base")
 			nivel_activo.configurar(recursos)
 			nivel_activo.finalizado.connect(_cerrar_sol_2, CONNECT_DEFERRED)
-			nivel_activo.avance_plantas_guardado.connect(_guardar.bind("base"))
+			nivel_activo.avance_guardado.connect(_guardar.bind("base"))
 		3:
 			nivel_activo.configurar(recursos, historial_soles.get("sistemas_danados", false))
 			nivel_activo.descanso_solicitado.connect(_cerrar_sol_3, CONNECT_DEFERRED)
@@ -619,6 +660,7 @@ func _cambiar(destino: String) -> void:
 	if fase == "noche":
 		posicion = PuestoUmbra.TERMINALES.dormitorio
 	estacion = ""
+	taladro.soltar()
 	extraccion_hasta = 0
 	aviso_tiempo = 0
 	if fase == "base":
@@ -636,10 +678,10 @@ func _cambiar(destino: String) -> void:
 func _mostrar() -> void:
 	nivel_activo = null
 	huerto = null
+	laboratorio = null
 	interfaz_tablet = null
 	boton_tablet = null
 	anuncio_sol = null
-	sombra_estacion = null
 	panel_control = null
 	visita_nucleo = null
 	marco_nucleo = null
@@ -713,6 +755,8 @@ func _mostrar() -> void:
 	capa.add_child(voz)
 	pista = _etiqueta("", Rect2(34, 653, 445, 35), 17)
 	boton = _boton("", Rect2(986, 28, 256, 45), _accion)
+	boton.button_down.connect(_iniciar_taladro.bind(&"puntero"))
+	boton.button_up.connect(_soltar_taladro.bind(&"puntero"))
 	boton.visible = false
 	match fase:
 		"portada":
@@ -845,6 +889,7 @@ func _alternar_tablet() -> void:
 		_cerrar_tablet()
 		return
 	_cerrar_anuncio_sol()
+	_soltar_taladro(&"")
 	interfaz_tablet = Tablet.new()
 	interfaz_tablet.estado = recursos.estado()
 	interfaz_tablet.z_index = 25
@@ -853,6 +898,8 @@ func _alternar_tablet() -> void:
 		nivel_activo.process_mode = Node.PROCESS_MODE_DISABLED
 	elif is_instance_valid(huerto):
 		huerto.process_mode = Node.PROCESS_MODE_DISABLED
+	elif is_instance_valid(laboratorio):
+		laboratorio.process_mode = Node.PROCESS_MODE_DISABLED
 	capa.add_child(interfaz_tablet)
 
 func _cerrar_tablet() -> void:
@@ -863,6 +910,8 @@ func _cerrar_tablet() -> void:
 		nivel_activo.process_mode = Node.PROCESS_MODE_INHERIT
 	elif is_instance_valid(huerto):
 		huerto.process_mode = Node.PROCESS_MODE_INHERIT
+	elif is_instance_valid(laboratorio):
+		laboratorio.process_mode = Node.PROCESS_MODE_INHERIT
 
 func _refrescar_recursos() -> void:
 	var datos := recursos.estado()
@@ -946,54 +995,21 @@ func _abrir_estacion(id: String) -> void:
 	if id == "cultivos":
 		_abrir_huerto()
 		return
-	estaciones = VBoxContainer.new()
-	estaciones.position = Vector2(818, 78 if _sol_uno() else 180)
-	estaciones.custom_minimum_size.x = 384
-	estaciones.add_theme_constant_override("separation", 4)
-	capa.add_child(estaciones)
-	if _sol_uno():
-		_opciones_sol_uno(id)
-	elif id == "agua":
-		voz.decir("Pluto", "Aquí limpiamos el hielo. Los depósitos de oxígeno están al lado, en esta misma sala.")
-		_opcion("Recoger hielo de la reserva de prueba", _hielo_prueba)
-		_opcion("Purificar hielo · 2 energía", recursos.purificar_hielo)
-	elif id == "oxigeno":
-		voz.decir("Pluto", "Este equipo usa agua y batería para asegurar el aire de hoy.")
-		_opcion("Asegurar aire · 6 energía y 1 agua", recursos.activar_oxigeno)
-	var cerrar := Button.new()
-	cerrar.text = "Cerrar · Esc"
-	cerrar.pressed.connect(_cerrar_estacion)
-	estaciones.add_child(cerrar)
-	for control: Button in estaciones.get_children():
-		control.alignment = HORIZONTAL_ALIGNMENT_LEFT
-		control.custom_minimum_size.y = 33
-		control.add_theme_font_size_override("font_size", 17)
-		AccionEscena.aplicar(control)
-	_sombrear_estacion()
-	if _sol_uno():
-		estaciones.get_child(0).grab_focus()
+	laboratorio = Laboratorio.new()
+	laboratorio.tipo = id
+	laboratorio.recursos = recursos
+	laboratorio.cerrar_solicitado.connect(_cerrar_estacion)
+	laboratorio.trabajo_completado.connect(_registrar_laboratorio)
+	capa.add_child(laboratorio)
+	capa.move_child(boton_tablet, -1)
 
-func _sombrear_estacion() -> void:
-	var degradado := Gradient.new()
-	degradado.offsets = PackedFloat32Array([0.0, 0.7, 1.0])
-	degradado.colors = PackedColorArray([Color("#17100df5"), Color("#17100dde"), Color("#17100d00")])
-	var textura := GradientTexture2D.new()
-	textura.gradient = degradado
-	textura.fill = GradientTexture2D.FILL_RADIAL
-	textura.fill_from = Vector2(0.51, 0.5)
-	textura.fill_to = Vector2(1.0, 0.5)
-	var rect := Rect2(estaciones.position - Vector2(96, 72),
-		estaciones.get_combined_minimum_size() + Vector2(192, 144))
-	sombra_estacion = _imagen(textura, rect)
-	capa.move_child(sombra_estacion, estaciones.get_index())
-
-func _opciones_sol_uno(id: String) -> void:
-	if id == "oxigeno":
-		voz.decir("Pluto", "Si se acaba el oxígeno, no podemos respirar. Asegura el aire al inicio de cada día. Reserva 6 de energía y 1 de agua.")
-		_opcion("Asegurar aire · 6 energía y 1 agua", recursos.activar_oxigeno)
-	elif id == "agua":
-		voz.decir("Pluto", "El hielo trae polvo. Derrítelo, fíltralo y revisa el agua antes de llenar el tanque.")
-		_opcion("Purificar 1 hielo · 2 energía", recursos.purificar_hielo)
+func _registrar_laboratorio(_ganancia: int) -> void:
+	_refrescar_recursos()
+	if _sol_uno():
+		var datos := recursos.estado()
+		voz.decir("Pluto", Tutorial.GUIA[Tutorial.objetivo(datos)])
+		aviso_tiempo = 6
+	_guardar()
 
 func _abrir_huerto() -> void:
 	huerto = Invernadero.new()
@@ -1020,44 +1036,14 @@ func _comer_guardado(cultivo: String) -> bool:
 		return false
 	return recursos.aplicar_decision(Tutorial.COMIDA, {"alimento": Recursos.CULTIVOS[cultivo].alimento})
 
-func _opcion(texto: String, accion: Callable) -> Button:
-	var control := Button.new()
-	control.text = texto
-	control.pressed.connect(_usar_estacion.bind(accion))
-	estaciones.add_child(control)
-	return control
-
-func _usar_estacion(accion: Callable) -> void:
-	var aplicada: bool = accion.call()
-	if _sol_uno() and aplicada:
-		var datos := recursos.estado()
-		voz.decir("Pluto", Tutorial.GUIA[Tutorial.objetivo(datos)])
-	else:
-		voz.decir("Pluto", "Listo. Revisa las reservas." if aplicada else "Revisa las reservas y si la tarea ya está lista.")
-		if _sol_uno() and estacion == "agua":
-			voz.decir("Pluto", "Para purificar necesitas hielo, 2 de energía y espacio en el tanque de agua.")
-	aviso_tiempo = 6
-	_refrescar_recursos()
-	if aplicada:
-		_guardar()
-
-func _hielo_prueba() -> bool:
-	return recursos.aplicar_decision("reserva_hielo_prueba", {}) and recursos.recoger_hielo()
-
 func _cerrar_estacion() -> void:
 	estacion = ""
-	if is_instance_valid(huerto):
-		capa.remove_child(huerto)
-		huerto.queue_free()
-		huerto = null
-		_actualizar_guia()
-		return
-	estaciones.hide()
-	estaciones.queue_free()
-	if is_instance_valid(sombra_estacion):
-		sombra_estacion.hide()
-		sombra_estacion.queue_free()
-		sombra_estacion = null
+	var actividad: Control = huerto if is_instance_valid(huerto) else laboratorio
+	capa.remove_child(actividad)
+	actividad.queue_free()
+	huerto = null
+	laboratorio = null
+	_actualizar_guia()
 
 func _crear_mapa(interior: bool) -> void:
 	var marco := Control.new()

@@ -182,8 +182,15 @@ func _probar() -> void:
 	_tecla(dia, KEY_F)
 	_caminar_a(dia, Dia.AGUA)
 	dia._process(0.0)
-	assert(dia.interfaz.alternativa.visible)
-	_clic(dia.interfaz.alternativa)
+	assert(dia.interfaz.accion.visible)
+	_clic(dia.interfaz.accion)
+	assert(is_instance_valid(dia.laboratorio))
+	_tecla(dia, KEY_E)
+	assert(dia.laboratorio.muestra_cargada and partida.estado().hielo == 1)
+	_puntero(dia.laboratorio.mando, true)
+	dia.laboratorio._process(1.4)
+	_puntero(dia.laboratorio.mando, false)
+	_tecla(dia, KEY_ESCAPE)
 	assert(partida.estado().reservas.agua == 3 and partida.estado().hielo == 0)
 	await _accion(dia, Paso.AIRE)
 	assert(partida.estado().aire_asegurado and partida.estado().reservas.energia == 0)
@@ -202,9 +209,12 @@ func _probar() -> void:
 	_tecla(dia, KEY_E)
 	assert(partida.estado().bandejas.is_empty())
 	_clic(dia.huerto.accion)
+	assert(partida.estado().bandejas.is_empty())
+	_puntero(dia.huerto.bandejas[0], true)
+	dia.huerto._process(1.2)
+	_puntero(dia.huerto.bandejas[0], false)
 	assert(partida.estado().bandejas.has("lechuga"))
 	partida.avanzar(15.0)
-	await create_timer(0.7).timeout
 	dia._process(0.0)
 	await _captura(dia, "cosecha-lista")
 	assert(not dia.huerto.accion.disabled and "Recoger" in dia.huerto.accion.text)
@@ -264,16 +274,19 @@ func _tecla(dia: Dia, codigo: Key) -> void:
 
 
 func _clic(boton: Button) -> void:
-	assert(boton.is_visible_in_tree() and not boton.disabled, "El botón debe estar disponible.")
+	_puntero(boton, true)
+	_puntero(boton, false)
+
+
+func _puntero(boton: Button, presionado: bool) -> void:
+	if presionado:
+		assert(boton.is_visible_in_tree() and not boton.disabled, "El botón debe estar disponible.")
 	var evento := InputEventMouseButton.new()
 	evento.button_index = MOUSE_BUTTON_LEFT
 	evento.position = boton.get_global_rect().get_center()
 	evento.global_position = evento.position
-	evento.pressed = true
+	evento.pressed = presionado
 	root.push_input(evento, true)
-	var soltar := evento.duplicate() as InputEventMouseButton
-	soltar.pressed = false
-	root.push_input(soltar, true)
 
 
 func _accion(dia: Dia, etapa: int) -> void:
@@ -365,6 +378,7 @@ func _resolver(dia: Dia) -> void:
 				else:
 					_tecla(dia, [KEY_1, KEY_2, KEY_3, KEY_4][i])
 		assert(dia.taller.reglas.aire_conectado())
+		dia.taller.avanzar(0.6)
 		await _captura(dia, "circuito-listo")
 		_tecla(dia, KEY_E)
 		assert(dia.recursos.estado().aire_asegurado)

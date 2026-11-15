@@ -17,6 +17,7 @@ var tipo := "aire"
 var jugando := false
 var seleccionado := 0
 var ui := UI.new()
+var fondo: TextureRect
 var tablero: Control
 var titulo: Label
 var pista: Label
@@ -29,12 +30,22 @@ var volver: Button
 var izquierda: Button
 var derecha: Button
 var piezas: Array[Button] = []
+var angulos := PackedFloat32Array()
+var giros_visuales := PackedFloat32Array()
+var ajuste_visual := 0.0
 
 func _ready() -> void:
 	size = Vector2(1280, 720)
+	fondo = TextureRect.new()
+	fondo.size = size
+	fondo.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	fondo.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+	fondo.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(fondo)
 	var velo := ColorRect.new()
 	velo.size = size
-	velo.color = Color("#160f0eef")
+	velo.color = Color("#18111bcb")
+	velo.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(velo)
 	var panel := Control.new()
 	panel.position = Vector2(220, 108)
@@ -61,8 +72,8 @@ func _ready() -> void:
 		boton.pressed.connect(_girar.bind(i))
 		tablero.add_child(boton)
 		piezas.append(boton)
-	izquierda = ui._boton(tablero, Rect2(44, 188, 140, 42), "A / ←   Mover")
-	derecha = ui._boton(tablero, Rect2(576, 188, 140, 42), "Mover   D / →")
+	izquierda = ui._boton(tablero, Rect2(44, 188, 140, 42), "A · Izquierda")
+	derecha = ui._boton(tablero, Rect2(576, 188, 140, 42), "D · Derecha")
 	izquierda.pressed.connect(_mover.bind(-1))
 	derecha.pressed.connect(_mover.bind(1))
 	progreso = ui._texto(panel, Rect2(30, 402, 780, 24), "", 17, UI.ORO)
@@ -81,13 +92,19 @@ func _ready() -> void:
 func abrir(actividad: String) -> void:
 	tipo = actividad
 	reglas = Reglas.new()
+	fondo.texture = load("res://assets/laboratorio_banco.png") if tipo == "aire" else PuestoUmbra.TORMENTA
+	angulos.clear()
+	for giro in reglas.giros:
+		angulos.append(giro * PI / 2.0)
+	giros_visuales = angulos.duplicate()
+	ajuste_visual = reglas.ajuste
 	jugando = false
 	pausa.text = "Esc · Pausa"
 	seleccionado = 0
 	respuesta.text = "Puedes probar otra vez. Equivocarte no gasta recursos."
 	titulo.text = "Laboratorio · Un camino para el aire" if tipo == "aire" else "Exterior · Que nada salga volando"
 	pista.text = "Gira los cuatro codos hasta unir la entrada con el tanque." if tipo == "aire" else "Mueve el cierre por el riel hasta la marca. Fíjalo durante la calma."
-	progreso.text = "Al activar: 6 energía + 1 agua → aire seguro hasta dormir." if tipo == "aire" else "Al terminar: 4 energía + 1 comida → equipos protegidos."
+	progreso.text = "6 energía + 1 agua para preparar el aire." if tipo == "aire" else "4 energía + 1 comida al asegurar los tres cierres."
 	principal.text = "E · Entendido, empezar"
 	izquierda.visible = tipo == "reparar"
 	derecha.visible = tipo == "reparar"
@@ -100,6 +117,9 @@ func avanzar(delta: float) -> void:
 	if not visible or not jugando:
 		return
 	reglas.tiempo += delta
+	for i in giros_visuales.size():
+		giros_visuales[i] = move_toward(giros_visuales[i], angulos[i], delta * 11.0)
+	ajuste_visual = move_toward(ajuste_visual, reglas.ajuste, delta * 10.0)
 	tablero.queue_redraw()
 
 func tecla(codigo: Key) -> void:
@@ -139,6 +159,7 @@ func _girar(indice: int) -> void:
 	if not jugando: return
 	seleccionado = indice
 	reglas.girar(indice)
+	angulos[indice] += PI / 2.0
 	sonido.emit(true)
 	respuesta.text = "¡Camino completo! Pulsa E para llenar el tanque." if reglas.aire_conectado() else "Sigue la luz azul: muestra hasta dónde llega el aire."
 	tablero.queue_redraw()
@@ -180,6 +201,7 @@ func _confirmar() -> void:
 	tablero.queue_redraw()
 
 func _rotulo(texto: String, punto: Vector2, color: Color, tamano := 18) -> void:
+	tablero.draw_string_outline(ThemeDB.fallback_font, punto, texto, HORIZONTAL_ALIGNMENT_LEFT, -1, tamano, 5, UI.TINTA)
 	tablero.draw_string(ThemeDB.fallback_font, punto, texto, HORIZONTAL_ALIGNMENT_LEFT, -1, tamano, color)
 
 func _dibujar() -> void:
@@ -213,7 +235,7 @@ func _dibujar_aire() -> void:
 			tablero.draw_texture_rect_region(ARTE, Rect2(centro - Vector2(42, 16), Vector2(84, 32)), TUBO, tinta)
 			continue
 		# El pivote del codo coincide con el cruce de sus dos puertos.
-		tablero.draw_set_transform(centro, reglas.giros[indice] * PI / 2.0)
+		tablero.draw_set_transform(centro, giros_visuales[indice])
 		tablero.draw_texture_rect_region(ARTE, Rect2(-15, -42, 57, 57), CODO, tinta)
 		tablero.draw_set_transform(Vector2.ZERO)
 		_rotulo(str(indice + 1), origen + Vector2(7, 19), UI.ORO if indice == seleccionado else UI.PAPEL, 17)
@@ -231,10 +253,10 @@ func _dibujar_cierres() -> void:
 	_rotulo("CALMA · puedes fijar" if calma else "RÁFAGA · espera un momento", Vector2(200, 64), UI.VERDE if calma else UI.ORO, 23)
 	tablero.draw_texture_rect_region(ARTE, Rect2(85, 104, 592, 64), RIEL)
 	var objetivo: float = 116.0 + Reglas.METAS[cierre] * 66.0
-	_rotulo("↓", Vector2(objetivo - 12, 103), UI.ORO, 29)
-	var ajuste := 116.0 + reglas.ajuste * 66.0
+	_rotulo("META", Vector2(objetivo - 19, 98), UI.ORO, 16)
+	var ajuste := 116.0 + ajuste_visual * 66.0
 	tablero.draw_texture_rect_region(ARTE, Rect2(ajuste - 26, 104, 52, 59), PESTILLO)
-	_rotulo("Cierre azul hacia la flecha dorada", Vector2(219, 216), UI.PAPEL, 18)
+	_rotulo("Mueve el cierre azul bajo la marca META", Vector2(212, 216), UI.PAPEL, 18)
 
 func _exit_tree() -> void:
 	ui.free()

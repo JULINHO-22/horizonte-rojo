@@ -1,6 +1,6 @@
 # Día 5 | Bajo protección
 
-En Control, pulsa **E** o toca el equipo para avisar a Tierra. La respuesta tarda. Sigue por la puerta sur y baja por el acceso lateral dentro de la esclusa, marcado también en el plano. La campaña permite visitar el mismo núcleo antes de la emergencia. La esclusa sigue siendo el vestíbulo que conecta la base con el exterior. Nora aparece cruzando el umbral abierto hasta el lado donde esperan Iris y Teo. El control a la derecha acciona la compuerta detrás de la tripulación. El indicador exterior sube y baja según las lecturas archivadas de Curiosity. La tormenta del día 2 es de polvo y la del día 5 corresponde a partículas del Sol.
+En Control, pulsa **E** o toca el equipo para avisar a Tierra. La respuesta tarda. Sigue por la puerta sur y baja por el acceso lateral dentro de la esclusa, marcado también en el plano. La campaña permite visitar el mismo núcleo antes de la emergencia. La esclusa sigue siendo el vestíbulo que conecta la base con el exterior. Nora aparece cruzando el umbral abierto hasta el lado donde esperan Iris y Teo. Mantén **E** o el control de la compuerta hasta sellarla. Soltar antes vuelve a abrir las hojas. Tras cerrar, el indicador exterior sube y baja según las lecturas archivadas de Curiosity. La tormenta del día 2 es de polvo y la del día 5 corresponde a partículas del Sol.
 
 | Antecedente | Pérdidas del impacto |
 | --- | --- |

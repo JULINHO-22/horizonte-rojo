@@ -14,9 +14,9 @@ La escena principal abre el viaje y la campaña completa. La nave sale con el m�
 
 Pulsa **E** junto a la computadora de Control para consultar las tareas. Selecciona **Ver reservas** arriba a la derecha o usa el atajo **Q** para consultar oxígeno, agua, energía, comida e hielo. La consulta pausa el juego. En la esclusa sur, el acceso lateral baja al núcleo protegido que se usa en el Sol 5.
 
-El laboratorio de Agua y Oxígeno está al noroeste, pasando por Energía. Purifica agua junto al filtro azul y prepara oxígeno junto a los depósitos verdes. El taller está inmediatamente al este de Control. Plantas se alcanza por el desvío norte del corredor este, girando a la izquierda. No hay Enfermería ni accidente de Teo.
+El laboratorio de Agua y Oxígeno está al noroeste, pasando por Energía. Carga una muestra de hielo en la cubeta y mantén **E** o el botón ámbar para filtrarla. En el Sol 1, mantén **E** o la válvula del tanque para estabilizar el oxígeno. El taller está inmediatamente al este de Control. Plantas se alcanza por el desvío norte del corredor este, girando a la izquierda. No hay Enfermería ni accidente de Teo.
 
-En Plantas, pulsa **E** junto a las bandejas. En los soles 1 a 3 puedes elegir un cultivo con **1–4** o con el ratón. Coloca una semilla y riega esa bandeja. La planta cambia de aspecto mientras avanza su reloj. Puedes salir y volver para recoger y comer allí mismo. En el Sol 4, atiende las bandejas directamente en el escenario y usa la espera solar en Energía para hacerlas crecer.
+En Plantas, pulsa **E** junto a las bandejas. En los soles 1 a 3 puedes elegir un cultivo con **1–4** o con el ratón. Coloca una semilla y mantén **E** o la tierra pulsada hasta completar el riego. La planta cambia de aspecto y cada bandeja muestra su reloj. Puedes salir y volver para recoger y comer allí mismo. En el Sol 4, atiende las bandejas directamente en el escenario y usa la espera solar en Energía para hacerlas crecer.
 
 El recorrido guarda su avance en `user://narrativa.cfg`, separado de las partidas del simulador anterior. Para revisar el inicio usa **Empezar de nuevo** en la portada. Durante una transición se recupera el último punto estable.
 

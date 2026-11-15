@@ -14,7 +14,7 @@ En este checkout también puedes abrir `jugar_dia_2.bat` (usa el Godot local de 
 
 En los tableros, **Esc pausa y conserva las piezas**; E o Esc continúa. **F cancela sin cobrar** y permite reiniciar el reto al abrirlo de nuevo. El reloj compartido corre durante el trabajo activo; se detiene al leer la explicación o pausar. Nora no se mueve mientras opera un tablero. Las reservas se validan de nuevo al confirmar, pues la comida puede bajar mientras se trabaja.
 
-Se conserva la libertad del contrato: puedes preparar aire antes de decidir, o posponerlo desde los tanques y hacerlo después de reparar. Antes de completar la reparación puedes volver por la esclusa y resguardarte. Si falta agua y traes hielo, F en los tanques guía al **filtro azul**; F junto al filtro purifica con la API común (2 energía por hasta 3 agua). Dormir sin aire o sin comida, o agotar el oxígeno, devuelve derrota con un consejo para el siguiente intento.
+Puedes preparar aire antes de decidir o posponerlo y hacerlo después de reparar. Antes de completar la reparación puedes volver por la esclusa y resguardarte. Si falta agua y traes hielo, **F** en los tanques guía al filtro azul. Abre el banco con **E**, arrastra el hielo a la cubeta y mantén **E** o el botón ámbar para purificarlo. El coste es 2 de energía y rinde hasta 3 de agua. Dormir sin aire o sin comida, o agotar el oxígeno, devuelve derrota con un consejo para el siguiente intento.
 
 ## Criterios de diseño para 7–12 años
 

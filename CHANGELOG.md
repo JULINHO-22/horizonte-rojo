@@ -1,5 +1,11 @@
 # Cambios
 
+## 2026-11-15 | Portada y actividades de Red Horizon
+
+- Portada adaptable con arte pixel art de Umbra al anochecer, tipografía Barlow y un acceso directo al recorrido. La descarga y las escenas extra tienen sus propios controles.
+- El riego, el taladro, la válvula de oxígeno y el sello del núcleo responden mientras se mantiene el mando. Soltar antes devuelve el equipo a su estado inicial. Las bandejas muestran el tiempo y el progreso de cada cultivo.
+- El hielo se coloca en la cubeta y se funde antes de filtrarse. El Sol 2 anima los codos y los cierres de sus retos. En el Sol 3 se elige una ruta y después se confirma tras revisar su efecto.
+
 ## 2026-11-15 | Invernadero de Umbra
 
 - Los soles 1 a 3 comparten una vista pixel art de las bandejas. Coloca la semilla, riega la tierra y observa cómo el brote crece hasta la cosecha. La cuenta regresiva sigue avanzando al volver al recorrido.
