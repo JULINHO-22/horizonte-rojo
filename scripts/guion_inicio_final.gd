@@ -23,6 +23,13 @@ const FICHAS := {
 	"cierre": "Esta sala tiene dos puertas: cerramos una antes de abrir la otra para conservar el aire del refugio.",
 	"taller": "Aquí se revisan los trajes y se guardan herramientas y repuestos.",
 }
+const Recursos := preload("res://scripts/mecanicas/recursos_mision.gd")
+var recursos := Recursos.new()
+const Indicadores := preload("res://scripts/mecanicas/indicadores_refugio.gd")
+var lecturas: Control
+var comida_ui: Control
+var estaciones: VBoxContainer
+var estacion := ""
 var campana = Campana.new()
 var fase := "portada"
 var reloj := 0.0
@@ -48,6 +55,13 @@ func _ready() -> void:
 			get_tree().change_scene_to_file.call_deferred(VISTAS_FINALES[argumento])
 			return
 	restaurado = campana.cargar()
+	if not restaurado.is_empty():
+		var guardado: Variant = restaurado.recursos
+		if not guardado is Dictionary or guardado.get("sol") != campana.sol or not recursos.restaurar_estado(guardado):
+			var inicial := recursos.guardar_estado()
+			inicial.sol = campana.sol
+			inicial.terminado = campana.listo_para_regresar()
+			recursos.restaurar_estado(inicial)
 	if OS.has_feature("web") and restaurado.is_empty():
 		_cambiar("ida")
 	else:
@@ -69,7 +83,17 @@ func _process(delta: float) -> void:
 			puesto.queue_redraw()
 			if reloj >= DURACION_ATERRIZAJE:
 				_iniciar_caminata()
-		"base", "camino_base", "camino_nave":
+		"base":
+			if not estacion.is_empty():
+				return
+			recursos.avanzar(delta)
+			if not recursos.estado().derrota.is_empty():
+				_cambiar("derrota")
+				_guardar()
+				return
+			_caminar(delta)
+			_refrescar_recursos()
+		"camino_base", "camino_nave":
 			_caminar(delta)
 		"esclusa":
 			puesto.avance_esclusa = reloj
@@ -168,7 +192,7 @@ func _actualizar_guia() -> void:
 		if boton.visible:
 			_ubicar_accion()
 		if aviso_tiempo <= 0:
-			voz.decir("Pluto", "El dormitorio está por el pasillo derecho, arriba." if not campana.listo_para_regresar() else "Revisa la ruta en Control antes de salir.")
+			voz.decir("Pluto", "Asegura el aire en el Centro de agua antes de dormir." if not campana.listo_para_regresar() else "Revisa la ruta en Control antes de salir.")
 			voz.visible = reloj < 6.0
 		else:
 			voz.visible = true
@@ -184,10 +208,18 @@ func _accion() -> void:
 		"ida", "aterrizaje":
 			_iniciar_caminata()
 		"base":
+			if not estacion.is_empty():
+				_cerrar_estacion()
+				return
 			var cerca := puesto.terminal_cercana()
 			if cerca == "dormitorio" and not campana.listo_para_regresar():
-				_guardar()
-				_cambiar("noche")
+				if recursos.dormir():
+					_cambiar("noche")
+				else:
+					_cambiar("derrota")
+					_guardar()
+			elif cerca in ["agua", "cultivos"] and not campana.listo_para_regresar():
+				_abrir_estacion(cerca)
 			elif cerca == "radio" and campana.listo_para_regresar():
 				voz.decir("Iris", "La ruta está preparada. Salgamos juntos: la nave nos espera a la izquierda del refugio.")
 				puesto.objetivo_mision = "cierre"
@@ -196,6 +228,9 @@ func _accion() -> void:
 				posicion = PuestoUmbra.ESCLUSA
 				_cambiar("camino_nave")
 				_guardar()
+			elif cerca == "energia":
+				voz.decir("Pluto", "Con más polvo en el aire, llega menos luz a los paneles. Fuente: NASA, Pancam.")
+				aviso_tiempo = 9
 			elif FICHAS.has(cerca):
 				voz.decir("Pluto", FICHAS[cerca])
 				aviso_tiempo = 9
@@ -204,6 +239,8 @@ func _accion() -> void:
 				_cambiar("pilotaje")
 		"pilotaje":
 			_cambiar("despegue")
+		"derrota":
+			_reiniciar()
 		"epilogo":
 			if reloj >= 10:
 				_reiniciar()
@@ -222,17 +259,21 @@ func _ubicar_accion() -> void:
 func _reiniciar() -> void:
 	campana.borrar()
 	campana = Campana.new()
+	recursos = Recursos.new()
 	restaurado = {}
 	posicion = Vector2(220, PuestoUmbra.SUELO)
 	_cambiar("ida")
 
 func _guardar(fase_guardada := "") -> void:
-	var error: Error = campana.guardar(fase if fase_guardada.is_empty() else fase_guardada, posicion)
+	var error: Error = campana.guardar(fase if fase_guardada.is_empty() else fase_guardada, posicion, recursos.guardar_estado())
 	if error != OK:
 		push_warning("No se pudo guardar la narrativa: %s" % error_string(error))
 
 func _cambiar(destino: String) -> void:
 	fase = destino
+	estacion = ""
+	if fase == "base":
+		recursos.iniciar_sol()
 	reloj = 0
 	_mostrar()
 
@@ -263,6 +304,9 @@ func _mostrar() -> void:
 		"despegue":
 			_imagen(PuestoUmbra.SENDERO, AREA)
 			nave_salida = _imagen(PuestoUmbra.NAVE, Rect2(280, 275, 170, 260), true)
+		"derrota":
+			_sombra(AREA, Color.BLACK)
+			_etiqueta("Game Over", Rect2(485, 290, 400, 100), 56)
 		"epilogo":
 			_imagen(PuestoUmbra.CENTRO_AGUA, AREA)
 			_sombra(Rect2(0, 0, 1280, 720), Color(0.03, 0.07, 0.12, 0.78))
@@ -315,7 +359,18 @@ func _mostrar() -> void:
 			_actualizar_guia()
 		"camino_nave":
 			voz.decir("Percy", "¡Buen regreso! Yo seguiré aquí, buscando nuevas pistas.")
+		"derrota":
+			boton.position = Vector2(512, 410)
+			boton.text = "Volver a intentar"
+			boton.show()
 		"base":
+			lecturas = Indicadores.new()
+			capa.add_child(lecturas)
+			comida_ui = Indicadores.new()
+			comida_ui.solo_alimento = true
+			comida_ui.position = Vector2(958, 24)
+			capa.add_child(comida_ui)
+			_refrescar_recursos()
 			titulo.text = "Día %d de 5 · Refugio Umbra" % campana.sol
 			_actualizar_guia()
 		"noche":
@@ -331,6 +386,65 @@ func _mostrar() -> void:
 			boton.text = "Volver al comienzo"
 	if fase in ["noche", "amanecer", "llegada_tierra", "aterrizaje"]:
 		velo = _sombra(AREA, Color(0, 0, 0, 1 if fase in ["amanecer", "aterrizaje"] else 0))
+
+func _refrescar_recursos() -> void:
+	var datos := recursos.estado()
+	lecturas.actualizar(datos)
+	comida_ui.actualizar(datos)
+	lecturas.visible = not plano and PuestoUmbra.ROOMS.radio.has_point(puesto.punto)
+	# Anclaje sobre el display cian de la computadora en la ilustración de Control.
+	var esquina := puesto.proyectar_suelo(Vector2(370, 198))
+	var borde := puesto.proyectar_suelo(Vector2(436, 198))
+	lecturas.position = esquina
+	lecturas.scale = Vector2.ONE * ((borde.x - esquina.x) / 386.0)
+	if datos.sin_luz:
+		puesto.modulate = Color("#59697d")
+	else:
+		puesto.modulate = Color.WHITE
+
+func _abrir_estacion(id: String) -> void:
+	estacion = id
+	boton.hide()
+	estaciones = VBoxContainer.new()
+	estaciones.position = Vector2(818, 180)
+	estaciones.custom_minimum_size.x = 384
+	capa.add_child(estaciones)
+	if id == "agua":
+		voz.decir("Pluto", "Primero limpia el hielo para obtener agua. Para preparar aire, el equipo necesita agua y batería.")
+		_opcion("Recoger hielo de la reserva de prueba", _hielo_prueba)
+		_opcion("Purificar hielo · 2 energía", recursos.purificar_hielo)
+		_opcion("Asegurar aire · 6 energía y 1 agua", recursos.activar_oxigeno)
+	else:
+		for cultivo: String in Recursos.CULTIVOS:
+			var ficha: Dictionary = Recursos.CULTIVOS[cultivo]
+			_opcion("Sembrar %s · %d energía, 1 agua, %d s, +%d comida" % [
+				cultivo.capitalize(), ficha.energia, int(ficha.segundos), ficha.alimento], recursos.sembrar.bind(cultivo))
+			_opcion("Comer %s" % cultivo, recursos.comer.bind(cultivo))
+	var cerrar := Button.new()
+	cerrar.text = "Cerrar · Esc"
+	cerrar.pressed.connect(_cerrar_estacion)
+	estaciones.add_child(cerrar)
+
+func _opcion(texto: String, accion: Callable) -> void:
+	var control := Button.new()
+	control.text = texto
+	control.pressed.connect(_usar_estacion.bind(accion))
+	estaciones.add_child(control)
+
+func _usar_estacion(accion: Callable) -> void:
+	var aplicada: bool = accion.call()
+	voz.decir("Pluto", "Listo. Revisa las reservas." if aplicada else "Revisa las reservas y si la tarea ya está lista.")
+	aviso_tiempo = 6
+	_refrescar_recursos()
+	if aplicada:
+		_guardar()
+
+func _hielo_prueba() -> bool:
+	return recursos.aplicar_decision("reserva_hielo_prueba", {}) and recursos.recoger_hielo()
+
+func _cerrar_estacion() -> void:
+	estacion = ""
+	estaciones.queue_free()
 
 func _crear_mapa(interior: bool) -> void:
 	var marco := Control.new()

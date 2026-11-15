@@ -1,6 +1,6 @@
 # Mecánicas básicas y contrato de los niveles
 
-Esta es la primera entrega común del equipo, basada en **Mecánicas básicas (3)** y **Flujo de los cinco días y finales**. Contiene reglas y un banco de pruebas. La integración con la campaña, las actividades de los cinco días y sus condiciones de victoria se hacen en entregas separadas.
+Esta es la primera entrega común del equipo, basada en **Mecánicas básicas (3)** y **Flujo de los cinco días y finales**. Contiene el modelo, el banco de pruebas y la conexión inicial al recorrido principal. Dentro del refugio se ven las cuatro reservas en tiempo real. Centro de agua permite asegurar aire y purificar hielo. Plantas permite sembrar y comer. Hasta que estén listas las expediciones, Centro de agua ofrece una unidad de hielo de prueba por sol. Las actividades de los cinco días y el selector final se integrarán con el equipo.
 
 ## Cómo probarlo
 
@@ -69,3 +69,5 @@ Las acciones devuelven si se aplicaron. La señal se emite después de actualiza
 - Polvo y energía. «Con más polvo en el aire, llega menos luz a los paneles». Fuente para la relación: [NASA PDS, Pancam](https://pds.nasa.gov/ds-view/pds/viewProfile.jsp?dsid=MER1%2FMER2-M-PANCAM-5-ATMOS-OPACITY-V1.0).
 - Cultivos y luz. «En un invernadero de prueba, el rábano recibió más luz que la lechuga». [NASA OSDR, EDEN ISS](https://osdr.nasa.gov/bio/repo/data/studies/OSD-895) y [NASA NTRS, cultivo de papa](https://ntrs.nasa.gov/citations/19950005536).
 - Los rayos, burbujas y segundos son unidades del juego. En el juego principal se podrán mostrar 12 rayos, un tanque con la palabra «Oxígeno» y una gota para el agua. El banco interno usa controles simples para probar el contrato. Las fuentes pueden consultarse como enlaces, sin depender de una API para jugar.
+
+El recorrido principal usa `scripts/mecanicas/indicadores_refugio.gd` para mostrar 12 rayos, 8 burbujas, una gota con seis niveles y 10 tomates. Los niveles pueden instanciar este Control y llamar a `actualizar(partida.estado())`. En la campaña, las tres lecturas siguen la pantalla de la supercomputadora. La comida queda arriba a la derecha. Pluto explica el agua, el aire y el efecto del polvo cerca de las estaciones.

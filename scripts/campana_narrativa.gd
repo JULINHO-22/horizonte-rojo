@@ -17,13 +17,14 @@ func terminar_noche() -> bool:
 func listo_para_regresar() -> bool:
 	return noches == SOLES
 
-func guardar(fase: String, posicion: Vector2) -> Error:
+func guardar(fase: String, posicion: Vector2, recursos := {}) -> Error:
 	var archivo := ConfigFile.new()
 	archivo.set_value("guion", "version", 1)
 	archivo.set_value("guion", "sol", sol)
 	archivo.set_value("guion", "noches", noches)
 	archivo.set_value("guion", "fase", fase)
 	archivo.set_value("guion", "posicion", posicion)
+	archivo.set_value("guion", "recursos", recursos)
 	var resultado := archivo.save(ARCHIVO + ".tmp")
 	if resultado != OK:
 		return resultado
@@ -43,11 +44,11 @@ func cargar() -> Dictionary:
 		return {}
 	if descanso == SOLES and dia != SOLES:
 		return {}
-	if not lugar.is_finite() or fase not in ["base", "camino_base", "camino_nave", "epilogo"]:
+	if not lugar.is_finite() or fase not in ["base", "camino_base", "camino_nave", "epilogo", "derrota"]:
 		return {}
 	sol = dia
 	noches = descanso
-	return {"fase": fase, "posicion": lugar}
+	return {"fase": fase, "posicion": lugar, "recursos": archivo.get_value("guion", "recursos", {})}
 
 func borrar() -> void:
 	if FileAccess.file_exists(ARCHIVO):

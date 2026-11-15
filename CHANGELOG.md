@@ -1,10 +1,24 @@
 # Cambios
 
+## 2026-11-15 | Iconos de Control
+
+- Se sustituyen las máscaras de píxeles por iconos generados con bordes suaves. El nivel del agua se anima dentro de la gota.
+
+## Indicadores en la supercomputadora
+
+- Energía, oxígeno y agua disponen de zonas separadas dentro de la pantalla del equipo. La comida se muestra en la esquina superior derecha.
+- Pluto explica el vínculo entre polvo y energía y cómo usar agua y batería para producir aire.
+
 ## 2026-11-14 | Día 2 jugable en escena independiente
 
 - Durante la tormenta de polvo, Nora puede salir a proteger los paneles y el laboratorio o resguardarse y dejar daños para el Día 3. El oxígeno puede asegurarse antes o después de decidir.
 - La decisión se toma en la nueva supercomputadora de Control. Las acciones aparecen junto a sus puntos de interacción y Pluto usa el diálogo de escena compartido.
 - El nivel usa el contrato común de recursos, se puede abrir con F6 y emite el resultado para la futura integración. La prueba gráfica comprueba las dos rutas, incluyendo la salida a la esclusa. [Recorrido, balance y pruebas](docs/dias/DIA-2.md).
+
+## 2026-11-14 | Recursos activos en el refugio
+
+- El recorrido principal muestra rayos, burbujas, una gota y tomates en vivo y usa el modelo compartido en Agua y Plantas, al dormir y al guardar.
+- La reserva provisional de hielo permite probar el circuito hasta que se conecten las expediciones.
 
 ## 2026-11-14 | Encuadre, diálogos y arranque web
 
