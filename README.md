@@ -12,6 +12,8 @@ La escena principal es un **recorrido narrativo en revisión**: cinemática 2D p
 4. Desde Control, cruza la puerta derecha, sube por el corredor y gira a la derecha hacia Dormitorio. Cerca de la marca pulsa **E** o **Descansar**. La pantalla se oscurece durante tres segundos y comienza la siguiente mañana.
 5. Tras la quinta noche, revisa Control, sal por la esclusa y sigue el camino hacia la izquierda hasta la nave. **E** permite subir; en el puesto de pilotaje, **Iniciar vuelo** activa el regreso.
 
+Pulsa **E** junto a la computadora de Control para consultar las reservas y la tarea del día. En la esclusa sur, el acceso lateral baja al núcleo protegido que se usa en el Día 5.
+
 El laboratorio de Agua y Oxígeno está al noroeste, pasando por Energía. Purifica agua junto al filtro azul y prepara oxígeno junto a los depósitos verdes. El taller está inmediatamente al este de Control. Plantas se alcanza por el desvío norte del corredor este, girando a la izquierda. No hay Enfermería ni accidente de Teo.
 
 El recorrido guarda su avance en `user://narrativa.cfg`, separado de las partidas del simulador anterior. Para revisar el inicio usa **Empezar de nuevo** en la portada. Durante una transición se recupera el último punto estable.
@@ -22,7 +24,7 @@ Para ver los dos finales alternativos abre `scenes/final_incompleta.tscn` o `sce
 
 ## Probar los días 4 y 5
 
-En la rama `codex/dias-4-y-5`, abre `scenes/dias/tramo_final/prueba.tscn` y pulsa **F6**. Puedes empezar en el día 4 con diferentes antecedentes o probar directamente los tres desenlaces del día 5. Los dos niveles comparten las reservas. El banco funciona al margen del guardado de campaña. Consulta [Día 4](docs/dias/DIA-4.md) y [Día 5](docs/dias/DIA-5.md) para el contrato de integración.
+En la rama `codex/dias-4-y-5`, abre `scenes/dias/tramo_final/prueba.tscn` y pulsa **F6**. Puedes empezar en el día 4 con diferentes antecedentes o probar directamente los tres desenlaces del día 5. En la prueba, pulsa **Ctrl + Shift + M** para abrir el selector y volver a la partida. Elegir otro escenario inicia una prueba nueva. Los dos niveles comparten las reservas. El banco funciona al margen del guardado de campaña. Consulta [Día 4](docs/dias/DIA-4.md) y [Día 5](docs/dias/DIA-5.md) para el contrato de integración.
 
 ## Probar la base de mecánicas
 

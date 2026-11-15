@@ -48,7 +48,19 @@ func _probar() -> void:
 	var banco := Banco.instantiate()
 	root.add_child(banco)
 	await _captura("dias-45-prueba")
+	banco._elegir_dia(5)
+	await _captura("dias-45-selector-dia5")
 	banco.iniciar(1)
+	var atajo := InputEventKey.new()
+	atajo.physical_keycode = KEY_M
+	atajo.ctrl_pressed = true
+	atajo.shift_pressed = true
+	atajo.pressed = true
+	var partida: Control = banco._pantalla
+	root.push_input(atajo)
+	assert(is_instance_valid(banco._selector) and partida.process_mode == Node.PROCESS_MODE_DISABLED)
+	root.push_input(atajo)
+	assert(banco._selector == null and banco._pantalla == partida and partida.process_mode == Node.PROCESS_MODE_INHERIT)
 	var nivel: Tramo = banco._pantalla
 	nivel.set_process(false)
 	assert(not Reglas.impedimento("ambas", nivel.recursos.estado()).is_empty())
@@ -64,14 +76,34 @@ func _probar() -> void:
 	nivel.mapa.plano = false
 	nivel.vista.mostrar_plano(false)
 	nivel.mapa.actualizar_camara(2.0)
+	var tecla := InputEventKey.new()
+	tecla.physical_keycode = KEY_E
+	tecla.pressed = true
+	root.push_input(tecla)
+	assert(nivel.vista.abierta())
+	tecla.physical_keycode = KEY_ESCAPE
+	root.push_input(tecla)
+	assert(not nivel.vista.abierta())
 	_clic(nivel, "control", Tramo.RADIO)
 	assert(nivel.vista.abierta())
 	await _captura("dia4-control")
 	nivel._elegir("ambas")
 	_camino(nivel, [Vector2(402, 318), Vector2(402, 360), Tramo.ESCLUSA])
 	nivel._interactuar()
+	var inicio_barranco := nivel.mapa.punto
+	nivel.mapa.tiempo = 20.0
+	assert(nivel.mapa.empuje_viento() == 0.0)
+	nivel.mapa.avanzar(Vector2.ZERO, 0.05)
+	assert(nivel.mapa.punto == inicio_barranco, "Con cielo sereno no hay deriva")
+	nivel.mapa.avanzar(Vector2.RIGHT, 0.05)
+	assert(nivel.mapa.punto.x > inicio_barranco.x, "La ráfaga invisible no debe frenar el avance")
+	nivel.mapa.cielo_sereno = false
+	assert(nivel.mapa.empuje_viento() > 0.0, "Las ráfagas siguen activas durante la tormenta")
+	nivel.mapa.cielo_sereno = true
+	nivel.mapa.velocidad = Vector2.ZERO
 	_camino(nivel, [PuestoUmbra.SONDEOS[0]])
-	nivel._interactuar()
+	tecla.physical_keycode = KEY_E
+	root.push_input(tecla)
 	assert(nivel.etapa == "sondeos" and nivel._lecturas.size() == 1)
 	_camino(nivel, [PuestoUmbra.MUESTRA])
 	nivel._interactuar()
@@ -94,7 +126,7 @@ func _probar() -> void:
 	_camino(nivel, [Vector2(25, 42), Vector2(191, 42), Vector2(191, 245), Tramo.TALLER])
 	nivel._interactuar()
 	assert(nivel.mapa.carga == "protecciones")
-	_camino(nivel, [Vector2(402, 245), Vector2(402, 360), Tramo.ESCLUSA])
+	_camino(nivel, [Vector2(402, 245), Vector2(402, 360), Tramo.ACCESO_NUCLEO])
 	nivel._interactuar()
 	_camino(nivel, [Tramo.AIRE_PROTEGIDO])
 	nivel._interactuar()
@@ -121,8 +153,9 @@ func _probar() -> void:
 	_camino(nivel, [Vector2(103, 42), Vector2(191, 42), Vector2(191, 245), Vector2(538, 245),
 		Vector2(538, 133), Vector2(681, 133), Vector2(681, 89), Tramo.DORMITORIO])
 	nivel._interactuar()
-	assert(nivel.vista.abierta())
-	nivel._dormir()
+	assert(not nivel.vista.abierta())
+	assert(nivel._confirmacion == "descanso")
+	nivel._interactuar()
 	await process_frame
 	assert(banco._recursos.estado().sol == 5)
 	assert(banco._recursos.estado().reservas.agua == 5)
@@ -132,20 +165,23 @@ func _probar() -> void:
 		banco.iniciar(2 + i)
 		nivel = banco._pantalla
 		_camino(nivel, [Tramo.RADIO])
+		_clic(nivel, "control", Tramo.RADIO)
+		assert(not nivel.vista.abierta() and nivel.etapa == "ir_refugio")
+		_camino(nivel, [Vector2(402, 318), Vector2(402, 360), Tramo.ACCESO_NUCLEO])
+		assert(nivel.mapa.zona == "base")
 		nivel._interactuar()
-		_camino(nivel, [Vector2(402, 318), Vector2(402, 360), Tramo.ESCLUSA])
+		assert(nivel.etapa == "cruzar_umbral")
 		nivel._interactuar()
+		assert(nivel.etapa == "cruzar_umbral")
+		await create_timer(1.24).timeout
+		assert(nivel.mapa.zona == "refugio" and nivel.etapa == "sellar")
+		assert(nivel.mapa.compuerta == 0.0 and nivel.mapa.entrada_nucleo == 1.0)
 		_camino(nivel, [Tramo.PUERTA_PROTEGIDA])
 		var historia_impacto := {}
 		nivel.impacto_registrado.connect(func(historia: Dictionary): historia_impacto.merge(historia))
-		var palanca := nivel.mapa.ancla_interaccion("sello", Tramo.PUERTA_PROTEGIDA)
 		if i == 0:
 			await _captura("dia5-cierre")
-		_pulsar(palanca, true)
-		_pulsar(palanca + Vector2(20, 0), false)
-		assert(nivel.etapa == "sellar")
-		_pulsar(palanca, true)
-		_pulsar(palanca + Vector2(100, 0), false)
+		_clic(nivel, "sello", Tramo.PUERTA_PROTEGIDA)
 		assert(nivel.etapa == "impacto")
 		await create_timer(1.95).timeout
 		assert(nivel.mapa.fase_radiacion == "Pico de radiación")
@@ -163,14 +199,49 @@ func _probar() -> void:
 		else:
 			_camino(nivel, [Tramo.RADIO_PROTEGIDA])
 			nivel._interactuar()
-			assert(nivel.vista.abierta())
+			assert(not nivel.vista.abierta() and nivel.etapa == "salida5")
 			await _captura("dia5-" + resultados[i])
-			nivel._emitir_final(registro.final)
-			await process_frame
+			nivel._interactuar()
+			assert(nivel.etapa == "volver_capsula")
+			_camino(nivel, [Tramo.UMBRAL_NUCLEO])
+			nivel._interactuar()
+			await create_timer(1.24).timeout
 			assert(banco._pantalla.mision_cumplida == (i == 0))
+			assert(banco._pantalla.titulo.text.is_empty(), "El viaje de regreso no lleva un rótulo de tiempo")
+			await _probar_cinematica(banco._pantalla, i == 0)
 	print("TRAMO_FINAL_OK")
 	quit()
 
+
+func _probar_cinematica(cierre: Control, cumplida: bool) -> void:
+	cierre.set_process(false)
+	var espacio := InputEventKey.new()
+	espacio.physical_keycode = KEY_SPACE
+	espacio.pressed = true
+	root.push_input(espacio)
+	assert(cierre.fase == "hangar")
+	root.push_input(espacio)
+	var primer_texto: String = cierre.voz.frase.text
+	assert(cierre.voz.visible and not primer_texto.is_empty())
+	espacio.echo = true
+	root.push_input(espacio)
+	assert(cierre.voz.frase.text == primer_texto)
+	espacio.echo = false
+	root.push_input(espacio)
+	assert(cierre.fase == "hangar" and cierre.voz.frase.text != primer_texto)
+	root.push_input(espacio)
+	assert(cierre.fase == ("ceremonia" if cumplida else "noticia"))
+	assert(cierre.accion.visible and cierre.accion.text.begins_with("Omitir"))
+	root.push_input(espacio)
+	assert(cierre.voz.visible)
+	if not cumplida:
+		root.push_input(espacio)
+		assert(cierre.voz.frase.text.contains("incompleta"))
+		await _captura("final-noticiero")
+	cierre.accion.pressed.emit()
+	assert(cierre.fase == ("victoria" if cumplida else "noticia"))
+	if not cumplida:
+		assert(cierre.accion.text == "Repetir final" and cierre.voz.frase.text.contains("a salvo"))
 
 func _probar_planes_y_proteccion() -> void:
 	for id in ["hielo", "refuerzo"]:

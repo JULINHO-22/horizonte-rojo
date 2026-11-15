@@ -1,7 +1,10 @@
 extends PuestoUmbra
 
 const REFUGIO_SOLAR := preload("res://assets/dias/dia_5/nucleo_radiacion.png")
+const PUERTA_ABIERTA := preload("res://assets/dias/dia_5/nucleo_paso_abierto.png")
 const SUELO_PROTEGIDO := 319.0
+const UMBRAL := Vector2(342, PuestoUmbra.SUELO)
+const MARCO_PASO := Rect2(0.402, 0.431, 0.196, 0.333)
 var zona := "base"
 var blancos: Dictionary = {}
 var nombres: Dictionary = {}
@@ -17,6 +20,7 @@ var placas: Array[String] = []
 var impacto := 0.0
 var lecturas: Array[String] = []
 var compuerta := 0.0
+var entrada_nucleo := 1.0
 
 func entrar(destino: String, sitio: Vector2) -> void:
 	zona = destino
@@ -62,7 +66,6 @@ func _draw() -> void:
 		if carga == "hielo":
 			draw_circle(apoyo - Vector2(0, 9), 2.4, LUZ, true, -1.0, true)
 	if plano:
-		_dibujar_acceso()
 		return
 	if not fase_radiacion.is_empty():
 		_dibujar_radiacion()
@@ -74,11 +77,7 @@ func _draw() -> void:
 func _dibujar_refugio() -> void:
 	var marco := Rect2(0, 0, ancho_visible, 385)
 	draw_texture_rect(REFUGIO_SOLAR, marco, false)
-	var separacion := (1.0 - compuerta) * 10.0
-	if separacion > 0.0:
-		var junta := ancho_visible * 0.5
-		draw_rect(Rect2(junta - separacion * 0.5, 171, separacion, 122), Color("#172124"))
-		draw_line(Vector2(junta - separacion * 0.5, 172), Vector2(junta - separacion * 0.5, 292), Color("#6d7373"), 1.0)
+	_dibujar_compuerta(marco.size)
 	if impacto > 0:
 		draw_rect(marco, Color(0.38, 0.08, 0.06, impacto * 0.28))
 		draw_rect(marco, Color(0.01, 0.04, 0.08, impacto * 0.44))
@@ -89,9 +88,33 @@ func _dibujar_refugio() -> void:
 	_sprite(IRIS, Vector2(445, SUELO_PROTEGIDO), 52)
 	_sprite(TEO_NORMAL, Vector2(582, SUELO_PROTEGIDO), 51)
 	_sprite(DRON, Vector2(127, SUELO_PROTEGIDO), 30)
-	var andando := NORA_PASOS if caminando else NORA
-	_sprite(andando, Vector2(punto.x, SUELO_PROTEGIDO), 51, 0, direccion_izquierda,
-		int(paso * 8) if caminando else -1)
+	var cruzando := entrada_nucleo < 1.0
+	var andando := NORA_PASOS if caminando or cruzando else NORA
+	var pies := Vector2(punto.x, lerpf(283.0, SUELO_PROTEGIDO, entrada_nucleo))
+	var pose := mini(7, int(fposmod(entrada_nucleo * 1.6, 1.0) * 8)) if cruzando else int(paso * 8)
+	_sprite(andando, pies, lerpf(38.0, 51.0, entrada_nucleo), 0, direccion_izquierda,
+		pose if caminando or cruzando else -1)
+
+func _dibujar_compuerta(tamano: Vector2) -> void:
+	if compuerta >= 1.0:
+		return
+	var destino := Rect2(MARCO_PASO.position * tamano, MARCO_PASO.size * tamano)
+	var tamano_abierto := PUERTA_ABIERTA.get_size()
+	draw_texture_rect_region(PUERTA_ABIERTA, destino,
+		Rect2(MARCO_PASO.position * tamano_abierto, MARCO_PASO.size * tamano_abierto))
+	# Los bordes interiores de las hojas entran desde los costados, sin deformar el arte.
+	var mitad_fuente := MARCO_PASO.size.x * REFUGIO_SOLAR.get_width() * 0.5
+	var mitad_destino := destino.size.x * 0.5
+	var fuente := MARCO_PASO.position * REFUGIO_SOLAR.get_size()
+	var alto := MARCO_PASO.size.y * REFUGIO_SOLAR.get_height()
+	var ancho := mitad_destino * compuerta
+	var recorte := mitad_fuente * compuerta
+	if recorte <= 0.1:
+		return
+	draw_texture_rect_region(REFUGIO_SOLAR, Rect2(destino.position, Vector2(ancho, destino.size.y)),
+		Rect2(fuente.x + mitad_fuente - recorte, fuente.y, recorte, alto))
+	draw_texture_rect_region(REFUGIO_SOLAR, Rect2(destino.end.x - ancho, destino.position.y, ancho, destino.size.y),
+		Rect2(fuente.x + mitad_fuente, fuente.y, recorte, alto))
 
 func _dibujar_reconocimiento() -> void:
 	draw_set_transform(_origen_mundo(), 0, Vector2.ONE * _zoom_mundo())
@@ -115,12 +138,6 @@ func ancla_interaccion(id: String, sitio: Vector2) -> Vector2:
 		return sobre_suelo + Vector2(0, 5)
 	return sobre_suelo - Vector2(0, 75.0 if id in ["sello", "montaje"] else 52.0)
 
-func _dibujar_acceso() -> void:
-	var sitio := proyectar_suelo(Vector2(400, 372)) / escala_visual
-	draw_line(sitio, sitio + Vector2(42, -7), LUZ, 1.6, true)
-	draw_circle(sitio, 5, LUZ, true, -1, true)
-	_rotulo_suelo(sitio + Vector2(120, -7), "NÚCLEO PROTEGIDO")
-
 func _dibujar_radiacion() -> void:
 	var origen := Vector2(ancho_visible - 225, 116)
 	_rotulo_suelo(origen + Vector2(93, -13), fase_radiacion)
@@ -128,9 +145,12 @@ func _dibujar_radiacion() -> void:
 	draw_line(origen, origen + Vector2(186 * nivel_radiacion, 0), OCRE, 3.4, true)
 	_rotulo_suelo(origen + Vector2(93, 21), "Curiosity · datos de 2017")
 
+func alcance_interaccion() -> float:
+	return 22.0 if interior else 34.0
+
 func _dibujar_marca(id: String, sitio: Vector2) -> void:
 	var centro := ancla_interaccion(id, sitio) / escala_visual
-	var cerca := sitio.distance_to(punto) <= (18.0 if interior else 27.0)
+	var cerca := sitio.distance_to(punto) < alcance_interaccion()
 	var borde := centro.clamp(Vector2(25, 84), Vector2(ancho_visible - 25, 487 if interior else 338))
 	if centro.distance_to(borde) > 12:
 		var direccion := (centro - borde).normalized()
@@ -140,19 +160,16 @@ func _dibujar_marca(id: String, sitio: Vector2) -> void:
 		return
 	var activa := foco == id
 	var color := Color.WHITE if activa else LUZ if cerca else Color("#b5c4c3")
-	if id == "sello" and cerca:
-		var final := centro + Vector2(100.0 / escala_visual, 0)
-		var x := clampf(cursor.x / escala_visual, centro.x, final.x) if arrastre == "sello" else centro.x
-		draw_line(centro, final, Color("#17282d"), 8, true)
-		draw_line(centro, final, LUZ, 2, true)
-		draw_circle(Vector2(x, centro.y), 9, color, true, -1, true)
-		_rotulo_suelo(centro.lerp(final, 0.5) - Vector2(0, 17), "Desliza para cerrar")
-	else:
-		draw_circle(centro, 8, Color("#10232b"), true, -1, true)
-		draw_arc(centro, 8, 0.0, TAU, 28, color, 2.0, true)
-		if cerca:
-			draw_circle(centro, 3.0, color, true, -1.0, true)
-			_rotulo_suelo(centro - Vector2(0, 17), nombres.get(id, ""))
+	draw_circle(centro, 8, Color("#10232b"), true, -1, true)
+	draw_arc(centro, 8, 0.0, TAU, 28, color, 2.0, true)
+	var nombre: String = nombres.get(id, "")
+	if cerca:
+		draw_circle(centro, 3.0, color, true, -1.0, true)
+		var prefijo := "Arrastra o pulsa E · " if id == "filtro" or id.begins_with("montaje_") else "E · "
+		nombre = prefijo + nombre
+	elif zona == "hielo" and id in ["escarcha", "veta"]:
+		nombre = "Sondeo A" if id == "escarcha" else "Sondeo B"
+	_rotulo_suelo(centro - Vector2(0, 17), nombre)
 
 func _rotulo_suelo(centro: Vector2, texto: String) -> void:
 	if texto.is_empty():
@@ -161,6 +178,7 @@ func _rotulo_suelo(centro: Vector2, texto: String) -> void:
 	const TAMANO := 19
 	var ancho := fuente.get_string_size(texto, HORIZONTAL_ALIGNMENT_LEFT, -1, TAMANO).x
 	var ancla := centro * escala_visual - Vector2(ancho * 0.5, 0)
+	ancla.x = clampf(ancla.x, 16, ancho_visible * escala_visual - ancho - 16)
 	# Mantiene las letras a resolución de pantalla aunque el mundo tenga zoom.
 	draw_set_transform(Vector2.ZERO, 0, Vector2.ONE / escala_visual)
 	draw_string_outline(fuente, ancla, texto, HORIZONTAL_ALIGNMENT_LEFT, -1, TAMANO, 5, Color("#101b23"))

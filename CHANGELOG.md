@@ -1,5 +1,36 @@
 # Cambios
 
+## 2026-11-15 | Acceso a las cinemáticas
+
+- La portada de Godot ofrece dos accesos opcionales para ver los finales con cinemática, al igual que la portada web.
+
+## 2026-11-15 | Continuidad entre la campaña y el refugio final
+
+- La campaña usa el mismo panel de Control que el Día 4 y retira las lecturas sobre la máquina.
+- La esclusa marca la entrada lateral al núcleo y ambos recorridos comparten su ilustración.
+
+## 2026-11-15 | Avance de diálogos y noticiero
+
+- Espacio lleva al siguiente parlamento de los finales. El botón Omitir adelanta la escena completa.
+- El regreso de emergencia tiene una recepción propia y un cierre en un noticiero pixel art.
+
+## 2026-11-15 | Entrada y comunicaciones del día 5
+
+- Nora cruza el umbral del núcleo antes de accionar la compuerta desde adentro.
+- La radio y el cierre se accionan junto a los equipos. La tripulación comunica el resultado sobre la escena.
+- El montaje de viaje y las cinemáticas de regreso omiten los rótulos de tiempo transcurrido.
+
+## 2026-11-15 | Control y tareas de los días 4 y 5
+
+- El cielo despejado desactiva también el empuje del viento en el barranco.
+- Las marcas tienen nombre y muestran E junto a la acción disponible.
+- El panel de Control reúne instrumentos, comida y tareas. El recorrido queda libre de la franja de reservas.
+- Baterías y dormitorio confirman desde el equipo con un segundo toque y una indicación de la tripulación.
+
+## 2026-11-15 | Selector del banco de los días 4 y 5
+
+- Se muestran los escenarios por día con nombres claros y antecedentes en lenguaje cotidiano. Ctrl + Shift + M permite abrir el selector y reanudar la prueba.
+
 ## 2026-11-15 | Interacción directa y datos solares
 
 - Se actúa sobre los equipos del escenario. La caja y el blindaje se arrastran hasta sus destinos y la compuerta usa un cierre deslizante. Espacio ofrece un control alternativo.

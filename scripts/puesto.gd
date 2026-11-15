@@ -35,6 +35,7 @@ const LIMITES_BASE := Rect2(-148, -72, 1024, 588)
 const TAMANO_MAPA := Vector2(804, 527)
 const ENTRADA := Vector2(400, 394)
 const CENTRO_ESCLUSA_X := 402.0
+const ACCESO_NUCLEO := Vector2(421, 368)
 const LIMITE_CONTROL := 339.0
 const PASO_ESCLUSA := Rect2(393, 310, 20, 52)
 # El desvío sale del pasillo este. Sus tres brazos se cruzan sobre el piso.
@@ -212,7 +213,7 @@ func saltar() -> void:
 
 
 func intensidad_viento() -> float:
-	if interior or chequeo or aterrizaje:
+	if cielo_sereno or interior or chequeo or aterrizaje:
 		return 0.0
 	var pulso := pow(maxf(0, cos((tiempo - 20.0) * TAU / 6.5)), 6.0)
 	return (0.18 + 0.82 * pulso) * smoothstep(6.0, 13.0, tiempo)
@@ -807,6 +808,12 @@ func _dibujar_interior() -> void:
 			var marca := _origen_mundo() + (encuadre.get_center() - Vector2(0, 44)) * escala_camara
 			var activa := id == objetivo_mision
 			_baliza(marca, nombres_plano[id], LUZ if activa else Color("#f3e3cc"))
+		if laboratorio_activo:
+			var acceso := _origen_mundo() + ACCESO_NUCLEO * escala_camara
+			var rotulo := acceso + Vector2(123, -4)
+			draw_line(acceso, rotulo - Vector2(79, 0), LUZ, 1.6, true)
+			draw_circle(acceso, 5, LUZ, true, -1.0, true)
+			_baliza(rotulo, "NÚCLEO PROTEGIDO", LUZ)
 	if en_esclusa() and not plano:
 		var entrada_control := _origen_mundo() + Vector2(CENTRO_ESCLUSA_X, 338) * escala_camara
 		entrada_control.y = maxf(entrada_control.y, 70.0)

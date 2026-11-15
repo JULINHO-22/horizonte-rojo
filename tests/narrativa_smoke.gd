@@ -78,6 +78,21 @@ func _probar() -> void:
 	juego.posicion = Vector2(402, 270)
 	juego._mostrar()
 	await _captura("control-supercomputadora")
+	juego.posicion = PuestoUmbra.TERMINALES.radio
+	juego._mostrar()
+	juego._accion()
+	assert(is_instance_valid(juego.panel_control))
+	await create_timer(0.19).timeout
+	await _captura("campana-panel-control")
+	juego._cerrar_control()
+	_tramo(juego.puesto, Vector2(402, 360), PuestoUmbra.ACCESO_NUCLEO)
+	juego.posicion = PuestoUmbra.ACCESO_NUCLEO
+	juego._mostrar()
+	juego._accion()
+	assert(is_instance_valid(juego.visita_nucleo) and juego.visita_nucleo.zona == "refugio")
+	await _captura("campana-nucleo-protegido")
+	juego._accion()
+	assert(juego.visita_nucleo == null and juego.fase == "base" and juego.posicion == PuestoUmbra.ACCESO_NUCLEO)
 	juego.posicion = Vector2(402, 329)
 	juego._mostrar()
 	await _captura("umbral")
@@ -109,6 +124,8 @@ func _probar() -> void:
 	juego.posicion = PuestoUmbra.TERMINALES.radio
 	juego._mostrar()
 	juego._accion()
+	assert(is_instance_valid(juego.panel_control))
+	juego.panel_control.ruta_confirmada.emit()
 	assert(juego.puesto.objetivo_mision == "cierre")
 	juego.posicion = PuestoUmbra.TERMINALES.cierre
 	juego._mostrar()

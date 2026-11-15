@@ -5,21 +5,14 @@ const PAPEL := Color("#fff0d9")
 const MENTA := Color("#9ce6d8")
 const AMBAR := Color("#f5bb75")
 
-var _titulo: Label
-var _objetivo: Label
-var _reservas: Label
+const PanelControl := preload("res://scripts/panel_control.gd")
 var _dialogo: Control
-var _ventana: Panel
-var _marco: Panel
+var _ventana: PanelControl
 var _salida_plano: Label
+var _informe: Control
 
 func _ready() -> void:
 	mouse_filter = MOUSE_FILTER_IGNORE
-	_marco = placa(self, Rect2(22, 18, 1236, 88))
-	_titulo = rotulo(self, "", Rect2(46, 30, 750, 31), 25, PAPEL)
-	_objetivo = rotulo(self, "", Rect2(46, 66, 1168, 30), 18, MENTA)
-	_reservas = rotulo(self, "", Rect2(700, 34, 534, 28), 18, PAPEL)
-	_reservas.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	_dialogo = preload("res://scripts/dialogo_escena.gd").new()
 	_dialogo.position = Vector2(48, 141)
 	add_child(_dialogo)
@@ -27,40 +20,58 @@ func _ready() -> void:
 	_salida_plano.hide()
 
 func mostrar_plano(activo: bool) -> void:
-	_marco.visible = not activo
-	_titulo.visible = not activo
-	_objetivo.visible = not activo
-	_reservas.visible = not activo
 	_dialogo.visible = not activo
 	_salida_plano.visible = activo
-func actualizar(titulo: String, objetivo: String, r: Dictionary) -> void:
-	_titulo.text = titulo
-	_objetivo.text = objetivo
-	_reservas.text = "Energía %d    Agua %d    Oxígeno %d    Comida %d" % [r.energia, r.agua, r.oxigeno, r.alimento]
 
-func decir(quien: String, frase: String) -> void:
+func decir(quien: String, frase: String, origen := Vector2(48, 141)) -> void:
+	_dialogo.position = origen
 	_dialogo.decir(quien, frase)
+
+func mostrar_lecturas(registro: Dictionary, causa: String, donki: String, curiosity: String) -> void:
+	var antes: Dictionary = registro.antes
+	var despues: Dictionary = registro.despues
+	_informe = Control.new()
+	_informe.mouse_filter = MOUSE_FILTER_IGNORE
+	add_child(_informe)
+	var lectura := preload("res://scripts/dialogo_escena.gd").new()
+	lectura.position = Vector2(868, 145)
+	_informe.add_child(lectura)
+	var cambios := "Energía  %d → %d    Aire  %d → %d\nAgua  %d → %d    Comida  %d → %d" % [
+		antes.energia, despues.energia, antes.oxigeno, despues.oxigeno,
+		antes.agua, despues.agua, antes.alimento, despues.alimento]
+	lectura.decir("Reservas del refugio", cambios + "\n" + causa)
+	for opcion in [{"titulo": "Alerta DONKI", "url": donki, "x": 872}, {"titulo": "Curiosity en Marte", "url": curiosity, "x": 1015}]:
+		var enlace := LinkButton.new()
+		enlace.text = opcion.titulo
+		enlace.uri = opcion.url
+		enlace.position = Vector2(opcion.x, 357)
+		enlace.add_theme_color_override("font_color", PAPEL)
+		enlace.add_theme_color_override("font_outline_color", Color("#101b23"))
+		enlace.add_theme_constant_override("outline_size", 5)
+		_informe.add_child(enlace)
+
+func cerrar_lecturas() -> void:
+	if is_instance_valid(_informe):
+		_informe.hide()
+		_informe.queue_free()
+		_informe = null
 
 func abierta() -> bool:
 	return is_instance_valid(_ventana)
 
-func abrir(titulo: String, frase: String, alto := 478.0) -> Panel:
+func abrir_control(estado: Dictionary, objetivo: String) -> Control:
 	cerrar()
-	var velo := ColorRect.new()
-	velo.name = "Velo"
-	velo.color = Color(0.01, 0.03, 0.06, 0.68)
-	velo.size = Vector2(1280, 720)
-	add_child(velo)
-	_ventana = placa(velo, Rect2(188, (720 - alto) * 0.5, 904, alto))
-	rotulo(_ventana, titulo, Rect2(32, 25, 827, 45), 31, PAPEL)
-	rotulo(_ventana, frase, Rect2(32, 79, 827, 65), 20, MENTA)
+	_ventana = PanelControl.new()
+	_ventana.configurar(estado, false, 180.0)
+	_ventana.cerrar_solicitado.connect(cerrar)
+	add_child(_ventana)
+	_ventana.mostrar_tarea(objetivo)
 	return _ventana
 
 func cerrar() -> void:
 	if is_instance_valid(_ventana):
-		var velo := _ventana.get_parent()
-		remove_child(velo)
-		velo.queue_free()
+		remove_child(_ventana)
+		_ventana.queue_free()
 		_ventana = null
 
 static func placa(padre: Control, rect: Rect2) -> Panel:

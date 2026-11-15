@@ -6,44 +6,105 @@ const Recursos := preload("res://scripts/mecanicas/recursos_mision.gd")
 const FINAL_BUENO := preload("res://scenes/final_cumplida.tscn")
 const FINAL_EVACUACION := preload("res://scenes/final_incompleta.tscn")
 const PERFILES := [
-	{"nombre": "Día 4 · Paneles protegidos", "descripcion": "La reparación del día 2 dejó los sistemas disponibles. Hay margen para preparar ambos trabajos.",
+	{"nombre": "Base con reservas", "descripcion": "Los paneles funcionan. Puedes\nconseguir agua y reforzar el\nrefugio el mismo día.",
 		"sol": 4, "reservas": {"energia": 12, "agua": 3, "oxigeno": 7, "alimento": 8}, "danio": false, "refuerzo": false},
-	{"nombre": "Día 4 · Sistemas dañados", "descripcion": "El equipo se quedó bajo techo el día 2. Con menos reservas, decidir qué preparar importa más.",
+	{"nombre": "Base con daños", "descripcion": "La tormenta anterior dejó daños.\nTienes menos agua y batería\npara preparar la base.",
 		"sol": 4, "reservas": {"energia": 7, "agua": 1, "oxigeno": 5, "alimento": 4}, "danio": true, "refuerzo": false},
-	{"nombre": "Día 5 · Refugio reforzado", "descripcion": "Punto de prueba para misión completada.",
+	{"nombre": "Refugio reforzado", "descripcion": "El blindaje está instalado y hay\nreservas para afrontar la tormenta.",
 		"sol": 5, "reservas": {"energia": 9, "agua": 3, "oxigeno": 7, "alimento": 6}, "danio": false, "refuerzo": true},
-	{"nombre": "Día 5 · Suministros justos", "descripcion": "Punto de prueba para evacuación.",
+	{"nombre": "Suministros justos", "descripcion": "La base tiene daños y poco\nmargen. Comprueba si las\nreservas alcanzan para evacuar.",
 		"sol": 5, "reservas": {"energia": 9, "agua": 2, "oxigeno": 6, "alimento": 3}, "danio": true, "refuerzo": false},
-	{"nombre": "Día 5 · Aire al límite", "descripcion": "Punto de prueba para pérdida de señal.",
+	{"nombre": "Poco oxígeno", "descripcion": "El tanque está a la mitad y falta\nreforzar el refugio. Observa qué\npasa con el aire.",
 		"sol": 5, "reservas": {"energia": 9, "agua": 2, "oxigeno": 4, "alimento": 3}, "danio": true, "refuerzo": false},
 ]
+const MARFIL := Color("#fff1dd")
+const ARENA := Color("#f5bb8d")
+const CIRUELA := Color("#302027")
+
 var _pantalla: Control
 var _recursos: Recursos
+var _selector: Control
+var _dia_elegido := 4
+var _modo_anterior := Node.PROCESS_MODE_INHERIT
 
 func _ready() -> void:
 	_menu()
 
+func _input(evento: InputEvent) -> void:
+	if evento is InputEventKey and evento.pressed and not evento.echo:
+		if evento.ctrl_pressed and evento.shift_pressed and evento.physical_keycode == KEY_M:
+			get_viewport().set_input_as_handled()
+			if is_instance_valid(_selector) and is_instance_valid(_pantalla):
+				_cerrar_menu()
+			elif not is_instance_valid(_selector):
+				_menu()
+
 func _menu() -> void:
-	_limpiar()
-	_pantalla = Control.new()
-	add_child(_pantalla)
+	if is_instance_valid(_pantalla) and not is_instance_valid(_selector):
+		_modo_anterior = _pantalla.process_mode
+		_pantalla.process_mode = Node.PROCESS_MODE_DISABLED
+	_elegir_dia(_recursos.estado().sol if is_instance_valid(_pantalla) and _recursos != null else _dia_elegido)
+
+func _elegir_dia(dia: int) -> void:
+	_dia_elegido = dia
+	if is_instance_valid(_selector):
+		remove_child(_selector)
+		_selector.queue_free()
+	_selector = Control.new()
+	_selector.size = Vector2(1280, 720)
+	add_child(_selector)
 	var fondo := TextureRect.new()
 	fondo.texture = PuestoUmbra.SENDERO
-	fondo.size = Vector2(1280, 720)
+	fondo.size = _selector.size
 	fondo.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	_pantalla.add_child(fondo)
-	var panel := Vista.placa(_pantalla, Rect2(110, 58, 1060, 603))
-	Vista.rotulo(panel, "Horizonte Rojo", Rect2(38, 24, 970, 54), 40, Vista.PAPEL)
-	Vista.rotulo(panel, "Días 4 y 5  /  Elige un punto de entrada", Rect2(40, 83, 960, 41), 22, Vista.MENTA)
+	_selector.add_child(fondo)
+	var sombra := ColorRect.new()
+	sombra.color = Color(0.12, 0.06, 0.10, 0.62)
+	sombra.size = _selector.size
+	_selector.add_child(sombra)
+	Vista.rotulo(_selector, "Horizonte Rojo", Rect2(64, 42, 730, 78), 55, MARFIL)
+	Vista.rotulo(_selector, "Elige dónde empezar la prueba", Rect2(68, 128, 850, 42), 26, MARFIL)
+	_boton_brief(_selector, "Día 4 · Preparar la base", Rect2(68, 198, 310, 53), _elegir_dia.bind(4), dia == 4)
+	_boton_brief(_selector, "Día 5 · Afrontar la tormenta", Rect2(392, 198, 310, 53), _elegir_dia.bind(5), dia == 5)
+	var resumen := "Trae hielo, instala el blindaje y asegura el aire antes de dormir." if dia == 4 else "Reúne a la tripulación, cierra la compuerta y consulta el resultado."
+	Vista.rotulo(_selector, resumen, Rect2(70, 278, 1140, 52), 24, MARFIL)
+	var columna := 0
 	for i in range(PERFILES.size()):
 		var perfil: Dictionary = PERFILES[i]
-		var y := 143 + i * 82
-		Vista.boton(panel, perfil.nombre, Rect2(40, y, 355, 54), iniciar.bind(i))
-		Vista.rotulo(panel, perfil.descripcion, Rect2(421, y + 4, 591, 64), 19, Vista.PAPEL)
-	Vista.rotulo(panel, "WASD o flechas para caminar   ·   Toca o arrastra sobre el escenario   ·   Espacio como alternativa   ·   M para el plano",
-		Rect2(40, 557, 965, 35), 17, Vista.MENTA)
+		if perfil.sol != dia:
+			continue
+		var x := 68 + columna * 386
+		var tarjeta := Vista.placa(_selector, Rect2(x, 348, 372, 250))
+		tarjeta.add_theme_stylebox_override("panel", Vista._estilo(CIRUELA, Color("#a57467")))
+		Vista.rotulo(tarjeta, perfil.nombre, Rect2(22, 20, 328, 39), 26, ARENA)
+		Vista.rotulo(tarjeta, perfil.descripcion, Rect2(22, 75, 328, 92), 20, MARFIL)
+		_boton_brief(tarjeta, "Jugar este escenario", Rect2(22, 181, 328, 46), iniciar.bind(i))
+		columna += 1
+	Vista.rotulo(_selector, "Ctrl + Shift + M · Abrir o cerrar este menú", Rect2(68, 652, 630, 36), 19, MARFIL)
+	if is_instance_valid(_pantalla):
+		_boton_brief(_selector, "Continuar partida", Rect2(947, 637, 265, 50), _cerrar_menu).grab_focus()
+
+func _boton_brief(padre: Control, texto: String, zona: Rect2, accion: Callable, activo := false) -> Button:
+	var boton := Vista.boton(padre, texto, zona, accion)
+	boton.add_theme_color_override("font_color", CIRUELA if activo else MARFIL)
+	boton.add_theme_color_override("font_hover_color", CIRUELA)
+	boton.add_theme_color_override("font_pressed_color", CIRUELA)
+	boton.add_theme_stylebox_override("normal", Vista._estilo(ARENA if activo else CIRUELA, ARENA))
+	boton.add_theme_stylebox_override("hover", Vista._estilo(Color("#ffdbbd"), ARENA))
+	boton.add_theme_stylebox_override("pressed", Vista._estilo(ARENA, MARFIL))
+	boton.add_theme_stylebox_override("focus", Vista._estilo(Color.TRANSPARENT, MARFIL))
+	return boton
+
+func _cerrar_menu() -> void:
+	if is_instance_valid(_selector):
+		remove_child(_selector)
+		_selector.queue_free()
+		_selector = null
+	if is_instance_valid(_pantalla):
+		_pantalla.process_mode = _modo_anterior
 
 func iniciar(indice: int) -> void:
+	_cerrar_menu()
 	var perfil: Dictionary = PERFILES[indice]
 	_recursos = Recursos.new()
 	var guardado := _recursos.guardar_estado()
