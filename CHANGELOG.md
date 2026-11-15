@@ -1,5 +1,11 @@
 # Cambios
 
+## 2026-11-15 | Carga más rápida en navegador
+
+- La portada usa una imagen más ligera y muestra el progreso de descarga y el arranque desde el primer momento.
+- La exportación web empaca las escenas de campaña y sus vistas previas. Comprime fondos, reduce sprites sobredimensionados y deja el simulador provisional en Godot.
+- Los soles 2 a 5 cargan su escena al entrar. El lienzo web limita la resolución de render a la resolución base del juego.
+
 ## 2026-11-15 | Red Horizon, mantenimiento y cierre de misión
 
 - Red Horizon es el nombre de la portada web y de la ventana. Las partidas existentes conservan su ubicación.

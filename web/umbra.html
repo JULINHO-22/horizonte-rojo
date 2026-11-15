@@ -4,6 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#17222d">
+  <link rel="preload" href="portada.jpg" as="image">
   <title>Red Horizon · Cinco días en Marte</title>
   <style>
     * { box-sizing: border-box; }
@@ -11,13 +12,13 @@
     body { margin: 0; }
     [hidden] { display: none !important; }
     #stage { position: relative; min-height: 100dvh; display: grid; place-items: center; overflow: hidden; }
-    #stage::before { content: ""; position: absolute; inset: -24px; background: linear-gradient(#17222db8, #17222de0), url("portada.png") center / cover; filter: blur(18px); pointer-events: none; }
+    #stage { background: #110f15; }
     canvas { position: relative; display: block; width: min(100vw, 177.778dvh); height: min(100dvh, 56.25vw); outline: 0; }
     #launch {
-      position: absolute; inset: 0; display: grid; align-items: end;
+      position: absolute; inset: 0; display: grid; align-items: end; overflow-y: auto;
       background: linear-gradient(90deg, #17212df5, #233644d9 32%, transparent 77%),
         linear-gradient(0deg, #17212d, transparent 51%),
-        linear-gradient(#34475444, #34475444), url("portada.png") center / cover, #344754;
+        linear-gradient(#34475444, #34475444), url("portada.jpg") center / cover, #344754;
     }
     .expedicion { width: min(45rem, 95%); padding: clamp(1.25rem, 6vw, 6rem); padding-right: 0; }
     .destino { width: fit-content; padding: .48rem .85rem; color: #182832; background: #93b6b2; font-weight: 700; border-radius: .25rem .25rem 1rem .25rem; }
@@ -34,7 +35,9 @@
     .finales legend { padding: 0; margin-bottom: .45rem; color: #ccd5df; font-size: .85rem; }
     .finales button { padding: .45rem .7rem; border: 1px solid #738895; border-radius: .35rem; background: #1c2c39; color: #e4ecef; font: inherit; font-size: .84rem; }
     #status { min-height: 2.4em; color: #cfdae1; font-size: .86rem; line-height: 1.35; }
-    #progreso { width: min(100%, 16rem); accent-color: #a9ecdf; display: block; }
+    .carga { display: flex; align-items: center; gap: .65rem; max-width: 21rem; margin: .5rem 0; }
+    #progreso { flex: 1; min-width: 0; height: .55rem; accent-color: #a9ecdf; }
+    #porcentaje { min-width: 3ch; color: #e4ecef; font: 700 .8rem "Trebuchet MS", sans-serif; text-align: right; }
     #fullscreen { position: absolute; right: .75rem; bottom: .6rem; background: #182632db; color: #e4ecef; border: 1px solid #82969e; border-radius: .35rem; min-width: 40px; min-height: 36px; }
     @media (max-width: 650px) {
       #launch { background-position: 62% center; }
@@ -51,7 +54,7 @@
       <p class="destino">Primera parada · Marte</p>
       <h1>Red<br>Horizon</h1>
       <h2>Cinco días en Marte</h2>
-      <p class="historia">Viaja con Nora, Iris y Teo. Conoce el refugio y acompaña su regreso. Pulsa Ctrl + Shift + M dentro del juego para probar cualquiera de los cinco soles. Un sol es un día en Marte.</p>
+      <p class="historia">Cinco soles para sostener el refugio de Umbra y volver a la Tierra.</p>
       <button id="play" type="button">Entrar al recorrido</button>
       <fieldset class="finales">
         <legend>Vistas previas</legend>
@@ -59,8 +62,11 @@
         <button type="button" data-final="incompleta">Misión incompleta</button>
         <button type="button" data-final="cumplida">Misión cumplida</button>
       </fieldset>
-      <progress id="progreso" max="1" hidden></progress>
-      <p id="status" role="status">Usa el teclado para moverte y el ratón para elegir.</p>
+      <div class="carga" hidden>
+        <progress id="progreso" max="1" aria-label="Descarga del juego"></progress>
+        <span id="porcentaje" aria-hidden="true"></span>
+      </div>
+      <p id="status" role="status">Preparando la descarga…</p>
     </div>
   </div>
   <button id="fullscreen" type="button" aria-label="Pantalla completa" title="Pantalla completa" hidden>⛶</button>
@@ -72,11 +78,13 @@
   const play = document.querySelector("#play");
   const status = document.querySelector("#status");
   const progreso = document.querySelector("#progreso");
+  const carga = document.querySelector(".carga");
+  const porcentaje = document.querySelector("#porcentaje");
   const fullscreen = document.querySelector("#fullscreen");
   function fitCanvas() {
     const bounds = canvas.getBoundingClientRect();
     if (!bounds.width || !bounds.height) return;
-    const density = Math.min(devicePixelRatio, 1920 / bounds.width, 1080 / bounds.height);
+    const density = Math.min(devicePixelRatio, 1280 / bounds.width, 720 / bounds.height);
     const width = Math.round(bounds.width * density);
     const height = Math.round(bounds.height * density);
     if (canvas.width !== width) canvas.width = width;
@@ -88,31 +96,51 @@
   const pack = config.mainPack || config.executable + ".pck";
   let engine;
   let preparacion;
+  let listo = false;
+  function mostrarProgreso(valor) {
+    progreso.value = valor;
+    const texto = Math.floor(valor * 100) + "%";
+    if (porcentaje.textContent !== texto) porcentaje.textContent = texto;
+  }
   function preparar() {
     if (preparacion) return preparacion;
     if (!Engine.isWebGLAvailable()) return Promise.reject(new Error("WebGL no disponible"));
+    carga.hidden = false;
+    mostrarProgreso(0);
+    status.textContent = "Descargando el juego…";
     engine = new Engine({
       ...config,
       onProgress(current, total) {
-        if (total > 0) progreso.value = current / total;
+        if (total > 0 && !listo) mostrarProgreso(Math.min(0.99, current / total));
       }
     });
-    preparacion = Promise.all([engine.init(config.executable), engine.preloadFile(pack, pack)]);
-    preparacion.catch(() => { preparacion = undefined; });
+    preparacion = Promise.all([engine.init(config.executable), engine.preloadFile(pack, pack)]).then(() => {
+      listo = true;
+      mostrarProgreso(1);
+      status.textContent = play.disabled ? "Abriendo el recorrido…" : "Todo listo. Puedes entrar al recorrido.";
+    }).catch(error => {
+      preparacion = undefined;
+      throw error;
+    });
     return preparacion;
   }
   // Adelantar la descarga mientras se ve la portada. La partida arranca al elegir.
-  preparar().catch(() => {});
+  preparar().catch(() => {
+    if (!play.disabled) {
+      carga.hidden = true;
+      status.textContent = "La descarga se interrumpió. Pulsa Entrar al recorrido para reintentar.";
+    }
+  });
   async function iniciar(final = "") {
     if (play.disabled) return;
     finales.forEach(button => { button.disabled = true; });
     play.disabled = true;
     play.textContent = "Cargando el juego…";
-    status.textContent = "Descargando ilustraciones y motor.";
-    progreso.hidden = false;
+    status.textContent = listo ? "Abriendo el recorrido…" : "Descargando el juego…";
     try {
       fitCanvas();
       await preparar();
+      status.textContent = "Abriendo el recorrido…";
       const args = ["--main-pack", pack];
       if (final) args.push("--", "--final-" + final);
       await engine.start({ canvas, args });
@@ -121,8 +149,10 @@
       canvas.focus();
     } catch (error) {
       console.error(error);
-      status.textContent = "No pudimos abrir el juego. Recarga la página o prueba con otro navegador.";
-      progreso.hidden = true;
+      listo = false;
+      preparacion = undefined;
+      status.textContent = "No pudimos abrir el juego. Inténtalo de nuevo.";
+      carga.hidden = true;
       play.textContent = "Volver a intentar";
       play.disabled = false;
       finales.forEach(button => { button.disabled = false; });

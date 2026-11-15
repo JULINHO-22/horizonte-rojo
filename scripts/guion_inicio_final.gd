@@ -26,10 +26,10 @@ const Recursos := preload("res://scripts/mecanicas/recursos_mision.gd")
 const Tutorial := preload("res://scenes/dias/dia_1/tutorial_sol_uno.gd")
 var recursos := Recursos.new()
 const SOLES_JUGABLES := {
-	2: preload("res://scenes/dias/dia_2/dia_2.tscn"),
-	3: preload("res://scenes/dias/dia_3/dia_3.tscn"),
-	4: preload("res://scenes/dias/tramo_final/nivel.tscn"),
-	5: preload("res://scenes/dias/tramo_final/nivel.tscn"),
+	2: "res://scenes/dias/dia_2/dia_2.tscn",
+	3: "res://scenes/dias/dia_3/dia_3.tscn",
+	4: "res://scenes/dias/tramo_final/nivel.tscn",
+	5: "res://scenes/dias/tramo_final/nivel.tscn",
 }
 var nivel_activo: Control
 var historial_soles := {}
@@ -483,7 +483,8 @@ func _faltantes_para_tormenta(reservas: Dictionary) -> Dictionary:
 	}
 
 func _montar_sol() -> void:
-	nivel_activo = SOLES_JUGABLES[campana.sol].instantiate()
+	var escena := load(SOLES_JUGABLES[campana.sol]) as PackedScene
+	nivel_activo = escena.instantiate()
 	match campana.sol:
 		2:
 			var datos := recursos.estado()

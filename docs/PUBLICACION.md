@@ -11,11 +11,13 @@
 
 ## Publicar en Firebase
 
-El proyecto `horizonte-rojo-game` usa Firebase Hosting. La portada ofrece vistas previas de ambas cinemáticas finales. El motor y el paquete se descargan en paralelo al mostrar la portada. La partida arranca al elegir un botón. Algunos fondos usan compresión de textura con pérdida de calidad 0,90. Los sprites con transparencia siguen usando compresión sin pérdida. Los archivos `index.*` se revalidan para que el navegador use el paquete que corresponde a la versión publicada. Desde la raíz del repositorio, genera la exportación Web de Godot, inicia sesión con una cuenta con acceso al proyecto y ejecuta `firebase deploy --only hosting --project horizonte-rojo-game`. [Guía oficial de Firebase Hosting](https://firebase.google.com/docs/hosting/quickstart).
+El proyecto `horizonte-rojo-game` usa Firebase Hosting. La portada ofrece vistas previas de ambas cinemáticas finales. El motor y el paquete se descargan en paralelo con progreso visible. Al llegar al 100 %, la portada distingue la apertura de la partida de la descarga. Algunos fondos usan compresión de textura con calidad 0,90 y los sprites conservan transparencia. Se limita el tamaño importado de los sprites sobredimensionados. El simulador provisional se abre desde Godot. Los archivos `index.*` se revalidan para que el navegador use el paquete de la versión publicada. Desde la raíz del repositorio, genera la exportación Web de Godot, inicia sesión con una cuenta con acceso al proyecto y ejecuta `firebase deploy --only hosting --project horizonte-rojo-game`. [Guía oficial de Firebase Hosting](https://firebase.google.com/docs/hosting/quickstart).
 
 `firebase.json` publica `build/web` y omite los metadatos de importación de Godot. Comprueba el enlace público con un perfil de navegador limpio. Inicia la expedición, revisa los paneles con Pluto y recarga. El guardado se conserva por dirección y por perfil del navegador.
 
 El repositorio no contiene un flujo de GitHub Actions para Firebase. Subir cambios a `main` actualiza el código. Hosting recibe la compilación cuando se ejecuta el despliegue con una cuenta autorizada. Para automatizar ese paso hace falta configurar la integración y sus credenciales. [Integración oficial de Firebase con GitHub](https://firebase.google.com/docs/hosting/github-integration)
+
+La optimización redujo `index.pck` de 36,4 MB a 16,3 MB y la portada de 2,9 MB a 366 KB. En Edge, con una conexión simulada de 20 Mb/s, un perfil limpio y compresión HTTP del motor, la apertura pasó de 26 a 15 segundos.
 
 La cinemática inicial usa texturas PNG pixel art empacadas por Godot dentro de `index.pck`; Firebase no necesita servirlas como archivos independientes ni habilitar un códec de video. El preset incluye el conjunto `*PixelArt.png` activo de `assets/NarrativaInicio/` y excluye los fondos, naves y variantes realistas anteriores que ya no consume el código.
 
@@ -33,7 +35,7 @@ test -s public/index.html && test -s public/index.wasm && test -s public/index.p
 
 1. Integra y prueba la revisión de código que se va a publicar. Anota su commit.
 2. Instala las plantillas de exportación de Godot 4.7.2. Desde la raíz del proyecto, ejecuta `./web/exportar.ps1 -Godot "<ruta al ejecutable de consola de Godot>"`. El script exporta a `build/web`, copia la portada y crea el ZIP.
-3. En un checkout separado de `render-web`, copia desde `build/web` a `public` el HTML, el cargador `.js`, los dos archivos de audio `.worklet.js`, el motor `.wasm`, el paquete `.pck` y las dos imágenes `index.png` y `portada.png`. Actualiza esos archivos juntos para evitar mezclar versiones.
+3. En un checkout separado de `render-web`, extrae a `public` el contenido de `build/Red-Horizon-Web.zip`. El archivo incluye el HTML, el cargador `.js`, el motor, el paquete de datos, los archivos de audio y las imágenes `index.png` y `portada.jpg`.
 4. Haz commit en `render-web` y sube la rama. Revisa el despliegue en Render y comprueba que muestra **Live**. Si el despliegue automático está desactivado, el propietario puede lanzar el despliegue manual del último commit.
 5. Abre la URL pública, pulsa **Iniciar expedición** y confirma que carga la escena de aterrizaje.
 
