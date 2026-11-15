@@ -12,12 +12,15 @@ const PLANES := {
 const ID_PLAN := "dia4_preparacion"
 const ID_TORMENTA := "dia5_tormenta_solar"
 
+static func titulo_plan(plan: String) -> String:
+	return I18n.t("reglas.plan." + plan, PLANES.get(plan, {}).get("titulo", plan))
+
 static func impedimento(plan: String, estado: Dictionary) -> String:
 	if not PLANES.has(plan) or estado.sol != 4 or not estado.en_curso or estado.decisiones.has(ID_PLAN):
-		return "Ya hay un plan completado para hoy."
+		return I18n.t("reglas.imp.hecho")
 	var ficha: Dictionary = PLANES[plan]
 	if estado.reservas.energia < ficha.min_energia or estado.reservas.alimento < ficha.min_alimento:
-		return "Requiere %d de energía y %d de alimento." % [ficha.min_energia, ficha.min_alimento]
+		return I18n.tf("reglas.imp.req", [ficha.min_energia, ficha.min_alimento])
 	return ""
 
 static func completar_plan(recursos: Recursos, plan: String) -> bool:

@@ -1,5 +1,11 @@
 # Cambios
 
+## 2026-11-15 | Idiomas oficiales de la ONU (es, en, fr, ru, ar, zh)
+
+- Se incorpora localización completa de textos en los seis idiomas oficiales de la ONU: español (predeterminado), inglés, francés, ruso, árabe y chino simplificado mediante `I18n` (`scripts/i18n.gd`) y diccionarios por idioma (`scripts/idiomas/*.gd`), sin modificar mecánicas, reglas ni diseño del juego.
+- Se añade selector de idioma al inicio tanto en la portada de escritorio como en la portada web (`web/umbra.html`), con persistencia separada en `user://idioma.cfg` (y `localStorage` + `--lang=` en web) para conservar la elección aunque se reinicie la campaña.
+- Se incluyen fuentes SIL OFL 1.1 (`NotoSansArabic-SemiBold.ttf` y `NotoSansSC-SemiBold.ttf` en `assets/fonts/`) registradas como respaldo en `ThemeDB.fallback_font` para renderizar árabe y chino simplificado sin caracteres faltantes.
+
 ## 2026-11-15 | Tablet, tareas y transiciones de campaña
 
 - Los cinco soles consultan las reservas con la tablet portátil (T). Control muestra el trabajo pendiente y las decisiones de la misión.

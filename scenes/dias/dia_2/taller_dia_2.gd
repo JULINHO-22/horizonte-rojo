@@ -52,8 +52,8 @@ func _ready() -> void:
 		boton.pressed.connect(_girar.bind(i))
 		tablero.add_child(boton)
 		piezas.append(boton)
-	izquierda = ui._boton(tablero, Rect2(44, 188, 140, 42), "A / ←   Mover")
-	derecha = ui._boton(tablero, Rect2(576, 188, 140, 42), "Mover   D / →")
+	izquierda = ui._boton(tablero, Rect2(44, 188, 140, 42), I18n.t("taller.mover_izq"))
+	derecha = ui._boton(tablero, Rect2(576, 188, 140, 42), I18n.t("taller.mover_der"))
 	izquierda.pressed.connect(_mover.bind(-1))
 	derecha.pressed.connect(_mover.bind(1))
 	progreso = ui._texto(panel, Rect2(30, 402, 780, 24), "", 17, UI.ORO)
@@ -61,11 +61,11 @@ func _ready() -> void:
 	reserva = ui._texto(self, Rect2(230, 68, 630, 30), "", 18, UI.PAPEL)
 	reserva.add_theme_color_override("font_outline_color", UI.TINTA)
 	reserva.add_theme_constant_override("outline_size", 6)
-	pausa = ui._boton(self, Rect2(860, 62, 200, 36), "Esc · Pausa")
+	pausa = ui._boton(self, Rect2(860, 62, 200, 36), I18n.t("ui.esc_pausa"))
 	pausa.pressed.connect(_pausar)
 	principal = ui._boton(panel, Rect2(30, 488, 510, 48), "")
 	principal.pressed.connect(_confirmar)
-	volver = ui._boton(panel, Rect2(560, 488, 250, 48), "Q · Volver sin gastar")
+	volver = ui._boton(panel, Rect2(560, 488, 250, 48), I18n.t("taller.volver"))
 	volver.pressed.connect(func(): cancelado.emit())
 	hide()
 
@@ -73,13 +73,14 @@ func abrir(actividad: String) -> void:
 	tipo = actividad
 	reglas = Reglas.new()
 	jugando = false
-	pausa.text = "Esc · Pausa"
+	pausa.text = I18n.t("ui.esc_pausa")
 	seleccionado = 0
-	respuesta.text = "Puedes probar otra vez. Equivocarte no gasta recursos."
-	titulo.text = "Laboratorio · Un camino para el aire" if tipo == "aire" else "Exterior · Que nada salga volando"
-	pista.text = "Gira las 4 piezas hasta unir la entrada con el tanque." if tipo == "aire" else "Alinea cada cierre con su marca. Fíjalo cuando diga CALMA."
-	progreso.text = "Al activar: 6 energía + 1 agua → aire seguro hasta dormir." if tipo == "aire" else "Al terminar: 4 energía + 1 comida → equipos protegidos."
-	principal.text = "E · Entendido, empezar"
+	respuesta.text = I18n.t("taller.nota")
+	var prefijo := "taller.tubo" if tipo == "aire" else "taller.cierre"
+	titulo.text = I18n.t(prefijo + ".tit")
+	pista.text = I18n.t(prefijo + ".inst")
+	progreso.text = I18n.t(prefijo + ".costo")
+	principal.text = I18n.t("taller.empezar")
 	izquierda.visible = tipo == "reparar"
 	derecha.visible = tipo == "reparar"
 	for pieza in piezas:
@@ -116,14 +117,14 @@ func tecla(codigo: Key) -> void:
 func _pausar() -> void:
 	if jugando:
 		jugando = false
-		principal.text = "E · Continuar"
-		respuesta.text = "En pausa. Tus piezas se quedan como las dejaste."
-		pausa.text = "Esc · Continuar"
+		principal.text = I18n.t("taller.pausa_cont")
+		respuesta.text = I18n.t("taller.pausa_msg")
+		pausa.text = I18n.t("ui.esc_continuar")
 	else:
 		_confirmar()
 
 func mostrar_aire(estado: Dictionary) -> void:
-	reserva.text = "AIRE SEGURO · ya puedes trabajar con calma" if estado.aire_asegurado else "AIRE: %d / 8 · Esc pausa el juego y conserva tus piezas" % estado.reservas.oxigeno
+	reserva.text = I18n.t("taller.aire_ok") if estado.aire_asegurado else I18n.tf("taller.aire_reloj", [estado.reservas.oxigeno])
 	reserva.add_theme_color_override("font_color", UI.VERDE if estado.aire_asegurado else (UI.ORO if estado.reservas.oxigeno > 3 else UI.ROJO))
 
 func _girar(indice: int) -> void:
@@ -131,7 +132,7 @@ func _girar(indice: int) -> void:
 	seleccionado = indice
 	reglas.girar(indice)
 	sonido.emit(true)
-	respuesta.text = "¡Camino completo! Pulsa E para llenar el tanque." if reglas.aire_conectado() else "Sigue la luz azul: muestra hasta dónde llega el aire."
+	respuesta.text = I18n.t("taller.tubo.completo" if reglas.aire_conectado() else "taller.tubo.luz")
 	tablero.queue_redraw()
 
 func _mover(cantidad: int) -> void:
@@ -143,9 +144,9 @@ func _mover(cantidad: int) -> void:
 func _confirmar() -> void:
 	if not jugando:
 		jugando = true
-		pausa.text = "Esc · Pausa"
-		principal.text = "E · Activar el aire" if tipo == "aire" else "E · Fijar este cierre"
-		respuesta.text = "Clic para girar · o teclas 1, 2, 3, 4." if tipo == "aire" else "Mueve con A / D o los botones. Busca la marca dorada."
+		pausa.text = I18n.t("ui.esc_pausa")
+		principal.text = I18n.t("taller.btn.activar_aire" if tipo == "aire" else "taller.btn.fijar_cierre")
+		respuesta.text = I18n.t("taller.ayuda.tubo" if tipo == "aire" else "taller.ayuda.cierre")
 		tablero.queue_redraw()
 		return
 	if tipo == "aire":
@@ -153,20 +154,20 @@ func _confirmar() -> void:
 			completado.emit(tipo)
 		else:
 			reglas.fallos += 1
-			respuesta.text = "Falta unir las tuberías. Gira donde se detiene la luz azul."
+			respuesta.text = I18n.t("taller.tubo.falta")
 			sonido.emit(false)
 	else:
 		var resultado := reglas.asegurar()
 		match resultado:
 			"listo": completado.emit(tipo)
 			"siguiente":
-				respuesta.text = "¡Bien! Un cierre más protegido. Vamos al siguiente."
+				respuesta.text = I18n.t("taller.cierre.bien")
 				sonido.emit(true)
 			"alinear":
-				respuesta.text = "Casi. Mueve la pieza hasta la marca dorada."
+				respuesta.text = I18n.t("taller.cierre.casi")
 				sonido.emit(false)
 			"viento":
-				respuesta.text = "¡Una ráfaga! Espera a que vuelva CALMA y pulsa E."
+				respuesta.text = I18n.t("taller.cierre.rafaga")
 				sonido.emit(false)
 	tablero.queue_redraw()
 
@@ -181,14 +182,14 @@ func _dibujar() -> void:
 
 func _dibujar_aire() -> void:
 	var ruta := reglas.recorrido()
-	_rotulo("ENTRADA", Vector2(32, 70), UI.CIAN)
-	_rotulo("Agua + energía", Vector2(32, 98), UI.MUTED, 16)
+	_rotulo(I18n.t("taller.entrada"), Vector2(32, 70), UI.CIAN)
+	_rotulo(I18n.t("taller.agua_energia"), Vector2(32, 98), UI.MUTED, 16)
 	var atlas := Iconos.ICONOS.get_size()
 	tablero.draw_texture_rect_region(Iconos.ICONOS, Rect2(32, 18, 30, 38), Rect2(Iconos.GOTA.position * atlas, Iconos.GOTA.size * atlas))
 	tablero.draw_texture_rect_region(Iconos.ICONOS, Rect2(83, 18, 30, 38), Rect2(Iconos.RAYO.position * atlas, Iconos.RAYO.size * atlas))
 	tablero.draw_line(Vector2(164, 41), Vector2(280, 41), UI.CIAN, 8)
-	_rotulo("TANQUE", Vector2(582, 168), UI.CIAN)
-	_rotulo("Oxígeno", Vector2(582, 195), UI.MUTED, 16)
+	_rotulo(I18n.t("taller.tanque"), Vector2(582, 168), UI.CIAN)
+	_rotulo(I18n.t("ind.oxigeno"), Vector2(582, 195), UI.MUTED, 16)
 	for i in 3:
 		var y := 84.0 - fposmod(reglas.tiempo * 12.0 + i * 23.0, 60.0)
 		tablero.draw_texture_rect_region(Iconos.ICONOS, Rect2(594 + (i % 2) * 24, y, 22, 22), Rect2(Iconos.BURBUJA.position * atlas, Iconos.BURBUJA.size * atlas), Color.WHITE if 9 in ruta else Iconos.APAGADO)
@@ -206,18 +207,17 @@ func _dibujar_aire() -> void:
 		if indice >= 0:
 			tablero.draw_rect(Rect2(origen, Vector2(74, 74)), UI.ORO if indice == seleccionado else UI.BORDE_CIAN, false, 2)
 			_rotulo(str(indice + 1), origen + Vector2(5, 17), UI.ORO, 15)
-	_rotulo("GIRAR", Vector2(32, 172), UI.ORO, 16)
-	_rotulo("Clic en las piezas", Vector2(32, 198), UI.PAPEL, 16)
-	_rotulo("o teclas 1 · 2 · 3 · 4", Vector2(32, 222), UI.MUTED, 16)
+	_rotulo(I18n.t("taller.girar"), Vector2(32, 172), UI.ORO, 16)
+	_rotulo(I18n.t("taller.clic_piezas"), Vector2(32, 198), UI.PAPEL, 16)
+	_rotulo(I18n.t("taller.teclas_14"), Vector2(32, 222), UI.MUTED, 16)
 
 func _dibujar_cierres() -> void:
 	var cierre := mini(reglas.cierre, 2)
-	var nombres := ["PANEL IZQUIERDO", "PANEL DERECHO", "TOMA DEL LABORATORIO"]
 	for i in 3:
 		var color := UI.VERDE if i < reglas.cierre else (UI.ORO if i == cierre else UI.MUTED)
-		_rotulo(("LISTO  " if i < reglas.cierre else str(i + 1) + "  ") + nombres[i], Vector2(i * 250 + 4, 20), color, 15)
+		_rotulo((I18n.t("taller.listo") + "  " if i < reglas.cierre else str(i + 1) + "  ") + I18n.t("taller.col.%d" % i), Vector2(i * 250 + 4, 20), color, 15)
 	var calma := reglas.calma()
-	_rotulo("CALMA · puedes fijar" if calma else "RÁFAGA · espera un momento", Vector2(200, 64), UI.VERDE if calma else UI.ORO, 23)
+	_rotulo(I18n.t("taller.calma" if calma else "taller.rafaga"), Vector2(200, 64), UI.VERDE if calma else UI.ORO, 23)
 	tablero.draw_rect(Rect2(180, 78, 400, 5), UI.BORDE_CIAN)
 	tablero.draw_rect(Rect2(180, 78, 400 * fposmod(reglas.tiempo, 4.0) / 4.0, 5), UI.VERDE if calma else UI.ORO)
 	for i in 9:
@@ -227,7 +227,7 @@ func _dibujar_cierres() -> void:
 			tablero.draw_rect(Rect2(x - 10, 102, 40, 60), UI.ORO, false, 3)
 		if i == reglas.ajuste:
 			tablero.draw_rect(Rect2(x - 4, 117, 28, 30), UI.CIAN)
-	_rotulo("Pieza azul → marca dorada", Vector2(240, 216), UI.PAPEL, 19)
+	_rotulo(I18n.t("taller.leyenda"), Vector2(240, 216), UI.PAPEL, 19)
 
 func _exit_tree() -> void:
 	ui.free()

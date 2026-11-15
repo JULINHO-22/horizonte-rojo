@@ -16,11 +16,11 @@ const DURACION_IDA := 5.4
 const DURACION_ATERRIZAJE := 2.6
 const DURACION_REGRESO := 9.0
 const FICHAS := {
-	"energia": "La energía mantiene funcionando los equipos. Aquí se reparte la reserva del refugio.",
-	"agua": "Aquí se limpia y comprueba el agua antes de usarla. El hielo recién recogido todavía no se puede beber.",
-	"cultivos": "Estas plantas necesitan agua, luz y tiempo para crecer.",
-	"cierre": "Esta sala tiene dos puertas: cerramos una antes de abrir la otra para conservar el aire del refugio.",
-	"taller": "Aquí se revisan los trajes y se guardan herramientas y repuestos.",
+	"energia": "base.ficha.energia",
+	"agua": "base.ficha.agua",
+	"cultivos": "base.ficha.cultivos",
+	"cierre": "base.ficha.cierre",
+	"taller": "base.ficha.taller",
 }
 const Recursos := preload("res://scripts/mecanicas/recursos_mision.gd")
 const Tutorial := preload("res://scenes/dias/dia_1/tutorial_sol_uno.gd")
@@ -75,6 +75,7 @@ var restaurado := {}
 
 func _ready() -> void:
 	get_window().min_size = Vector2i(800, 450)
+	I18n.idioma()
 	for argumento in OS.get_cmdline_user_args():
 		if VISTAS_FINALES.has(argumento):
 			get_tree().change_scene_to_file.call_deferred(VISTAS_FINALES[argumento])
@@ -155,7 +156,7 @@ func _process(delta: float) -> void:
 			puesto.paso = fposmod(reloj * 2.5, 1.0)
 			puesto.actualizar_camara(delta)
 			puesto.queue_redraw()
-			voz.decir("Pluto", "Ya hay aire. Se abre la puerta interior." if reloj > 2.22 else "Cerramos la puerta de fuera para que no escape el aire.")
+			voz.decir("Pluto", I18n.t("base.esclusa.abrir" if reloj > 2.22 else "base.esclusa.cerrar"))
 			if reloj >= 3.5:
 				posicion = puesto.punto
 				_cambiar("base")
@@ -268,18 +269,16 @@ func _guia_expedicion() -> void:
 	var sitio := _deposito_cercano()
 	var recogido := not Tutorial.deposito(recursos.estado()).is_empty()
 	if aviso_tiempo <= 0:
-		voz.decir("Percy", "¡Ya tenemos hielo! Vuelve a la esclusa, a la izquierda." if recogido else
-			"Queda poca agua. Detecté hielo bajo el suelo. El mapa SWIM de NASA da pistas. Sigue a Iris: lleva el taladro.")
-	pista.text = "← Refugio" if recogido else "Depósitos a la derecha →"
+		voz.decir("Percy", I18n.t("sol1.percy.ya_hielo" if recogido else "sol1.percy.poca_agua"))
+	pista.text = I18n.t("sol1.pista.refugio_izq" if recogido else "sol1.pista.depositos_der")
 	if absf(posicion.x - PuestoUmbra.ESCLUSA.x) < 28:
-		boton.text = "E · Entrar al refugio"
+		boton.text = I18n.t("sol1.btn.entrar_refugio")
 	elif not recogido and not sitio.is_empty():
 		var agua := mini(Recursos.LIMITES.agua - int(recursos.estado().reservas.agua), sitio.hielo * 3)
 		if aviso_tiempo <= 0:
-			voz.decir("Percy", "Aquí ahorras batería. Más a la derecha hay más hielo." if sitio.hielo == 1 else
-				"Aquí hay más hielo. La caminata cansa y procesar dos muestras usa más batería.")
-		boton.text = "E · %s · hasta +%d agua" % [Tutorial.etiqueta_deposito(sitio), agua]
-		pista.text = "El total incluye el filtrado en el laboratorio."
+			voz.decir("Percy", I18n.t("sol1.percy.cerca" if sitio.hielo == 1 else "sol1.percy.profundo"))
+		boton.text = I18n.tf("sol1.btn.deposito", [Tutorial.etiqueta_deposito(sitio), agua])
+		pista.text = I18n.t("sol1.pista.taladro")
 	else:
 		return
 	boton.show()
@@ -300,7 +299,7 @@ func _accion_expedicion() -> void:
 	if sitio.is_empty():
 		return
 	if not recursos.recoger_hielo(sitio.hielo, sitio.energia, sitio.id, sitio.alimento):
-		voz.decir("Iris", "Revisa la energía y la comida en la tablet. Los paneles recargan la batería poco a poco.")
+		voz.decir("Iris", I18n.t("sol1.iris.tablet"))
 		aviso_tiempo = 6
 		return
 	puesto.taladro_sol_uno_x = sitio.x
@@ -309,7 +308,7 @@ func _accion_expedicion() -> void:
 	puesto.avance_muestra = 0
 	extraccion_hasta = reloj + 1.5
 	boton.hide()
-	voz.decir("Iris", "Con el taladro sacamos %d de hielo. Ahora toca llevarlo al filtro." % sitio.hielo)
+	voz.decir("Iris", I18n.tf("sol1.iris.sacamos", [sitio.hielo]))
 	aviso_tiempo = 5
 	_guardar()
 
@@ -318,45 +317,45 @@ func _actualizar_guia() -> void:
 	if fase == "expedicion_sol_1":
 		_guia_expedicion()
 	elif fase == "camino_base":
-		pista.text = "A / D o flechas   ·   Refugio a la derecha"
+		pista.text = I18n.t("base.pista.camino_base")
 		var rover := puesto.proyectar_suelo(Vector2(minf(puesto.punto.x + 85, PuestoUmbra.ESCLUSA.x - 44), PuestoUmbra.SUELO))
 		voz.position = Vector2(clampf(rover.x + 20, 40, 860), clampf(rover.y - 250, 74, 350))
 		voz.visible = reloj < 6.0
 	elif fase == "camino_nave":
-		pista.text = "A / D o flechas · Vuelve por el camino hasta la nave"
+		pista.text = I18n.t("base.pista.camino_nave")
 		if absf(posicion.x - 220) < 30:
 			boton.visible = true
-			boton.text = "E · Subir a la nave"
+			boton.text = I18n.t("base.btn.subir_nave")
 			_ubicar_accion()
 		return
 	elif fase == "base":
-		pista.text = "WASD o flechas  /  M: plano" if reloj < 6.0 else ""
+		pista.text = I18n.t("base.pista.base") if reloj < 6.0 else ""
 		var cerca := _estacion_cercana()
 		if _sol_uno():
 			_guia_sol_uno(cerca)
 			return
 		if cerca == "dormitorio" and not campana.listo_para_regresar():
-			boton.text = "E · Descansar"
+			boton.text = I18n.t("base.btn.descansar")
 			boton.visible = true
 		elif cerca == "radio" and not plano:
-			boton.text = "E · Abrir Control"
+			boton.text = I18n.t("base.btn.abrir_control")
 			boton.visible = true
 		elif cerca == "nucleo":
-			boton.text = "E · Bajar al núcleo protegido"
+			boton.text = I18n.t("base.btn.bajar_nucleo")
 			boton.visible = true
 		elif cerca == "cierre" and campana.listo_para_regresar():
-			boton.text = "E · Salir hacia la nave"
+			boton.text = I18n.t("base.btn.salir_nave")
 			boton.visible = true
 		elif cerca in ["agua", "oxigeno"] and not campana.listo_para_regresar():
-			boton.text = "E · Purificar agua" if cerca == "agua" else "E · Preparar oxígeno"
+			boton.text = I18n.t("base.btn.purificar_agua" if cerca == "agua" else "base.btn.preparar_oxigeno")
 			boton.visible = true
 		elif not cerca.is_empty() and FICHAS.has(cerca):
-			boton.text = "E · " + PuestoUmbra.NOMBRES.get(cerca, "Entrada").capitalize()
+			boton.text = I18n.t("puesto.accion." + cerca, I18n.t("puesto.accion.entrada"))
 			boton.visible = true
 		if boton.visible:
 			_ubicar_accion()
 		if aviso_tiempo <= 0:
-			voz.decir("Pluto", "Asegura el aire en el laboratorio de Agua y Oxígeno antes de dormir." if not campana.listo_para_regresar() else "Revisa la ruta en Control antes de salir.")
+			voz.decir("Pluto", I18n.t("base.guia.aire_o_control" if not campana.listo_para_regresar() else "base.guia.ruta_control"))
 			voz.visible = reloj < 6.0
 		else:
 			voz.visible = true
@@ -364,12 +363,10 @@ func _actualizar_guia() -> void:
 func _guia_sol_uno(cerca: String) -> void:
 	var objetivo := Tutorial.objetivo(recursos.estado())
 	if aviso_tiempo <= 0:
-		voz.decir("Pluto", Tutorial.GUIA[objetivo])
+		voz.decir("Pluto", Tutorial.guia(objetivo))
 	if cerca not in ["radio", "oxigeno", "cultivos", "cierre", "agua", "dormitorio", "nucleo"]:
 		return
-	boton.text = {"radio": "Consultar tareas", "oxigeno": "Preparar oxígeno", "cultivos": "Revisar bandejas",
-		"cierre": "Salir con Iris", "agua": "Purificar hielo", "dormitorio": "Descansar", "nucleo": "Bajar al núcleo protegido"}[cerca]
-	boton.text = "E · " + boton.text
+	boton.text = I18n.tf("ui.e_prefix", [I18n.t("sol1.act." + cerca)])
 	boton.show()
 	_ubicar_accion()
 
@@ -377,7 +374,7 @@ func _accion_sol_uno(cerca: String) -> void:
 	match cerca:
 		"radio":
 			recursos.aplicar_decision(Tutorial.CONTROL, {})
-			voz.decir("Pluto", "Control te muestra las tareas. En la tablet puedes ver qué tienes y cuánto queda para asegurar el aire.")
+			voz.decir("Pluto", I18n.t("sol1.pluto.control"))
 			aviso_tiempo = 8
 			_guardar()
 			_abrir_control()
@@ -397,16 +394,16 @@ func _intentar_descanso() -> void:
 		var datos := recursos.estado()
 		var pendientes := PackedStringArray()
 		if not datos.aire_asegurado:
-			pendientes.append("Prepara el aire en el laboratorio.")
+			pendientes.append(I18n.t("sol1.dormir.aire"))
 		if datos.reservas.alimento == 0:
-			pendientes.append("Recoge y come algo en Plantas.")
+			pendientes.append(I18n.t("sol1.dormir.comida"))
 		var faltantes := _faltantes_para_tormenta(datos.reservas)
 		if faltantes.agua > 0:
-			pendientes.append("Purifica hielo para guardar agua para mañana.")
+			pendientes.append(I18n.t("sol1.dormir.agua"))
 		if faltantes.energia > 0:
-			pendientes.append("Deja que los paneles recarguen la batería.")
+			pendientes.append(I18n.t("sol1.dormir.energia"))
 		if not pendientes.is_empty():
-			voz.decir("Pluto", "Antes de dormir: " + " ".join(pendientes))
+			voz.decir("Pluto", I18n.tf("sol1.dormir.antes", [" ".join(pendientes)]))
 			aviso_tiempo = 12
 			return
 	if recursos.dormir():
@@ -451,10 +448,10 @@ func _accion() -> void:
 				_cambiar("camino_nave")
 				_guardar()
 			elif cerca == "energia":
-				voz.decir("Pluto", "Con más polvo en el aire, llega menos luz a los paneles. Fuente: NASA, Pancam.")
+				voz.decir("Pluto", I18n.t("base.pluto.pancam"))
 				aviso_tiempo = 9
 			elif FICHAS.has(cerca):
-				voz.decir("Pluto", FICHAS[cerca])
+				voz.decir("Pluto", I18n.t(FICHAS[cerca]))
 				aviso_tiempo = 9
 		"camino_nave":
 			if absf(posicion.x - 220) < 30:
@@ -535,14 +532,13 @@ func _abrir_menu_soles() -> void:
 	add_child(menu_soles)
 	var anterior := capa
 	capa = menu_soles
-	_etiqueta("Soles de Horizonte Rojo", Rect2(124, 88, 1032, 64), 43)
-	_etiqueta("Un sol es un día en Marte. Dura un poquito más que un día en la Tierra.", Rect2(128, 166, 990, 64), 23)
-	var nombres := ["Llegada y búsqueda de hielo", "Tormenta de polvo", "Aire o invernadero", "Preparar el refugio", "Tormenta solar"]
-	for i in range(nombres.size()):
-		_boton("Sol %d · %s" % [i + 1, nombres[i]], Rect2(130, 245 + i * 61, 505, 45), _probar_sol.bind(i + 1))
-	_boton("Continuar", Rect2(800, 590, 292, 47), _cerrar_menu_soles)
+	_etiqueta(I18n.t("menu_soles.titulo"), Rect2(124, 88, 1032, 64), 43)
+	_etiqueta(I18n.t("menu_soles.subtitulo"), Rect2(128, 166, 990, 64), 23)
+	for i in range(5):
+		_boton(I18n.tf("menu_soles.item", [i + 1, I18n.t("menu_soles.nom.%d" % (i + 1))]), Rect2(130, 245 + i * 61, 505, 45), _probar_sol.bind(i + 1))
+	_boton(I18n.t("ui.continuar"), Rect2(800, 590, 292, 47), _cerrar_menu_soles)
 	if prueba_soles:
-		_boton("Volver a la partida guardada", Rect2(800, 528, 292, 47), _volver_a_campana)
+		_boton(I18n.t("menu_soles.volver"), Rect2(800, 528, 292, 47), _volver_a_campana)
 	capa = anterior
 
 func _cerrar_menu_soles() -> void:
@@ -671,9 +667,9 @@ func _mostrar() -> void:
 			nave_salida = _imagen(PuestoUmbra.NAVE, Rect2(280, 275, 170, 260), true)
 		"derrota":
 			_sombra(AREA, Color.BLACK)
-			_etiqueta("Game Over", Rect2(485, 290, 400, 100), 56)
+			_etiqueta(I18n.t("ui.game_over"), Rect2(485, 290, 400, 100), 56)
 			if campana.sol == 5:
-				var silencio := _etiqueta("La estación Umbra dejó de transmitir.", Rect2(330, 380, 620, 42), 24)
+				var silencio := _etiqueta(I18n.t("derrota.transmision"), Rect2(330, 380, 620, 42), 24)
 				silencio.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		"epilogo":
 			_imagen(PuestoUmbra.CENTRO_AGUA, AREA)
@@ -681,15 +677,15 @@ func _mostrar() -> void:
 			_imagen(PuestoUmbra.NORA, Rect2(190, 235, 175, 270), true)
 			_imagen(PuestoUmbra.IRIS, Rect2(390, 235, 175, 270), true)
 			_imagen(PuestoUmbra.TEO_NORMAL, Rect2(590, 235, 175, 270), true)
-			_etiqueta("Gracias, tripulación", Rect2(105, 120, 1060, 75), 44)
-			_etiqueta("De vuelta en la Tierra", Rect2(810, 283, 340, 65), 26)
-			_etiqueta("Las muestras se estudiarían en un laboratorio protegido. Esta es una misión imaginada para aprender.", Rect2(810, 355, 340, 130), 21)
+			_etiqueta(I18n.t("epilogo.gracias"), Rect2(105, 120, 1060, 75), 44)
+			_etiqueta(I18n.t("epilogo.de_vuelta"), Rect2(810, 283, 340, 65), 26)
+			_etiqueta(I18n.t("epilogo.nota"), Rect2(810, 355, 340, 130), 21)
 		_:
 			_imagen(PuestoUmbra.SENDERO, AREA)
 			_sombra(AREA, Color(0.03, 0.07, 0.12, 0.30))
-			_etiqueta("Horizonte Rojo", Rect2(85, 145, 1100, 100), 64)
-			_etiqueta("Cinco días en Marte", Rect2(90, 255, 900, 60), 32)
-			_etiqueta("Acompaña a Nora, Iris y Teo hasta el refugio.", Rect2(90, 322, 480, 72), 24)
+			_etiqueta(I18n.t("portada.titulo"), Rect2(85, 145, 1100, 100), 64)
+			_etiqueta(I18n.t("portada.subtitulo"), Rect2(90, 255, 900, 60), 32)
+			_etiqueta(I18n.t("portada.bajada"), Rect2(90, 322, 660, 68), 24)
 	titulo = _etiqueta("", Rect2(34, 26, 590, 36), 23)
 	voz = DialogoEscena.new()
 	voz.position = Vector2(45, 82)
@@ -699,72 +695,74 @@ func _mostrar() -> void:
 	boton.visible = false
 	match fase:
 		"portada":
+			_selector_idioma()
 			boton.position = Vector2(90, 402)
-			boton.text = "Continuar viaje" if not restaurado.is_empty() else "Comenzar viaje"
+			boton.text = I18n.t("portada.continuar") if not restaurado.is_empty() else I18n.t("portada.comenzar")
 			boton.visible = true
 			if not restaurado.is_empty():
-				_boton("Empezar de nuevo", Rect2(90, 460, 256, 45), _reiniciar)
+				_boton(I18n.t("portada.reiniciar"), Rect2(90, 460, 256, 45), _reiniciar)
 			for i in range(2):
-				var opcion := ["Misión incompleta", "Misión cumplida"][i] as String
+				var opcion := I18n.t(["portada.final_incompleta", "portada.final_cumplida"][i])
 				var clave := ["--final-incompleta", "--final-cumplida"][i] as String
-				_boton("Ver final · " + opcion, Rect2(90 + i * 273, 529, 257, 44), _ver_final.bind(clave))
+				var btn_final := _boton(I18n.tf("portada.ver_final", [opcion]), Rect2(90 + i * 318, 529, 302, 44), _ver_final.bind(clave))
+				btn_final.add_theme_font_size_override("font_size", 17)
 		"ida":
-			titulo.text = "Salida de la Tierra"
-			boton.text = "Saltar viaje · Esc"
+			titulo.text = I18n.t("viaje.salida_tierra")
+			boton.text = I18n.t("viaje.saltar")
 			boton.visible = true
 		"regreso", "llegada_tierra":
-			titulo.text = "Marte → Tierra"
-			voz.decir("Iris", "Nos llevamos las preguntas y lo que aprendimos. Percy seguirá explorando Marte.")
+			titulo.text = I18n.t("viaje.marte_tierra")
+			voz.decir("Iris", I18n.t("viaje.iris_regreso"))
 			pista.text = ""
 		"aterrizaje":
-			titulo.text = "Aterrizaje en Marte"
-			boton.text = "Saltar viaje · Esc"
+			titulo.text = I18n.t("viaje.aterrizaje")
+			boton.text = I18n.t("viaje.saltar")
 			boton.visible = true
 		"pilotaje":
-			titulo.text = "A bordo · Puesto de pilotaje"
-			voz.decir("Iris", "Tripulación a bordo, puerta cerrada. Nora, cuando estés lista, inicia el vuelo de regreso.")
-			pista.text = "Percy se queda en Marte · Ruta resumida, sin escala"
-			boton.text = "E · Iniciar vuelo"
+			titulo.text = I18n.t("viaje.pilotaje")
+			voz.decir("Iris", I18n.t("viaje.iris_pilotaje"))
+			pista.text = I18n.t("viaje.pista_pilotaje")
+			boton.text = I18n.t("viaje.iniciar_vuelo")
 			boton.visible = true
 		"camino_base":
-			voz.decir("Percy", "Soy Perseverance. Síganme al refugio.")
+			voz.decir("Percy", I18n.t("viaje.percy_llegada"))
 			_actualizar_guia()
 		"camino_nave":
-			voz.decir("Percy", "¡Buen regreso! Yo seguiré aquí, buscando nuevas pistas.")
+			voz.decir("Percy", I18n.t("viaje.percy_despedida"))
 		"expedicion_sol_1":
-			titulo.text = "Día 1 de 5 · Hielo bajo el suelo"
+			titulo.text = I18n.t("soles.dia1_titulo")
 			_actualizar_guia()
 		"derrota":
 			boton.position = Vector2(512, 450 if campana.sol == 5 else 410)
-			boton.text = "Volver a intentar"
+			boton.text = I18n.t("ui.volver_intentar")
 			boton.show()
 		"base":
 			_refrescar_recursos()
-			titulo.text = "Sol %d de 5 · Refugio Umbra" % campana.sol
+			titulo.text = I18n.tf("soles.base_titulo", [campana.sol])
 			_actualizar_guia()
 		"noche":
-			titulo.text = "Fin del sol %d" % campana.sol
+			titulo.text = I18n.tf("soles.fin_sol", [campana.sol])
 			voz.position = Vector2(80, 423)
-			voz.decir("Pluto", "Es hora de descansar. La base queda cerrada mientras dormimos.")
+			voz.decir("Pluto", I18n.t("soles.noche_pluto"))
 			escena_descanso = _imagen(DORMITORIO_NOCHE, Rect2(-80, 0, 1440, 720))
 			capa.move_child(escena_descanso, titulo.get_index())
 			escena_descanso.pivot_offset = escena_descanso.size * 0.5
 			escena_descanso.modulate.a = 0.0
 		"amanecer":
-			voz.decir("Pluto", "Buenos días. Es hora de preparar el regreso." if campana.listo_para_regresar() else "Buenos días. Comienza el día %d." % campana.sol)
+			voz.decir("Pluto", I18n.t("soles.amanecer_regreso") if campana.listo_para_regresar() else I18n.tf("soles.amanecer_dia", [campana.sol]))
 		"despegue":
-			voz.decir("Nora", "¡Hasta la próxima, Percy! Tripulación lista para volver.")
+			voz.decir("Nora", I18n.t("viaje.nora_despegue"))
 		"epilogo":
-			titulo.text = "Tierra · Cierre de la historia"
-			voz.decir("Equipo científico", "¡Gracias, astronautas! Sus preguntas y sus aportes nos ayudan a comprender Marte. ¡Sigan explorando!")
-			boton.text = "Volver al comienzo"
+			titulo.text = I18n.t("epilogo.titulo")
+			voz.decir("Equipo científico", I18n.t("epilogo.equipo"))
+			boton.text = I18n.t("ui.volver_comienzo")
 	if fase in ["noche", "amanecer", "llegada_tierra", "aterrizaje"]:
 		velo = _sombra(AREA, Color(0, 0, 0, 1 if fase in ["amanecer", "aterrizaje"] else 0))
 	if fase in ["base", "expedicion_sol_1"]:
 		_mostrar_accesos_sol()
 
 func _mostrar_accesos_sol() -> void:
-	boton_tablet = _boton("T · Tablet", Rect2(965, 18, 158, 42), _alternar_tablet)
+	boton_tablet = _boton(I18n.t("ui.tablet_btn"), Rect2(965, 18, 158, 42), _alternar_tablet)
 	boton_tablet.focus_mode = Control.FOCUS_NONE
 	boton_tablet.z_index = 10
 	if fase != "base" or sol_anunciado == campana.sol or campana.listo_para_regresar():
@@ -777,9 +775,9 @@ func _mostrar_accesos_sol() -> void:
 	var anterior := capa
 	capa = anuncio
 	var rotulos := [
-		_etiqueta("SOL %02d" % campana.sol, Rect2(350, 115, 580, 78), 65),
-		_etiqueta(NOMBRES_SOLES[campana.sol - 1], Rect2(336, 206, 608, 45), 30),
-		_etiqueta(AVISOS_SOLES[campana.sol - 1], Rect2(268, 256, 744, 35), 21),
+		_etiqueta(I18n.tf("soles.sol_num", [campana.sol]), Rect2(350, 115, 580, 78), 65),
+		_etiqueta(I18n.t("soles.nom.%d" % campana.sol), Rect2(336, 206, 608, 45), 30),
+		_etiqueta(I18n.t("soles.aviso.%d" % campana.sol), Rect2(268, 256, 744, 35), 21),
 	]
 	capa = anterior
 	for rotulo: Label in rotulos:
@@ -836,9 +834,9 @@ func _abrir_control() -> void:
 	capa.add_child(panel_control)
 	capa.move_child(boton_tablet, -1)
 	if not regreso:
-		var tarea := "El aire está asegurado. Ve al dormitorio para descansar." if estado.aire_asegurado else "Prepara el aire en el laboratorio de Agua y Oxígeno antes de descansar."
+		var tarea := I18n.t("control.aire_ok" if estado.aire_asegurado else "control.aire_falta")
 		if _sol_uno():
-			tarea = Tutorial.GUIA[Tutorial.objetivo(estado)]
+			tarea = Tutorial.guia(Tutorial.objetivo(estado))
 		panel_control.mostrar_tarea(tarea)
 
 func _cerrar_control() -> void:
@@ -849,7 +847,7 @@ func _cerrar_control() -> void:
 
 func _confirmar_ruta() -> void:
 	_cerrar_control()
-	voz.decir("Iris", "La ruta está preparada. Salgamos juntos: la nave nos espera a la izquierda del refugio.")
+	voz.decir("Iris", I18n.t("base.ruta_preparada"))
 	puesto.objetivo_mision = "cierre"
 	aviso_tiempo = 9
 
@@ -865,11 +863,11 @@ func _abrir_nucleo() -> void:
 	var guia := DialogoEscena.new()
 	guia.position = Vector2(49, 120)
 	marco_nucleo.add_child(guia)
-	guia.decir("Pluto", "Este túnel conecta con la esclusa. Si hay radiación afuera, nos reunimos en esta sala protegida.")
+	guia.decir("Pluto", I18n.t("base.pluto.nucleo"))
 	capa.move_child(boton, -1)
 	var puerta := visita_nucleo.proyectar_suelo(MapaNucleo.UMBRAL)
 	boton.position = puerta + Vector2(-128, 28)
-	boton.text = "E · Volver a la esclusa"
+	boton.text = I18n.t("base.btn.volver_esclusa")
 	boton.show()
 
 func _cerca_salida_nucleo() -> bool:
@@ -901,20 +899,20 @@ func _abrir_estacion(id: String) -> void:
 	if _sol_uno():
 		_opciones_sol_uno(id)
 	elif id == "agua":
-		voz.decir("Pluto", "Aquí limpiamos el hielo. Los depósitos de oxígeno están al lado, en esta misma sala.")
-		_opcion("Recoger hielo de la reserva de prueba", _hielo_prueba)
-		_opcion("Purificar hielo · 2 energía", recursos.purificar_hielo)
+		voz.decir("Pluto", I18n.t("estacion.agua.desc"))
+		_opcion(I18n.t("estacion.agua.prueba"), _hielo_prueba)
+		_opcion(I18n.t("estacion.agua.purificar2"), recursos.purificar_hielo)
 	elif id == "oxigeno":
-		voz.decir("Pluto", "Este equipo usa agua y batería para asegurar el aire de hoy.")
-		_opcion("Asegurar aire · 6 energía y 1 agua", recursos.activar_oxigeno)
+		voz.decir("Pluto", I18n.t("estacion.ox.desc"))
+		_opcion(I18n.t("estacion.ox.asegurar"), recursos.activar_oxigeno)
 	else:
 		for cultivo: String in Recursos.CULTIVOS:
 			var ficha: Dictionary = Recursos.CULTIVOS[cultivo]
-			_opcion("Sembrar %s · %d energía, 1 agua, %d s, +%d comida" % [
-				cultivo.capitalize(), ficha.energia, int(ficha.segundos), ficha.alimento], recursos.sembrar.bind(cultivo))
-			_opcion("Comer %s" % cultivo, recursos.comer.bind(cultivo))
+			_opcion(I18n.tf("estacion.cultivo.libre", [
+				I18n.cultivo(cultivo), ficha.energia, int(ficha.segundos), ficha.alimento]), recursos.sembrar.bind(cultivo))
+			_opcion(I18n.tf("estacion.cultivo.comer", [I18n.cultivo(cultivo, true)]), recursos.comer.bind(cultivo))
 	var cerrar := Button.new()
-	cerrar.text = "Cerrar · Esc"
+	cerrar.text = I18n.t("ui.cerrar_esc")
 	cerrar.pressed.connect(_cerrar_estacion)
 	estaciones.add_child(cerrar)
 	if _sol_uno():
@@ -945,18 +943,18 @@ func _tema_plantas() -> Theme:
 func _opciones_sol_uno(id: String) -> void:
 	var datos := recursos.estado()
 	if id == "oxigeno":
-		voz.decir("Pluto", "Si se acaba el oxígeno, no podemos respirar. Asegura el aire al inicio de cada día. Reserva 6 de energía y 1 de agua.")
-		_opcion("Asegurar aire · 6 energía y 1 agua", recursos.activar_oxigeno)
+		voz.decir("Pluto", I18n.t("estacion.sol1.ox"))
+		_opcion(I18n.t("estacion.ox.asegurar"), recursos.activar_oxigeno)
 	elif id == "agua":
-		voz.decir("Pluto", "El hielo trae polvo. Derrítelo, fíltralo y revisa el agua antes de llenar el tanque.")
-		_opcion("Purificar 1 hielo · 2 energía", recursos.purificar_hielo)
+		voz.decir("Pluto", I18n.t("estacion.sol1.agua"))
+		_opcion(I18n.t("estacion.sol1.agua_btn"), recursos.purificar_hielo)
 	else:
-		voz.decir("Pluto", "Elige qué sembrar. El reloj te muestra cuánto falta. Cuando esté listo, recoge y come aquí mismo.")
+		voz.decir("Pluto", I18n.t("estacion.sol1.cultivos"))
 		for cultivo: String in Recursos.CULTIVOS:
 			turnos_cosecha[cultivo] = _opcion("", _usar_bandeja.bind(cultivo))
 		var anterior := Tutorial.cosecha(datos)
 		if Recursos.CULTIVOS.has(anterior) and Tutorial.COMIDA not in datos.decisiones:
-			_opcion("Comer la cosecha guardada", _comer_guardado.bind(anterior))
+			_opcion(I18n.t("estacion.sol1.guardada"), _comer_guardado.bind(anterior))
 		_actualizar_cosecha(datos)
 
 func _actualizar_cosecha(datos: Dictionary) -> void:
@@ -964,14 +962,14 @@ func _actualizar_cosecha(datos: Dictionary) -> void:
 		var control: Button = turnos_cosecha[cultivo]
 		var ficha: Dictionary = Recursos.CULTIVOS[cultivo]
 		if not datos.bandejas.has(cultivo):
-			control.text = "Sembrar %s · %d energía, 1 agua · %d s" % [cultivo.capitalize(), ficha.energia, int(ficha.segundos)]
+			control.text = I18n.tf("estacion.sol1.sembrar", [I18n.cultivo(cultivo), ficha.energia, int(ficha.segundos)])
 			control.disabled = false
 			continue
 		var espera := ceili(datos.bandejas[cultivo])
 		var reloj_cultivo := "%02d:%02d" % [int(espera / 60.0), espera % 60]
 		var lleno: bool = datos.reservas.alimento == Recursos.LIMITES.alimento
-		var estado := "lista · comida llena" if lleno else "recoger y comer · +%d comida" % ficha.alimento
-		control.text = "%s · %s" % [cultivo.capitalize(), "faltan " + reloj_cultivo if espera > 0 else estado]
+		var estado := I18n.t("estacion.sol1.llena") if lleno else I18n.tf("estacion.sol1.recoger", [ficha.alimento])
+		control.text = I18n.tf("estacion.sol1.bandeja", [I18n.cultivo(cultivo), I18n.tf("estacion.sol1.faltan", [reloj_cultivo]) if espera > 0 else estado])
 		control.disabled = espera > 0 or lleno
 
 func _usar_bandeja(cultivo: String) -> bool:
@@ -999,11 +997,11 @@ func _usar_estacion(accion: Callable) -> void:
 	if _sol_uno() and aplicada:
 		var datos := recursos.estado()
 		_actualizar_cosecha(datos)
-		voz.decir("Pluto", Tutorial.GUIA[Tutorial.objetivo(datos)])
+		voz.decir("Pluto", Tutorial.guia(Tutorial.objetivo(datos)))
 	else:
-		voz.decir("Pluto", "Listo. Revisa las reservas." if aplicada else "Revisa las reservas y si la tarea ya está lista.")
+		voz.decir("Pluto", I18n.t("estacion.pluto.listo" if aplicada else "estacion.pluto.revisar"))
 		if _sol_uno() and estacion == "agua":
-			voz.decir("Pluto", "Para purificar necesitas hielo, 2 de energía y espacio en el tanque de agua.")
+			voz.decir("Pluto", I18n.t("estacion.pluto.falta_agua"))
 	aviso_tiempo = 6
 	_refrescar_recursos()
 	if aplicada:
@@ -1101,3 +1099,24 @@ func _boton(texto: String, rect: Rect2, accion: Callable) -> Button:
 	control.pressed.connect(accion)
 	capa.add_child(control)
 	return control
+
+func _selector_idioma() -> void:
+	var etiqueta := _etiqueta(I18n.t("ui.idioma_titulo"), Rect2(616, 22, 630, 24), 15)
+	etiqueta.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	for i in range(I18n.IDIOMAS.size()):
+		var codigo: String = I18n.IDIOMAS[i]
+		var btn := _boton(I18n.etiqueta(codigo), Rect2(616 + i * 106, 50, 100, 36), _elegir_idioma.bind(codigo))
+		btn.focus_mode = Control.FOCUS_NONE
+		btn.add_theme_font_size_override("font_size", 15)
+		if codigo == I18n.idioma():
+			var activo := StyleBoxFlat.new()
+			activo.bg_color = Color("#1e3f4d")
+			activo.border_color = CIAN
+			activo.set_border_width_all(2)
+			activo.set_corner_radius_all(7)
+			btn.add_theme_stylebox_override("normal", activo)
+			btn.add_theme_color_override("font_color", CIAN)
+
+func _elegir_idioma(codigo: String) -> void:
+	I18n.set_idioma(codigo)
+	_mostrar()

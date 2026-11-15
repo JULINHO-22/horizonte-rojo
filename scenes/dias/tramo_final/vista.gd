@@ -16,7 +16,7 @@ func _ready() -> void:
 	_dialogo = preload("res://scripts/dialogo_escena.gd").new()
 	_dialogo.position = Vector2(48, 141)
 	add_child(_dialogo)
-	_salida_plano = rotulo(self, "M · Volver al recorrido", Rect2(25, 677, 230, 31), 18, PAPEL)
+	_salida_plano = rotulo(self, I18n.t("vista.volver"), Rect2(25, 677, 230, 31), 18, PAPEL)
 	_salida_plano.hide()
 
 func mostrar_plano(activo: bool) -> void:
@@ -36,11 +36,11 @@ func mostrar_lecturas(registro: Dictionary, causa: String, donki: String, curios
 	var lectura := preload("res://scripts/dialogo_escena.gd").new()
 	lectura.position = Vector2(868, 145)
 	_informe.add_child(lectura)
-	var cambios := "Energía  %d → %d    Aire  %d → %d\nAgua  %d → %d    Comida  %d → %d" % [
+	var cambios := I18n.tf("vista.cambios", [
 		antes.energia, despues.energia, antes.oxigeno, despues.oxigeno,
-		antes.agua, despues.agua, antes.alimento, despues.alimento]
+		antes.agua, despues.agua, antes.alimento, despues.alimento])
 	lectura.decir("Reservas del refugio", cambios + "\n" + causa)
-	for opcion in [{"titulo": "Alerta DONKI", "url": donki, "x": 872}, {"titulo": "Curiosity en Marte", "url": curiosity, "x": 1015}]:
+	for opcion in [{"titulo": I18n.t("vista.link.donki"), "url": donki, "x": 872}, {"titulo": I18n.t("vista.link.curiosity"), "url": curiosity, "x": 1015}]:
 		var enlace := LinkButton.new()
 		enlace.text = opcion.titulo
 		enlace.uri = opcion.url

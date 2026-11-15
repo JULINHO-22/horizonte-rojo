@@ -25,13 +25,13 @@ func _ready() -> void:
 	velo.position = -position
 	velo.size = get_viewport_rect().size
 	add_child(velo)
-	_etiqueta("CONTROL UMBRA   /   SOL %02d" % _sol, Rect2(34, 26, 690, 30), 17, MENTA)
-	_etiqueta("Tareas de la misión", Rect2(32, 62, 685, 60), 42, TITULO)
-	var cerrar := _boton("Cerrar · Esc", Rect2(771, 26, 140, 43), cerrar_solicitado.emit)
+	_etiqueta(I18n.tf("control.encabezado", [_sol]), Rect2(34, 26, 690, 30), 17, MENTA)
+	_etiqueta(I18n.t("control.titulo"), Rect2(32, 62, 685, 60), 42, TITULO)
+	var cerrar := _boton(I18n.t("ui.cerrar_esc"), Rect2(771, 26, 140, 43), cerrar_solicitado.emit)
 	cerrar.grab_focus()
 	if _regreso:
-		mostrar_tarea("Sal por la esclusa. La cápsula espera a la izquierda del refugio.")
-		_boton("Confirmar ruta de regreso", Rect2(34, 234, 262, 44), ruta_confirmada.emit)
+		mostrar_tarea(I18n.t("control.regreso_desc"))
+		_boton(I18n.t("control.confirmar_ruta"), Rect2(34, 234, 262, 44), ruta_confirmada.emit)
 	modulate.a = 0.0
 	create_tween().tween_property(self, "modulate:a", 1.0, 0.16)
 

@@ -16,3 +16,6 @@ const LECTURAS := [
 static func nivel(indice: int) -> float:
 	var base: float = LECTURAS[0].tasa
 	return clampf((LECTURAS[indice].tasa - base) / (LECTURAS[2].tasa - base), 0.0, 1.0)
+
+static func fase_texto(indice: int) -> String:
+	return I18n.t("nasa.fase.%d" % indice, LECTURAS[indice].fase)

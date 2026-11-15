@@ -12,22 +12,22 @@ const MARCHA := [PuestoUmbra.TEO_PASOS, PuestoUmbra.IRIS_PASOS, PuestoUmbra.NORA
 const TAMANO := Vector2(1280, 720)
 const RECONOCIMIENTO := 7.5
 const LLEGADA := [
-	[2.9, "Directora de misión", "Bienvenidos a casa. Nos alegra que estén a salvo."],
-	[5.7, "Directora de misión", "El equipo confirmó los resultados. Cumplieron la misión."],
+	[2.9, "Directora de misión", "final.llegada.0"],
+	[5.7, "Directora de misión", "final.llegada.1"],
 ]
 const LLEGADA_EMERGENCIA := [
-	[2.9, "Directora de misión", "Nora, Iris, Teo… bienvenidos a casa. Evacuar fue la decisión correcta."],
-	[5.7, "Iris", "Nos quedaron pruebas pendientes. Cuando estemos listos, explicaremos qué pasó."],
+	[2.9, "Directora de misión", "final.emg.0"],
+	[5.7, "Iris", "final.emg.1"],
 ]
 const ACTO := [
-	[2.5, "Directora de misión", "Cuando las cosas se complicaron, cuidaron el refugio y se cuidaron entre ustedes."],
-	[5.4, "Directora de misión", "En nombre del programa espacial, les entrego la Medalla Horizonte."],
-	[9.0, "Nora", "La próxima tripulación ya sabe por dónde empezar."],
+	[2.5, "Directora de misión", "final.acto.0"],
+	[5.4, "Directora de misión", "final.acto.1"],
+	[9.0, "Nora", "final.acto.2"],
 ]
 const NOTICIA := [
-	[0.25, "Presentadora", "Nora, Iris y Teo volvieron a la Tierra. Los tres están a salvo."],
-	[4.95, "Presentadora", "La tormenta obligó a evacuar la base. La misión quedó incompleta."],
-	[10.0, "Presentadora", "Ahora el equipo revisará qué pasó para preparar la próxima expedición."],
+	[0.25, "Presentadora", "final.noticia.0"],
+	[4.95, "Presentadora", "final.noticia.1"],
+	[10.0, "Presentadora", "final.noticia.2"],
 ]
 const FIN_NOTICIA := 15.5
 const VENTANA_NOTICIERO := Rect2(696, 133, 523, 277)
@@ -64,13 +64,13 @@ func _ready() -> void:
 	accion = Button.new()
 	accion.position = Vector2(1006, 34)
 	accion.custom_minimum_size = Vector2(232, 45)
-	accion.text = "Ir a la llegada"
+	accion.text = I18n.t("final.btn.ir_llegada")
 	accion.pressed.connect(_omitir)
 	add_child(accion)
 	salida = Button.new()
 	salida.position = Vector2(1006, 93)
 	salida.custom_minimum_size = Vector2(232, 45)
-	salida.text = "Salir al menú"
+	salida.text = I18n.t("final.btn.salir_menu")
 	salida.pressed.connect(_salir)
 	add_child(salida)
 	indicacion = _etiqueta(Vector2(1007, 150), 17)
@@ -169,7 +169,7 @@ func _presentar() -> void:
 	accion.position = Vector2(974, 529) if en_tv else Vector2(1006, 34)
 	salida.position = Vector2(974, 583) if en_tv else Vector2(1006, 93)
 	indicacion.position = Vector2(978, 635) if en_tv else Vector2(1007, 150)
-	indicacion.text = "Espacio · Avanzar"
+	indicacion.text = I18n.t("final.pista.avanzar")
 	indicacion.visible = fase != "victoria" and not (fase == "noticia" and reloj >= FIN_NOTICIA)
 	titulo.position = Vector2(42, 38)
 	titulo.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
@@ -179,29 +179,29 @@ func _presentar() -> void:
 	match fase:
 		"viaje":
 			titulo.text = ""
-			accion.text = "Omitir viaje · Esc"
+			accion.text = I18n.t("final.btn.omitir_viaje")
 		"hangar":
-			titulo.text = "De vuelta en la Tierra"
-			accion.text = "Omitir llegada"
+			titulo.text = I18n.t("final.tit.de_vuelta")
+			accion.text = I18n.t("final.btn.omitir_llegada")
 		"ceremonia":
-			titulo.text = "Reconocimiento a la tripulación"
-			accion.text = "Omitir ceremonia"
+			titulo.text = I18n.t("final.tit.acto")
+			accion.text = I18n.t("final.btn.omitir_acto")
 		"noticia":
 			titulo.position = Vector2(693, 65)
-			titulo.text = "Noticias de la Tierra"
-			accion.text = "Omitir noticiero" if reloj < FIN_NOTICIA else "Repetir final"
+			titulo.text = I18n.t("final.tit.noticia")
+			accion.text = I18n.t("final.btn.omitir_noticia") if reloj < FIN_NOTICIA else I18n.t("final.btn.repetir")
 			if reloj >= FIN_NOTICIA:
-				_decir("Presentadora", "La tripulación está a salvo. La misión quedó incompleta.", Vector2(100, 585))
+				_decir("Presentadora", I18n.t("final.noticia.cierre"), Vector2(100, 585))
 				return
 		"victoria":
 			var entrada := smoothstep(0.55, 1.45, reloj)
-			titulo.text = "¡Has ganado!"
+			titulo.text = I18n.t("final.ganaste")
 			titulo.position = Vector2(372, lerpf(459, 418, entrada))
 			titulo.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 			titulo.add_theme_font_size_override("font_size", 65)
 			titulo.modulate = Color("#ffda88")
 			titulo.modulate.a = entrada
-			accion.text = "Repetir final"
+			accion.text = I18n.t("final.btn.repetir")
 			accion.visible = reloj >= 2.5
 	var lineas := _lineas()
 	for i in range(lineas.size() - 1, -1, -1):
@@ -212,7 +212,7 @@ func _presentar() -> void:
 				origen = Vector2(100, 585)
 			elif linea[1] in ["Iris", "Nora"]:
 				origen = Vector2(492, 245)
-			_decir(linea[1], linea[2], origen)
+			_decir(linea[1], I18n.t(linea[2]), origen)
 			break
 
 func _decir(nombre: String, texto: String, origen := Vector2(897, 202)) -> void:

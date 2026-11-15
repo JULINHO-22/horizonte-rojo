@@ -19,7 +19,13 @@
         linear-gradient(0deg, #17212d, transparent 51%),
         linear-gradient(#34475444, #34475444), url("portada.png") center / cover, #344754;
     }
-    .expedicion { width: min(45rem, 95%); padding: clamp(1.25rem, 6vw, 6rem); padding-right: 0; }
+    .expedicion { width: min(45rem, 95%); padding: clamp(1.25rem, 6vw, 6rem); padding-inline-end: 0; }
+    .idiomas { position: absolute; top: clamp(.85rem, 3vw, 1.8rem); right: clamp(.85rem, 3vw, 2rem); display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: .38rem; max-width: min(36rem, 92vw); z-index: 2; }
+    .idiomas span { color: #bdc4df; font-size: .82rem; margin-inline-end: .2rem; }
+    .idiomas button { padding: .35rem .65rem; border: 1px solid #597282; border-radius: .35rem; background: #14222ed9; color: #dce6ec; font-size: .83rem; }
+    .idiomas button:hover { background: #233a4ae6; border-color: #93b6b2; }
+    .idiomas button[aria-pressed="true"] { background: #a9ecdf; color: #171320; border-color: #a9ecdf; font-weight: 700; }
+    .idiomas button:disabled { opacity: .65; cursor: wait; }
     .destino { width: fit-content; padding: .48rem .85rem; color: #182832; background: #93b6b2; font-weight: 700; border-radius: .25rem .25rem 1rem .25rem; }
     h1 { margin: .14em 0 0; font: 900 clamp(3.5rem, 10.5vw, 9.1rem)/.83 Georgia, serif; letter-spacing: -.065em; }
     h2 { margin: .6rem 0 1rem; font: 400 clamp(1.32rem, 3.2vw, 2.4rem)/1.1 Georgia, serif; color: #bdc4df; }
@@ -38,6 +44,7 @@
     #fullscreen { position: absolute; right: .75rem; bottom: .6rem; background: #182632db; color: #e4ecef; border: 1px solid #82969e; border-radius: .35rem; min-width: 40px; min-height: 36px; }
     @media (max-width: 650px) {
       #launch { background-position: 62% center; }
+      .idiomas { max-width: calc(100vw - 1.7rem); }
       .expedicion { padding-bottom: 1.2rem; }
     }
   </style>
@@ -47,9 +54,18 @@
 <main id="stage" aria-label="Juego Horizonte Rojo">
   <canvas id="canvas" tabindex="0">Abre el juego en un navegador con gráficos 3D habilitados.</canvas>
   <div id="launch">
+    <div class="idiomas" role="group" aria-label="Idioma">
+      <span id="idioma-label">Idioma</span>
+      <button type="button" data-lang="es" aria-pressed="true">Español</button>
+      <button type="button" data-lang="en" aria-pressed="false">English</button>
+      <button type="button" data-lang="fr" aria-pressed="false">Français</button>
+      <button type="button" data-lang="ru" aria-pressed="false">Русский</button>
+      <button type="button" data-lang="ar" aria-pressed="false">العربية</button>
+      <button type="button" data-lang="zh" aria-pressed="false">简体中文</button>
+    </div>
     <div class="expedicion">
       <p class="destino">Primera parada · Marte</p>
-      <h1>Horizonte<br>Rojo</h1>
+      <h1><span id="titulo-1">Horizonte</span><br><span id="titulo-2">Rojo</span></h1>
       <h2>Cinco días en Marte</h2>
       <p class="historia">Viaja con Nora, Iris y Teo. Conoce el refugio y acompaña su regreso. Pulsa Ctrl + Shift + M dentro del juego para probar cualquiera de los cinco soles. Un sol es un día en Marte.</p>
       <button id="play" type="button">Entrar al recorrido</button>
@@ -67,12 +83,144 @@
 </main>
 <script src="$GODOT_URL"></script>
 <script>
+  const TEXTOS = {
+    es: {
+      htmlLang: "es", dir: "ltr", docTitle: "Horizonte Rojo · Cinco días en Marte",
+      stageAria: "Juego Horizonte Rojo", canvas: "Abre el juego en un navegador con gráficos 3D habilitados.",
+      idioma: "Idioma", destino: "Primera parada · Marte", t1: "Horizonte", t2: "Rojo",
+      subtitulo: "Cinco días en Marte",
+      historia: "Viaja con Nora, Iris y Teo. Conoce el refugio y acompaña su regreso. Pulsa Ctrl + Shift + M dentro del juego para probar cualquiera de los cinco soles. Un sol es un día en Marte.",
+      jugar: "Entrar al recorrido", legend: "Vistas previas",
+      fRecursos: "Probar mecánicas", fIncompleta: "Misión incompleta", fCumplida: "Misión cumplida",
+      listo: "Usa el teclado para moverte y el ratón para elegir.",
+      fullscreen: "Pantalla completa", cargando: "Cargando el juego…",
+      descargando: "Descargando ilustraciones y motor.",
+      error: "No pudimos abrir el juego. Recarga la página o prueba con otro navegador.",
+      reintentar: "Volver a intentar", webgl: "WebGL no disponible"
+    },
+    en: {
+      htmlLang: "en", dir: "ltr", docTitle: "Red Horizon · Five Days on Mars",
+      stageAria: "Red Horizon Game", canvas: "Open the game in a browser with 3D graphics enabled.",
+      idioma: "Language", destino: "First stop · Mars", t1: "Red", t2: "Horizon",
+      subtitulo: "Five Days on Mars",
+      historia: "Travel with Nora, Iris, and Teo. Explore the shelter and guide their return. Press Ctrl + Shift + M inside the game to test any of the five sols. A sol is a day on Mars.",
+      jugar: "Enter expedition", legend: "Previews",
+      fRecursos: "Test mechanics", fIncompleta: "Incomplete mission", fCumplida: "Mission accomplished",
+      listo: "Use the keyboard to move and the mouse to choose.",
+      fullscreen: "Fullscreen", cargando: "Loading game…",
+      descargando: "Downloading artwork and engine.",
+      error: "Could not start the game. Reload the page or try another browser.",
+      reintentar: "Try again", webgl: "WebGL unavailable"
+    },
+    fr: {
+      htmlLang: "fr", dir: "ltr", docTitle: "Horizon Rouge · Cinq jours sur Mars",
+      stageAria: "Jeu Horizon Rouge", canvas: "Ouvre le jeu dans un navigateur avec graphismes 3D activés.",
+      idioma: "Langue", destino: "Première étape · Mars", t1: "Horizon", t2: "Rouge",
+      subtitulo: "Cinq jours sur Mars",
+      historia: "Voyage avec Nora, Iris et Teo. Découvre l'abri et accompagne leur retour. Appuie sur Ctrl + Shift + M en jeu pour essayer n'importe lequel des cinq sols. Un sol est un jour sur Mars.",
+      jugar: "Commencer l'expédition", legend: "Aperçus",
+      fRecursos: "Tester les mécaniques", fIncompleta: "Mission incomplète", fCumplida: "Mission accomplie",
+      listo: "Utilise le clavier pour te déplacer et la souris pour choisir.",
+      fullscreen: "Plein écran", cargando: "Chargement du jeu…",
+      descargando: "Téléchargement des visuels et du moteur.",
+      error: "Impossible de lancer le jeu. Recharge la page ou essaie un autre navigateur.",
+      reintentar: "Réessayer", webgl: "WebGL indisponible"
+    },
+    ru: {
+      htmlLang: "ru", dir: "ltr", docTitle: "Красный горизонт · Пять дней на Марсе",
+      stageAria: "Игра Красный горизонт", canvas: "Откройте игру в браузере с поддержкой 3D-графики.",
+      idioma: "Язык", destino: "Первая остановка · Марс", t1: "Красный", t2: "горизонт",
+      subtitulo: "Пять дней на Марсе",
+      historia: "Отправься с Норой, Ирис и Тео, изучи убежище и помоги им вернуться. Нажми Ctrl + Shift + M в игре, чтобы открыть любой из пяти солов. Сол — это день на Марсе.",
+      jugar: "Начать экспедицию", legend: "Быстрый просмотр",
+      fRecursos: "Тест механик", fIncompleta: "Незавершённая миссия", fCumplida: "Миссия выполнена",
+      listo: "Управляй движением с клавиатуры, а выбором — мышью.",
+      fullscreen: "Полный экран", cargando: "Загрузка игры…",
+      descargando: "Загрузка графики и движка.",
+      error: "Не удалось запустить игру. Обновите страницу или откройте другой браузер.",
+      reintentar: "Попробовать снова", webgl: "WebGL недоступен"
+    },
+    ar: {
+      htmlLang: "ar", dir: "rtl", docTitle: "الأفق الأحمر · خمسة أيام على المريخ",
+      stageAria: "لعبة الأفق الأحمر", canvas: "افتح اللعبة في متصفح يدعم الرسومات ثلاثية الأبعاد.",
+      idioma: "اللغة", destino: "المحطة الأولى · المريخ", t1: "الأفق", t2: "الأحمر",
+      subtitulo: "خمسة أيام على المريخ",
+      historia: "سافر مع نورا وإيريس وتيو. تعرّف على الملجأ ورافق عودتهم. اضغط Ctrl + Shift + M داخل اللعبة لتجربة أي من الأيام المريخية الخمسة. «السول» هو يوم على المريخ.",
+      jugar: "بدء الرحلة", legend: "معاينات",
+      fRecursos: "اختبار الآليات", fIncompleta: "مهمة غير مكتملة", fCumplida: "تمت المهمة",
+      listo: "استخدم لوحة المفاتيح للحركة والفأرة للاختيار.",
+      fullscreen: "ملء الشاشة", cargando: "جارٍ تحميل اللعبة…",
+      descargando: "جارٍ تنزيل الرسومات والمحرك.",
+      error: "تعذّر فتح اللعبة. أعد تحميل الصفحة أو جرّب متصفحًا آخر.",
+      reintentar: "المحاولة مجددًا", webgl: "WebGL غير متاح"
+    },
+    zh: {
+      htmlLang: "zh-CN", dir: "ltr", docTitle: "红色地平线 · 火星五日",
+      stageAria: "红色地平线游戏", canvas: "请在支持 3D 图形的浏览器中打开游戏。",
+      idioma: "语言", destino: "第一站 · 火星", t1: "红色", t2: "地平线",
+      subtitulo: "火星五日",
+      historia: "与诺拉、伊丽丝和特奥同行，了解庇护所并护送他们平安返回。游戏中按 Ctrl + Shift + M 可测试五个火星日。一个「索尔」就是火星上的一天。",
+      jugar: "进入旅程", legend: "快速预览",
+      fRecursos: "测试机制", fIncompleta: "任务未完成", fCumplida: "任务圆满完成",
+      listo: "使用键盘移动，使用鼠标选择。",
+      fullscreen: "全屏", cargando: "正在加载游戏…",
+      descargando: "正在下载美术资源与引擎。",
+      error: "无法启动游戏。请刷新页面或更换浏览器重试。",
+      reintentar: "重试", webgl: "WebGL 不可用"
+    }
+  };
+  const STORAGE_KEY = "horizonte_rojo_lang";
   const canvas = document.querySelector("#canvas");
   const stage = document.querySelector("#stage");
+  const expedicion = document.querySelector(".expedicion");
   const play = document.querySelector("#play");
   const status = document.querySelector("#status");
   const progreso = document.querySelector("#progreso");
   const fullscreen = document.querySelector("#fullscreen");
+  const idiomaBar = document.querySelector(".idiomas");
+  const idiomaBtns = [...document.querySelectorAll("[data-lang]")];
+  const finales = [...document.querySelectorAll("[data-final]")];
+  let lang = (() => {
+    const param = new URLSearchParams(location.search).get("lang");
+    if (param && TEXTOS[param]) return param;
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved && TEXTOS[saved]) return saved;
+    } catch {}
+    return "es";
+  })();
+  let estadoTexto = "listo";
+  function aplicarIdioma(codigo, guardar = true) {
+    if (!TEXTOS[codigo]) codigo = "es";
+    lang = codigo;
+    if (guardar) {
+      try { localStorage.setItem(STORAGE_KEY, lang); } catch {}
+    }
+    const tx = TEXTOS[lang];
+    document.documentElement.lang = tx.htmlLang;
+    document.title = tx.docTitle;
+    stage.setAttribute("aria-label", tx.stageAria);
+    canvas.textContent = tx.canvas;
+    expedicion.dir = tx.dir;
+    idiomaBar.setAttribute("aria-label", tx.idioma);
+    document.querySelector("#idioma-label").textContent = tx.idioma;
+    document.querySelector(".destino").textContent = tx.destino;
+    document.querySelector("#titulo-1").textContent = tx.t1;
+    document.querySelector("#titulo-2").textContent = tx.t2;
+    document.querySelector("h2").textContent = tx.subtitulo;
+    document.querySelector(".historia").textContent = tx.historia;
+    play.textContent = estadoTexto === "cargando" ? tx.cargando : estadoTexto === "error" ? tx.reintentar : tx.jugar;
+    document.querySelector(".finales legend").textContent = tx.legend;
+    document.querySelector('[data-final="recursos"]').textContent = tx.fRecursos;
+    document.querySelector('[data-final="incompleta"]').textContent = tx.fIncompleta;
+    document.querySelector('[data-final="cumplida"]').textContent = tx.fCumplida;
+    status.textContent = estadoTexto === "cargando" ? tx.descargando : estadoTexto === "error" ? tx.error : tx.listo;
+    fullscreen.setAttribute("aria-label", tx.fullscreen);
+    fullscreen.title = tx.fullscreen;
+    idiomaBtns.forEach(btn => btn.setAttribute("aria-pressed", String(btn.dataset.lang === lang)));
+  }
+  idiomaBtns.forEach(btn => btn.addEventListener("click", () => aplicarIdioma(btn.dataset.lang)));
+  aplicarIdioma(lang, false);
   function fitCanvas() {
     const bounds = canvas.getBoundingClientRect();
     if (!bounds.width || !bounds.height) return;
@@ -83,14 +231,13 @@
     if (canvas.height !== height) canvas.height = height;
   }
   new ResizeObserver(fitCanvas).observe(canvas);
-  const finales = [...document.querySelectorAll("[data-final]")];
   const config = $GODOT_CONFIG;
   const pack = config.mainPack || config.executable + ".pck";
   let engine;
   let preparacion;
   function preparar() {
     if (preparacion) return preparacion;
-    if (!Engine.isWebGLAvailable()) return Promise.reject(new Error("WebGL no disponible"));
+    if (!Engine.isWebGLAvailable()) return Promise.reject(new Error(TEXTOS[lang].webgl));
     engine = new Engine({
       ...config,
       onProgress(current, total) {
@@ -105,27 +252,31 @@
   preparar().catch(() => {});
   async function iniciar(final = "") {
     if (play.disabled) return;
+    idiomaBtns.forEach(button => { button.disabled = true; });
     finales.forEach(button => { button.disabled = true; });
     play.disabled = true;
-    play.textContent = "Cargando el juego…";
-    status.textContent = "Descargando ilustraciones y motor.";
+    estadoTexto = "cargando";
+    play.textContent = TEXTOS[lang].cargando;
+    status.textContent = TEXTOS[lang].descargando;
     progreso.hidden = false;
     try {
       fitCanvas();
       await preparar();
-      const args = ["--main-pack", pack];
-      if (final) args.push("--", "--final-" + final);
+      const args = ["--main-pack", pack, "--", "--lang=" + lang];
+      if (final) args.push("--final-" + final);
       await engine.start({ canvas, args });
       document.querySelector("#launch").hidden = true;
       fullscreen.hidden = !stage.requestFullscreen;
       canvas.focus();
     } catch (error) {
       console.error(error);
-      status.textContent = "No pudimos abrir el juego. Recarga la página o prueba con otro navegador.";
+      estadoTexto = "error";
+      status.textContent = TEXTOS[lang].error;
       progreso.hidden = true;
-      play.textContent = "Volver a intentar";
+      play.textContent = TEXTOS[lang].reintentar;
       play.disabled = false;
       finales.forEach(button => { button.disabled = false; });
+      idiomaBtns.forEach(button => { button.disabled = false; });
     }
   }
   play.addEventListener("click", () => iniciar());

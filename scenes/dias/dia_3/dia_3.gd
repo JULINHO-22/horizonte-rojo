@@ -16,9 +16,6 @@ const PAPEL := Color("#fff1db")
 const CIAN := Color("#83eadc")
 const NARANJA := Color("#f6a44e")
 const ROJO := Color("#ff6b6b")
-const NOMBRES_CULTIVOS := {
-	"lechuga": "Lechuga", "rabano": "Rábano", "tomate": "Tomate", "papa": "Papa",
-}
 
 var recursos
 var sistemas_danados := false
@@ -105,7 +102,7 @@ func _preparar_dia() -> void:
 		recursos.cambiado.connect(_actualizar_hud)
 	if sistemas_danados and not datos.decisiones.has("consecuencia_tormenta_dia_2"):
 		if not recursos.aplicar_perdidas("consecuencia_tormenta_dia_2", {"agua": 1, "oxigeno": 1}):
-			_mostrar_error("No se pudieron aplicar las consecuencias pendientes del día 2.")
+			_mostrar_error(I18n.t("sol3.err.consecuencias"))
 			return
 		if recursos.estado().derrota != "":
 			_mostrar_derrota(recursos.estado().derrota)
@@ -120,12 +117,12 @@ func _preparar_dia() -> void:
 	if recursos.estado().aire_asegurado:
 		var decisiones: Array = recursos.estado().decisiones
 		decision = "invernadero" if "sol_3_invernadero" in decisiones else "oxigeno"
-		_cerrar_decision("El aire ya está asegurado.")
+		_cerrar_decision(I18n.t("sol3.pluto.aire_listo"))
 	elif modo_prueba:
 		_mostrar_inicio()
 	else:
 		_comenzar_recorrido()
-		_decir_pluto("La tormenta terminó. Revisa los sistemas en Control y comprueba el invernadero.")
+		_decir_pluto(I18n.t("sol3.pluto.inicio"))
 
 
 func _crear_estado_de_prueba():
@@ -164,7 +161,7 @@ func _crear_mapa() -> void:
 
 
 func _crear_interfaz() -> void:
-	titulo = _etiqueta("DÍA 3 · OXÍGENO O INVERNADERO", Rect2(24, 18, 430, 29), 20, CIAN)
+	titulo = _etiqueta(I18n.t("sol3.hud.titulo"), Rect2(24, 18, 430, 29), 20, CIAN)
 	_aplicar_sombra(titulo)
 	add_child(titulo)
 	objetivo = _etiqueta("", Rect2(24, 49, 480, 28), 17, PAPEL)
@@ -173,11 +170,11 @@ func _crear_interfaz() -> void:
 
 	dialogo = DialogoEscena.new()
 	add_child(dialogo)
-	pista = _etiqueta("WASD / flechas · Caminar   E · Interactuar   M · Plano", Rect2(24, 682, 520, 24), 14, CIAN)
+	pista = _etiqueta(I18n.t("sol3.hud.ayuda"), Rect2(24, 682, 520, 24), 14, CIAN)
 	_aplicar_sombra(pista)
 	add_child(pista)
 
-	boton_accion = _boton("Continuar", Rect2(0, 0, 294, 50), _accion)
+	boton_accion = _boton(I18n.t("ui.continuar"), Rect2(0, 0, 294, 50), _accion)
 	add_child(boton_accion)
 
 	velo_fallo = ColorRect.new()
@@ -190,12 +187,12 @@ func _crear_interfaz() -> void:
 
 
 func _mostrar_inicio() -> void:
-	var columna := _crear_modal("Después de la tormenta")
-	_texto_modal(columna, "Las reservas conservan los valores de los días anteriores. %s" % (
-		"Los sistemas quedaron dañados y se aplicaron las pérdidas pendientes." if sistemas_danados
-		else "La reparación del día 2 protegió los sistemas."), 19)
-	_decir_pluto("La tormenta terminó. Vamos a revisar cómo quedaron los sistemas de Umbra. Empecemos por el invernadero y, si las reservas lo permiten, plantemos algo.")
-	var continuar := _boton_fila(columna, "Comenzar la revisión", _comenzar_recorrido)
+	var columna := _crear_modal(I18n.t("sol3.intro.tit"))
+	_texto_modal(columna, I18n.tf("sol3.intro.res", [
+		I18n.t("sol3.intro.danados") if sistemas_danados
+		else I18n.t("sol3.intro.protegidos")]), 19)
+	_decir_pluto(I18n.t("sol3.intro.desc"))
+	var continuar := _boton_fila(columna, I18n.t("sol3.intro.btn"), _comenzar_recorrido)
 	continuar.grab_focus()
 
 
@@ -203,7 +200,7 @@ func _comenzar_recorrido() -> void:
 	_cerrar_modal()
 	fase = "ir_plantas"
 	puesto.objetivo_mision = "cultivos"
-	_decir_pluto("Empecemos por el invernadero. Revisa las bandejas y planta algo si las reservas lo permiten.")
+	_decir_pluto(I18n.t("sol3.pluto.empecemos"))
 	_actualizar_guia()
 
 
@@ -227,31 +224,31 @@ func _actualizar_guia() -> void:
 	boton_accion.visible = false
 	match fase:
 		"inicio":
-			objetivo.text = "OBJETIVO · Escuchar a Pluto"
+			objetivo.text = I18n.t("sol3.obj.escuchar")
 		"ir_plantas":
-			objetivo.text = "OBJETIVO · Revisar Plantas"
+			objetivo.text = I18n.t("sol3.obj.plantas")
 			if puesto.terminal_cercana() == "cultivos":
-				boton_accion.text = "E · Revisar el invernadero"
+				boton_accion.text = I18n.t("sol3.act.invernadero")
 				boton_accion.visible = modal == null
 		"ir_oxigeno":
-			objetivo.text = "OBJETIVO · Revisar Agua y Oxígeno"
+			objetivo.text = I18n.t("sol3.obj.agua")
 			if _oxigeno_cercano():
-				boton_accion.text = "E · Comprobar el oxígeno"
+				boton_accion.text = I18n.t("sol3.act.oxigeno")
 				boton_accion.visible = modal == null
 		"decision":
-			objetivo.text = "EMERGENCIA · Elige un circuito"
+			objetivo.text = I18n.t("sol3.obj.emergencia")
 		"cierre":
-			objetivo.text = "OBJETIVO · Comer si hace falta y dormir"
+			objetivo.text = I18n.t("sol3.obj.descansar")
 			if puesto.terminal_cercana() == "cultivos":
-				boton_accion.text = "E · Revisar alimento"
+				boton_accion.text = I18n.t("sol3.act.alimento")
 				boton_accion.visible = modal == null
 			elif puesto.terminal_cercana() == "dormitorio":
-				boton_accion.text = "E · Dormir y cerrar el día"
+				boton_accion.text = I18n.t("sol3.act.dormir")
 				boton_accion.visible = modal == null
 		"terminado":
-			objetivo.text = "DÍA 3 COMPLETADO"
+			objetivo.text = I18n.t("sol3.obj.fin")
 	if _juego_activo() and not plano and puesto.terminal_cercana() == "radio":
-		boton_accion.text = "E · Consultar tareas"
+		boton_accion.text = I18n.t("sol3.act.tareas")
 		boton_accion.show()
 	if boton_accion.visible:
 		_ubicar_accion()
@@ -266,9 +263,9 @@ func _accion() -> void:
 		panel_control.cerrar_solicitado.connect(_cerrar_control)
 		add_child(panel_control)
 		var tarea: String = {
-			"ir_plantas": "Revisa los cultivos y comprueba el regulador en el laboratorio de Agua y Oxígeno.",
-			"ir_oxigeno": "Comprueba el regulador en el laboratorio de Agua y Oxígeno.",
-			"cierre": "Comprueba que quede comida y descansa en el dormitorio.",
+			"ir_plantas": I18n.t("sol3.tarea.0"),
+			"ir_oxigeno": I18n.t("sol3.tarea.1"),
+			"cierre": I18n.t("sol3.tarea.2"),
 		}[fase]
 		panel_control.mostrar_tarea(tarea)
 		return
@@ -293,8 +290,8 @@ func _cerrar_control() -> void:
 func _abrir_panel_plantas() -> void:
 	invernadero_revisado = true
 	var datos: Dictionary = recursos.estado()
-	var columna := _crear_modal("Sala de Plantas")
-	_texto_modal(columna, "Las bandejas, el alimento, el agua y la energía pertenecen al mismo estado persistente de la campaña.", 17)
+	var columna := _crear_modal(I18n.t("sol3.plantas.tit"))
+	_texto_modal(columna, I18n.t("sol3.plantas.sub"), 17)
 	if mensaje_panel != "":
 		_texto_modal(columna, mensaje_panel, 17, CIAN)
 		mensaje_panel = ""
@@ -303,8 +300,8 @@ func _abrir_panel_plantas() -> void:
 		var fila := HBoxContainer.new()
 		fila.add_theme_constant_override("separation", 10)
 		columna.add_child(fila)
-		var descripcion := "%s · %d energía + 1 agua · %d s · +%d alimento" % [
-			NOMBRES_CULTIVOS[cultivo], ficha.energia, int(ficha.segundos), ficha.alimento]
+		var descripcion := I18n.tf("sol3.plantas.ficha", [
+			I18n.cultivo(cultivo), ficha.energia, int(ficha.segundos), ficha.alimento])
 		var texto := _texto_modal(fila, descripcion, 16)
 		texto.custom_minimum_size.x = 520
 		bandejas_ui[cultivo] = _boton_fila(fila, "", _usar_bandeja.bind(cultivo))
@@ -312,7 +309,7 @@ func _abrir_panel_plantas() -> void:
 	var pie := HBoxContainer.new()
 	pie.add_theme_constant_override("separation", 12)
 	columna.add_child(pie)
-	var volver_texto := "Continuar hacia el oxígeno" if fase == "ir_plantas" else "Volver al recorrido"
+	var volver_texto := I18n.t("sol3.plantas.cont_ox") if fase == "ir_plantas" else I18n.t("sol3.plantas.volver")
 	_boton_fila(pie, volver_texto, _cerrar_panel_plantas)
 
 func _usar_bandeja(cultivo: String) -> void:
@@ -326,29 +323,29 @@ func _actualizar_bandejas(datos: Dictionary) -> void:
 		var control: Button = bandejas_ui[cultivo]
 		var espera: float = datos.bandejas.get(cultivo, -1.0)
 		if espera < 0:
-			control.text = "Sembrar"
+			control.text = I18n.t("sol3.plantas.sembrar")
 			control.disabled = datos.reservas.energia < Recursos.CULTIVOS[cultivo].energia or datos.reservas.agua == 0
 		elif espera > 0:
-			control.text = "Faltan %d s" % ceili(espera)
+			control.text = I18n.tf("sol3.plantas.faltan", [ceili(espera)])
 			control.disabled = true
 		else:
-			control.text = "Recoger y comer"
+			control.text = I18n.t("sol3.plantas.recoger")
 			control.disabled = datos.reservas.alimento >= Recursos.LIMITES.alimento
 
 func _sembrar(cultivo: String) -> void:
 	if recursos.sembrar(cultivo):
-		mensaje_panel = "%s sembrado. Puedes esperar aquí o seguir explorando." % NOMBRES_CULTIVOS[cultivo]
+		mensaje_panel = I18n.tf("sol3.plantas.sembrado", [I18n.cultivo(cultivo)])
 	else:
-		mensaje_panel = "No se pudo sembrar: revisa energía, agua y bandejas disponibles."
+		mensaje_panel = I18n.t("sol3.plantas.no_sembrar")
 	_cerrar_modal()
 	_abrir_panel_plantas()
 
 
 func _comer(cultivo: String) -> void:
 	if recursos.comer(cultivo):
-		mensaje_panel = "La tripulación comió %s y recuperó alimento." % NOMBRES_CULTIVOS[cultivo].to_lower()
+		mensaje_panel = I18n.tf("sol3.plantas.comio", [I18n.cultivo(cultivo, true)])
 	else:
-		mensaje_panel = "Ese cultivo todavía no está listo o la reserva de alimento ya está llena."
+		mensaje_panel = I18n.t("sol3.plantas.no_listo")
 	_cerrar_modal()
 	_abrir_panel_plantas()
 
@@ -358,7 +355,7 @@ func _cerrar_panel_plantas() -> void:
 	if fase == "ir_plantas":
 		fase = "ir_oxigeno"
 		puesto.objetivo_mision = "agua"
-		_decir_pluto("Bien. Ahora revisemos el oxígeno en el laboratorio conjunto antes de continuar con el día.")
+		_decir_pluto(I18n.t("sol3.plantas.sig"))
 	_actualizar_guia()
 
 
@@ -378,34 +375,34 @@ func _mostrar_decision() -> void:
 	var costo_oxigeno_energia := 7 if sistemas_danados else 6
 	var costo_oxigeno_agua := 2 if sistemas_danados else 1
 	var costo_tanques := 4 if sistemas_danados else 3
-	var columna := _crear_modal("Fallo eléctrico")
-	_decir_pluto("Espera… el regulador no responde. La energía disponible solo puede mantener uno de los circuitos: oxígeno o invernadero.")
-	_texto_modal(columna, "Elige después de revisar el costo y la consecuencia.", 17)
+	var columna := _crear_modal(I18n.t("sol3.fallo.tit"))
+	_decir_pluto(I18n.t("sol3.fallo.desc"))
+	_texto_modal(columna, I18n.t("sol3.fallo.aviso"), 17)
 
 	var oxigeno := _boton_fila(columna,
-		"PRIORIZAR OXÍGENO · -%d energía · -%d agua · -2 alimento\nLlena y estabiliza el oxígeno; activación diaria cumplida." % [costo_oxigeno_energia, costo_oxigeno_agua],
+		I18n.tf("sol3.fallo.btn_ox", [costo_oxigeno_energia, costo_oxigeno_agua]),
 		_elegir_oxigeno)
 	oxigeno.custom_minimum_size.y = 72
 	oxigeno.disabled = (datos.reservas.energia < costo_oxigeno_energia
 		or datos.reservas.agua < costo_oxigeno_agua or datos.reservas.alimento < 2)
 
 	var invernadero := _boton_fila(columna,
-		"PRIORIZAR INVERNADERO · -%d energía · -1 agua · -2 oxígeno · +2 alimento\nActiva los tanques de emergencia y asegura el aire de esta noche." % costo_tanques,
+		I18n.tf("sol3.fallo.btn_inv", [costo_tanques]),
 		_elegir_invernadero)
 	invernadero.custom_minimum_size.y = 72
 	invernadero.disabled = (datos.reservas.energia < costo_tanques
 		or datos.reservas.agua < 1 or datos.reservas.oxigeno <= 2)
 
 	if oxigeno.disabled and invernadero.disabled:
-		_texto_modal(columna, "Las reservas actuales no permiten completar ninguna activación. El aire seguirá sin asegurar.", 17, ROJO)
-	_boton_fila(columna, "Volver al recorrido y revisar las reservas", _volver_desde_decision)
+		_texto_modal(columna, I18n.t("sol3.fallo.ninguna"), 17, ROJO)
+	_boton_fila(columna, I18n.t("sol3.fallo.volver"), _volver_desde_decision)
 
 
 func _volver_desde_decision() -> void:
 	_cerrar_modal()
 	fase = "ir_oxigeno"
 	puesto.objetivo_mision = "agua"
-	_decir_pluto("El fallo sigue activo. Revisa las reservas y vuelve al sistema de oxígeno para decidir.")
+	_decir_pluto(I18n.t("sol3.fallo.sigue"))
 
 
 func _oxigeno_cercano() -> bool:
@@ -416,34 +413,34 @@ func _elegir_oxigeno() -> void:
 	var costo_energia := 7 if sistemas_danados else 6
 	var costo_agua := 2 if sistemas_danados else 1
 	if not recursos.activar_oxigeno(costo_energia, costo_agua, 2, true):
-		mensaje_panel = "No hay reservas suficientes para priorizar el oxígeno."
+		mensaje_panel = I18n.t("sol3.fallo.no_ox")
 		_cerrar_modal()
 		_mostrar_decision()
 		return
 	decision = "oxigeno"
 	recursos.aplicar_decision("sol_3_oxigeno", {})
 	decision_guardada.emit()
-	_cerrar_decision("Oxígeno estabilizado. Se perdió la cosecha, pero el aire quedó asegurado por hoy.")
+	_cerrar_decision(I18n.t("sol3.fallo.ok_ox"))
 
 
 func _elegir_invernadero() -> void:
 	var costo_energia := 4 if sistemas_danados else 3
 	if not recursos.usar_tanques_emergencia(costo_energia):
-		mensaje_panel = "No hay reservas suficientes para activar los tanques de emergencia."
+		mensaje_panel = I18n.t("sol3.fallo.no_inv")
 		_cerrar_modal()
 		_mostrar_decision()
 		return
 	decision = "invernadero"
 	recursos.aplicar_decision("sol_3_invernadero", {})
 	decision_guardada.emit()
-	_cerrar_decision("Invernadero priorizado. Los tanques de emergencia cubrirán el suministro nocturno de hoy.")
+	_cerrar_decision(I18n.t("sol3.fallo.ok_inv"))
 
 
 func _cerrar_decision(mensaje: String) -> void:
 	_cerrar_modal()
 	fase = "cierre"
 	puesto.objetivo_mision = "dormitorio"
-	_decir_pluto(mensaje + " Revisa el alimento y vuelve al dormitorio.")
+	_decir_pluto(mensaje + I18n.t("sol3.fallo.revisa_alim"))
 	_actualizar_hud()
 	_actualizar_guia()
 
@@ -451,22 +448,22 @@ func _cerrar_decision(mensaje: String) -> void:
 func _solicitar_dormir() -> void:
 	var datos: Dictionary = recursos.estado()
 	if not datos.aire_asegurado:
-		_decir_pluto("No podemos dormir: el aire todavía no está asegurado.")
+		_decir_pluto(I18n.t("sol3.dormir.sin_aire"))
 		return
 	if datos.reservas.alimento == 0:
-		_decir_pluto("No podemos dormir con alimento en cero. Vuelve a Plantas y come una cosecha lista.")
+		_decir_pluto(I18n.t("sol3.dormir.sin_comida"))
 		puesto.objetivo_mision = "cultivos"
 		return
 	var resultado := _resultado()
 	if not modo_prueba:
 		descanso_solicitado.emit(resultado)
-		_mostrar_fin("Sol 3 listo", "El controlador de campaña recibió la solicitud de descanso.")
+		_mostrar_fin(I18n.t("sol3.fin.campana_tit"), I18n.t("sol3.fin.campana_msg"))
 		return
 	var completado: bool = recursos.dormir()
 	if completado:
 		resultado["estado_despues_de_dormir"] = recursos.estado()
 		dia_completado.emit(resultado)
-		_mostrar_fin("Sol 3 completado", "La prueba local avanzó al día 4 sin reiniciar las reservas.")
+		_mostrar_fin(I18n.t("sol3.fin.local_tit"), I18n.t("sol3.fin.local_msg"))
 	else:
 		_mostrar_derrota(recursos.estado().derrota)
 
@@ -518,32 +515,39 @@ func _mostrar_fin(encabezado: String, texto: String) -> void:
 	puesto.objetivo_mision = ""
 	var columna := _crear_modal(encabezado)
 	_texto_modal(columna, texto, 20, CIAN)
-	_texto_modal(columna, "Decisión: %s. Sistemas heredados: %s." % [
-		"priorizar " + decision if decision != "" else "sin decisión",
-		"dañados" if sistemas_danados else "protegidos"], 18)
+	var texto_decision := I18n.t("sol3.dec.ninguna")
+	if decision == "oxigeno":
+		texto_decision = I18n.t("sol3.dec.oxigeno")
+	elif decision == "invernadero":
+		texto_decision = I18n.t("sol3.dec.invernadero")
+	elif decision != "":
+		texto_decision = decision
+	_texto_modal(columna, I18n.tf("sol3.fin.resumen", [
+		texto_decision,
+		I18n.t("sol3.sist.danados") if sistemas_danados else I18n.t("sol3.sist.protegidos")]), 18)
 	if modo_prueba:
-		_boton_fila(columna, "Reiniciar prueba del Sol 3", get_tree().reload_current_scene)
+		_boton_fila(columna, I18n.t("sol3.btn.reiniciar"), get_tree().reload_current_scene)
 
 
 func _mostrar_derrota(motivo: String) -> void:
 	if fase == "terminado":
 		return
 	var textos := {
-		"oxigeno_agotado": "El oxígeno llegó a cero.",
-		"aire_sin_activar": "Se intentó dormir sin asegurar el aire.",
-		"hambre_al_dormir": "Se intentó dormir sin alimento.",
+		"oxigeno_agotado": I18n.t("sol3.derrota.ox"),
+		"aire_sin_activar": I18n.t("sol3.derrota.aire"),
+		"hambre_al_dormir": I18n.t("sol3.derrota.comida"),
 	}
-	_mostrar_fin("GAME OVER", textos.get(motivo, "La tripulación no puede continuar."))
+	_mostrar_fin(I18n.t("ui.game_over_upper"), textos.get(motivo, I18n.t("sol3.derrota.sub")))
 
 
 func _mostrar_error_de_entrada(datos: Dictionary) -> void:
-	_mostrar_error("El Sol 3 necesita una partida abierta en el sol 3. Estado recibido: sol %s, en curso: %s." % [
-		str(datos.get("sol", "?")), str(datos.get("en_curso", false))])
+	_mostrar_error(I18n.tf("sol3.err.estado", [
+		str(datos.get("sol", "?")), str(datos.get("en_curso", false))]))
 
 
 func _mostrar_error(texto: String) -> void:
 	fase = "terminado"
-	var columna := _crear_modal("No se puede iniciar el Sol 3")
+	var columna := _crear_modal(I18n.t("sol3.err.tit"))
 	_texto_modal(columna, texto, 19, ROJO)
 
 

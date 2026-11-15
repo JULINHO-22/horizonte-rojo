@@ -52,43 +52,39 @@ func _draw() -> void:
 		return
 	draw_rect(Rect2(Vector2.ZERO, size), Color("#0c2029"))
 	if solo_alimento:
-		_rotulo("Comida", Vector2(8, 25), ROJO)
+		_rotulo(I18n.t("ind.comida"), Vector2(8, 25), ROJO)
 		for i in range(10):
 			_icono(TOMATE, Rect2(73 + i * 19, 10, 17, 19), i < r.alimento)
 		return
 	draw_rect(Rect2(2, 2, 382, 148), Color("#3c7880"), false, 2)
 	draw_line(Vector2(144, 4), Vector2(144, 148), Color("#3c7880"), 2)
 	draw_line(Vector2(266, 4), Vector2(266, 148), Color("#3c7880"), 2)
-	_rotulo("Energía", Vector2(12, 26), ORO)
+	_rotulo(I18n.t("ind.energia"), Vector2(12, 26), ORO)
 	for i in range(12):
 		_icono(RAYO, Rect2(11 + i * 10, 42, 9, 15), i < r.energia)
-	var rendimiento: String = {"bajo": "Alto", "medio": "Medio", "alto": "Bajo", "tormenta": "Pausado"}[datos.polvo]
 	_rotulo("%d / 12" % r.energia, Vector2(12, 84), PAPEL)
-	_rotulo("Solar: " + rendimiento, Vector2(12, 117), {"bajo": CIAN, "medio": ORO, "alto": ROJO, "tormenta": ROJO}[datos.polvo])
-	_rotulo("Oxígeno · O₂", Vector2(154, 26), CIAN)
+	_rotulo(I18n.t("ind.solar." + datos.polvo), Vector2(12, 117), {"bajo": CIAN, "medio": ORO, "alto": ROJO, "tormenta": ROJO}[datos.polvo])
+	_rotulo(I18n.t("ind.oxigeno_o2"), Vector2(154, 26), CIAN)
 	draw_rect(Rect2(172, 36, 62, 104), Color("#427d84"), false, 2)
 	for i in range(8):
 		var sitio := Vector2(183 + (i % 2) * 25, 116 - floori(i / 2.0) * 23)
 		_icono(BURBUJA, Rect2(sitio, Vector2(16, 16)), i < r.oxigeno)
-	_rotulo("Agua", Vector2(298, 26), AZUL)
+	_rotulo(I18n.t("ind.agua"), Vector2(298, 26), AZUL)
 	_dibujar_gota(Rect2(292, 39, 63, 85))
 
 func _dibujar_consola(r: Dictionary) -> void:
 	# El metal, el cristal y los tres biseles pertenecen al arte de la máquina.
-	_rotulo("Oxígeno", Vector2(1, 27), CIAN, 15)
+	_rotulo(I18n.t("ind.oxigeno"), Vector2(1, 27), CIAN, 15)
 	for i in range(8):
 		var sitio := Vector2(7 + (i % 2) * 24, 76 - floori(i / 2.0) * 13)
 		_icono(BURBUJA, Rect2(sitio, Vector2(11, 11)), i < r.oxigeno)
-	_rotulo("Energía", Vector2(94, 23), ORO, 18)
+	_rotulo(I18n.t("ind.energia"), Vector2(94, 23), ORO, 18)
 	_rotulo("%02d / 12" % r.energia, Vector2(202, 24), PAPEL, 20)
 	for i in range(12):
 		_icono(RAYO, Rect2(92 + i * 16, 38, 11, 17), i < r.energia)
-	var estado_solar: Array = {
-		"bajo": ["Alto", CIAN], "medio": ["Medio", ORO],
-		"alto": ["Bajo", ROJO], "tormenta": ["Pausado", ROJO],
-	}[datos.polvo]
-	_rotulo("Solar: " + estado_solar[0], Vector2(94, 76), estado_solar[1], 16)
-	_rotulo("Agua", Vector2(321, 26), AZUL, 16)
+	var color_solar: Color = {"bajo": CIAN, "medio": ORO, "alto": ROJO, "tormenta": ROJO}[datos.polvo]
+	_rotulo(I18n.t("ind.solar." + datos.polvo), Vector2(94, 76), color_solar, 16)
+	_rotulo(I18n.t("ind.agua"), Vector2(321, 26), AZUL, 16)
 	_dibujar_gota(Rect2(323, 35, 29, 50))
 
 func _dibujar_gota(gota: Rect2) -> void:

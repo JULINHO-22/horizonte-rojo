@@ -46,17 +46,17 @@ func _ready() -> void:
 func etapa() -> String:
 	if regreso:
 		if progreso < 0.30:
-			return "La cápsula deja atrás Marte"
+			return I18n.t("viaje.etapa.dejando_marte")
 		if progreso < 0.68:
 			return ""
-		return "Nos acercamos a la Tierra"
+		return I18n.t("viaje.etapa.acercando_tierra")
 	if progreso < 0.28:
-		return "Impulso de salida desde la Tierra"
+		return I18n.t("viaje.etapa.impulso_tierra")
 	if progreso < INICIO_SEPARACION:
 		return ""
 	if progreso < FIN_SEPARACION:
-		return "Separación del módulo de descenso"
-	return "El módulo se acerca a Marte"
+		return I18n.t("viaje.etapa.separacion")
+	return I18n.t("viaje.etapa.acercando_marte")
 
 func _crear_imagen(textura: Texture2D, transparente := false) -> TextureRect:
 	var imagen := TextureRect.new()

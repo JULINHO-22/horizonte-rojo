@@ -30,7 +30,7 @@ func _ready() -> void:
 	hide()
 
 func decir(quien: String, texto: String) -> void:
-	var encabezado := quien + ":"
+	var encabezado := I18n.encabezado_hablante(quien)
 	if frase.text != texto or nombre.text != encabezado:
 		nombre.text = encabezado
 		frase.text = texto

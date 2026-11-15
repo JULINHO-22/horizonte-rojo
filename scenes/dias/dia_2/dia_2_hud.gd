@@ -35,16 +35,16 @@ var animacion_logro: Tween
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 
-	_texto(self, Rect2(24, 18, 250, 28), "SOL 2 · TORMENTA DE POLVO", 19, PAPEL)
-	solar_alerta = _texto(self, Rect2(24, 45, 280, 22), "CARGA SOLAR DETENIDA", 14, ROJO)
+	_texto(self, Rect2(24, 18, 250, 28), I18n.t("sol2.hud.titulo"), 19, PAPEL)
+	solar_alerta = _texto(self, Rect2(24, 45, 280, 22), I18n.t("sol2.hud.solar"), 14, ROJO)
 	pasos = _texto(self, Rect2(24, 76, 820, 24), "", 16, PAPEL)
 	recordatorio = _texto(self, Rect2(24, 106, 825, 28), "", 17, ORO)
 	recordatorio.add_theme_color_override("font_outline_color", TINTA)
 	recordatorio.add_theme_constant_override("outline_size", 6)
 
 	# Botones de mapa y pausa apilados a la derecha (x=1140 a x=1264)
-	mapa = _boton(self, Rect2(1140, 14, 124, 36), "M · Plano")
-	pausa = _boton(self, Rect2(1140, 56, 124, 36), "Esc · Pausa")
+	mapa = _boton(self, Rect2(1140, 14, 124, 36), I18n.t("ui.m_plano"))
+	pausa = _boton(self, Rect2(1140, 56, 124, 36), I18n.t("ui.esc_pausa"))
 
 	# Indicador de navegación en el suelo / objetivo
 	marca = _texto(self, Rect2(0, 0, 70, 44), "◆", 28, CIAN)
@@ -96,15 +96,15 @@ func actualizar(lugar: String, mensaje: String, principal: String, otra: String,
 		actuar: bool, elegir: bool, interior: bool, plano: bool, punto: Vector2, nora: Vector2) -> void:
 	titulo.text = lugar
 	detalle.text = mensaje
-	accion.text = "E · " + principal
+	accion.text = I18n.tf("ui.e_prefix", [principal])
 	accion.disabled = not actuar
 	accion.visible = actuar
 	alternativa.disabled = not elegir
 	alternativa.visible = not otra.is_empty() and elegir
-	alternativa.text = "Q · " + otra
+	alternativa.text = I18n.tf("ui.q_prefix", [otra])
 
 	mapa.visible = interior
-	mapa.text = "M · Cerrar plano" if plano else "M · Plano"
+	mapa.text = I18n.t("ui.m_cerrar_plano" if plano else "ui.m_plano")
 
 	var visible_punto := punto.clamp(Vector2(60, 120), Vector2(1220, 660))
 	_ubicar_guia(visible_punto, nora, interior)
@@ -125,7 +125,7 @@ func actualizar(lugar: String, mensaje: String, principal: String, otra: String,
 func aviso_de_pluto(visible_en_escena: bool, posicion: Vector2, texto := "") -> void:
 	if visible_en_escena:
 		aviso_pluto.position = Vector2(clampf(posicion.x - 170.0, 42.0, 872.0), clampf(posicion.y - 170.0, 118.0, 471.0))
-		var mensaje := texto if not texto.is_empty() else "Acércate a la consola. Tenemos que decidir qué hacer con la tormenta."
+		var mensaje := texto if not texto.is_empty() else I18n.t("sol2.hud.pluto_inicio")
 		aviso_pluto.decir("Pluto", mensaje)
 	else:
 		aviso_pluto.hide()
@@ -170,7 +170,7 @@ func presentar(encabezado: String, mensaje: String, avance: String) -> void:
 	logro.hide()
 	modal_titulo.text = encabezado
 	modal_detalle.text = mensaje
-	confirmar.text = "E · " + avance
+	confirmar.text = I18n.tf("ui.e_prefix", [avance])
 	confirmar.visible = not avance.is_empty()
 	modal.show()
 
@@ -236,15 +236,15 @@ func ruta_del_dia(estado: Dictionary, salida_pendiente: bool, descansando: bool)
 	var decidido: bool = salida_pendiente or not estado.decisiones.is_empty()
 	var protegido: bool = "dia_2_reparar" in estado.decisiones
 	var dentro: bool = "dia_2_resguardarse" in estado.decisiones
-	pasos.text = "%s PLAN     →     %s AIRE     →     %s EQUIPOS     →     %s DESCANSO" % [
+	pasos.text = I18n.tf("sol2.hud.ruta", [
 		"✓" if decidido else "1", "✓" if estado.aire_asegurado else "2",
-		"✓" if protegido else ("–" if dentro else "3"), "4" if not descansando else "→"]
+		"✓" if protegido else ("–" if dentro else "3"), "4" if not descansando else "→"])
 	if estado.reservas.alimento <= 1 and estado.aire_asegurado:
-		recordatorio.text = "Hace falta comida · visita Plantas antes de dormir."
+		recordatorio.text = I18n.t("sol2.hud.falta_comida")
 		recordatorio.add_theme_color_override("font_color", ORO)
 	elif estado.aire_asegurado:
-		recordatorio.text = "Aire seguro · ya puedes explorar con calma."
+		recordatorio.text = I18n.t("sol2.hud.aire_ok")
 		recordatorio.add_theme_color_override("font_color", VERDE)
 	else:
-		recordatorio.text = "Primero el aire · busca los tanques verdes." if estado.reservas.oxigeno > 3 else "Queda poco aire · sigue la marca hasta los tanques verdes."
+		recordatorio.text = I18n.t("sol2.hud.aire_primero" if estado.reservas.oxigeno > 3 else "sol2.hud.aire_poco")
 		recordatorio.add_theme_color_override("font_color", ORO if estado.reservas.oxigeno > 3 else ROJO)

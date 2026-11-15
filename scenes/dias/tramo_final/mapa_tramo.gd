@@ -143,7 +143,7 @@ func _dibujar_radiacion() -> void:
 	_rotulo_suelo(origen + Vector2(93, -13), fase_radiacion)
 	draw_line(origen, origen + Vector2(186, 0), Color("#39434a"), 3.4, true)
 	draw_line(origen, origen + Vector2(186 * nivel_radiacion, 0), OCRE, 3.4, true)
-	_rotulo_suelo(origen + Vector2(93, 21), "Curiosity · datos de 2017")
+	_rotulo_suelo(origen + Vector2(93, 21), I18n.t("mapa.curiosity"))
 
 func alcance_interaccion() -> float:
 	return 22.0 if interior else 34.0
@@ -165,10 +165,10 @@ func _dibujar_marca(id: String, sitio: Vector2) -> void:
 	var nombre: String = nombres.get(id, "")
 	if cerca:
 		draw_circle(centro, 3.0, color, true, -1.0, true)
-		var prefijo := "Arrastra o pulsa E · " if id == "filtro" or id.begins_with("montaje_") else "E · "
-		nombre = prefijo + nombre
+		var clave_prefijo := "ui.arrastra_e_prefix" if id == "filtro" or id.begins_with("montaje_") else "ui.e_prefix"
+		nombre = I18n.tf(clave_prefijo, [nombre])
 	elif zona == "hielo" and id in ["escarcha", "veta"]:
-		nombre = "Sondeo A" if id == "escarcha" else "Sondeo B"
+		nombre = I18n.t("mapa.sondeo_a") if id == "escarcha" else I18n.t("mapa.sondeo_b")
 	_rotulo_suelo(centro - Vector2(0, 17), nombre)
 
 func _rotulo_suelo(centro: Vector2, texto: String) -> void:

@@ -43,7 +43,7 @@ func configurar(partida: Recursos, antecedentes: Dictionary) -> void:
 
 func _ready() -> void:
 	if recursos == null or recursos.estado().sol not in [4, 5]:
-		push_error("Configura TramoFinal con una partida del día 4 o 5.")
+		push_error(I18n.t("tramo.err.config"))
 		set_process(false)
 		return
 	var marco := Control.new()
@@ -64,7 +64,7 @@ func _ready() -> void:
 			_preparar_noche()
 		else:
 			_preparar_aviso()
-			var aviso := "Iris dejó una nota: los equipos dañados tendrán menos margen mañana." if historial.get("sistemas_danados", false) else "Control recibió un aviso para mañana. Pulsa E junto a la computadora para verlo."
+			var aviso := I18n.t("tramo.s4.iris_nota") if historial.get("sistemas_danados", false) else I18n.t("tramo.s4.aviso")
 			vista.decir("Pluto", aviso)
 	elif historial.has("impacto_solar") and recursos.estado().decisiones.has(Reglas.ID_TORMENTA):
 		mapa.compuerta = 1.0
@@ -72,8 +72,8 @@ func _ready() -> void:
 		_restaurar_impacto(historial.impacto_solar)
 	else:
 		mapa.paneles = 3 if historial.get("refugio_reforzado", false) else 0
-		_paso("aviso5", "Ve a Control y avisa a Tierra antes de cerrar el refugio.", {"control": RADIO})
-		vista.decir("Iris", "La radiación está subiendo. Avisa a Tierra desde Control; después bajaremos al refugio.")
+		_paso("aviso5", I18n.t("tramo.s5.aviso"), {"control": RADIO})
+		vista.decir("Iris", I18n.t("tramo.s5.iris"))
 
 func _process(delta: float) -> void:
 	if _fin:
@@ -138,7 +138,7 @@ func _puntero_inicio(posicion: Vector2) -> void:
 		if mapa.ancla_carga().distance_to(posicion) < 55.0:
 			mapa.arrastre = "objeto"
 		elif not id.is_empty():
-			vista.decir("Pluto", "Toma lo que llevas en la mano y arrástralo hasta el equipo.")
+			vista.decir("Pluto", I18n.t("tramo.pista.arrastra"))
 	elif not id.is_empty():
 		_interactuar(id)
 
@@ -175,26 +175,28 @@ func _cercana() -> String:
 
 func _texto_accion(id: String) -> String:
 	if not id.is_empty() and id == _confirmacion:
-		return "Confirmar espera" if id == "carga" else "Confirmar descanso"
+		return I18n.t("tramo.nodos.descanso_plan") if id == "carga" else I18n.t("tramo.nodos.descanso_fin")
 	if id == "control" and etapa == "aviso5":
-		return "Avisar a Tierra"
+		return I18n.t("tramo.nodos.aviso_s5")
 	if id == "emisora" and etapa == "salida5":
-		return "Enviar resultados y volver" if historial.impacto_solar.final == "mision_cumplida" else "Confirmar evacuación"
+		return I18n.t("tramo.nodos.enviar_ok") if historial.impacto_solar.final == "mision_cumplida" else I18n.t("tramo.nodos.evacuar")
 	if etapa == "sondeos":
 		if _lecturas.has(id):
-			return "Extraer la muestra" if id == "veta" and _lecturas.size() == 2 else "Revisar la lectura"
-		return "Medir bajo el suelo" if not id.is_empty() else ""
+			return I18n.t("tramo.nodos.extraer") if id == "veta" and _lecturas.size() == 2 else I18n.t("tramo.nodos.revisar")
+		return I18n.t("tramo.nodos.medir") if not id.is_empty() else ""
 	if id.begins_with("montaje_"):
-		return "Soporte del blindaje"
-	return {
-		"control": "Abrir Control", "afuera": "Salir al barranco", "retorno": "Volver a la base",
-		"filtro": "Limpiar la muestra", "taller": "Recoger protecciones",
-		"refugio": "Entrar al núcleo protegido", "montaje": "Colocar blindaje",
-		"ventilacion": "Comprobar el paso del aire", "aire": "Revisar oxígeno",
-		"descanso": "Cerrar el día", "carga": "Esperar carga solar", "plantas": "Revisar los cultivos",
-		"sello": "Cerrar desde dentro", "emisora": "Revisar la señal de Tierra",
-		"volver_capsula": "Abrir paso a la cápsula",
-	}.get(id, "")
+		return I18n.t("tramo.nodos.montaje")
+	var claves := {
+		"control": "tramo.nodos.radio", "afuera": "tramo.nodos.afuera", "retorno": "tramo.nodos.retorno",
+		"filtro": "tramo.nodos.filtro", "taller": "tramo.nodos.taller",
+		"refugio": "tramo.nodos.refugio", "montaje": "tramo.nodos.blindaje",
+		"ventilacion": "tramo.nodos.ventilacion", "aire": "tramo.nodos.oxigeno",
+		"descanso": "tramo.nodos.cama", "carga": "tramo.nodos.espera", "plantas": "tramo.nodos.plantas",
+		"sello": "tramo.nodos.sello", "emisora": "tramo.nodos.emisora",
+		"volver_capsula": "tramo.nodos.volver_capsula",
+	}
+	var clave: String = claves.get(id, "")
+	return "" if clave.is_empty() else I18n.t(clave)
 
 func _interactuar(id := "") -> void:
 	if _ocupado or _fin or vista.abierta() or mapa.plano:
@@ -206,8 +208,8 @@ func _interactuar(id := "") -> void:
 		if etapa == "aviso4":
 			_elegir_plan()
 		elif etapa == "aviso5":
-			var panel := vista.abrir_control(5, "Avisa a Tierra y baja al núcleo protegido por la esclusa.")
-			Vista.boton(panel, "Transmitir aviso", Rect2(34, 234, 242, 42), _avisar_tierra)
+			var panel := vista.abrir_control(5, I18n.t("tramo.s5.aviso_pista"))
+			Vista.boton(panel, I18n.t("tramo.s5.transmitir"), Rect2(34, 234, 242, 42), _avisar_tierra)
 		else:
 			vista.abrir_control(recursos.estado().sol, _objetivo)
 		return
@@ -216,20 +218,20 @@ func _interactuar(id := "") -> void:
 			_estacion_final_dia(accion)
 		"salida_hielo":
 			mapa.entrar("hielo", Vector2(300, PuestoUmbra.SUELO))
-			_paso("sondeos", "Compara los dos puntos marcados antes de taladrar.", {
+			_paso("sondeos", I18n.t("tramo.pista.comparar"), {
 				"escarcha": Vector2(555, PuestoUmbra.SUELO), "veta": PuestoUmbra.MUESTRA})
-			vista.decir("Percy", "Acércate a los dos sondeos. Pulsa E o toca la marca para ver qué hay debajo del polvo.")
+			vista.decir("Percy", I18n.t("tramo.percy.sondeos"))
 		"sondeos":
 			_sondear(accion)
 		"vuelta_hielo":
 			mapa.entrar("base", ESCLUSA)
-			_paso("purificar", "Cruza Energía hasta el filtro azul. Arrastra tu caja al filtro cuando estés cerca.", {"filtro": PuestoUmbra.EQUIPO_AGUA[0]})
+			_paso("purificar", I18n.t("tramo.pista.filtro"), {"filtro": PuestoUmbra.EQUIPO_AGUA[0]})
 		"purificar":
 			_purificar()
 		"recoger_blindaje":
 			mapa.carga = "protecciones"
-			_paso("llevar_blindaje", "Lleva las protecciones a la esclusa; allí está el acceso al núcleo protegido.", {"refugio": ACCESO_NUCLEO})
-			vista.decir("Teo", "Cubriremos el muro junto a la compuerta. La rejilla tiene que quedar libre para que entre aire.")
+			_paso("llevar_blindaje", I18n.t("tramo.pista.esclusa_nuc"), {"refugio": ACCESO_NUCLEO})
+			vista.decir("Teo", I18n.t("tramo.teo.muro"))
 		"llevar_blindaje":
 			mapa.entrar("refugio", UMBRAL_NUCLEO)
 			_mostrar_soportes()
@@ -237,7 +239,7 @@ func _interactuar(id := "") -> void:
 			if SOPORTES.has(accion):
 				_instalar_proteccion(accion)
 			else:
-				vista.decir("Teo", "Aquí pasa el aire. Busca la marca junto a la compuerta para fijar los paneles.")
+				vista.decir("Teo", I18n.t("tramo.teo.aire"))
 		"probar_aire":
 			_probar_aire()
 		"noche":
@@ -254,27 +256,26 @@ func _interactuar(id := "") -> void:
 			_tormenta()
 
 func _preparar_aviso() -> void:
-	_paso("aviso4", "Consulta el aviso de radiación en Control.", {"control": RADIO, "aire": AIRE,
+	_paso("aviso4", I18n.t("tramo.s4.aviso_radiacion"), {"control": RADIO, "aire": AIRE,
 		"carga": PuestoUmbra.TERMINALES.energia, "plantas": HUERTO})
 
 func _elegir_plan() -> void:
-	var panel := vista.abrir_control(4, "Mañana llega la tormenta solar. Elige cómo preparar la base.", true)
+	var panel := vista.abrir_control(4, I18n.t("tramo.s4.elegir_titulo"), true)
 	var fila := 218
 	var descripciones := {
-		"hielo": "5 de energía y 1 de comida. Hasta 3 de agua.",
-		"refuerzo": "3 de energía. Reduce las pérdidas durante la tormenta.",
-		"ambas": "7 de energía y 1 de comida. Agua y protección.",
+		"hielo": I18n.t("tramo.s4.desc.hielo"),
+		"refuerzo": I18n.t("tramo.s4.desc.refuerzo"),
+		"ambas": I18n.t("tramo.s4.desc.ambas"),
 	}
 	for id: String in Reglas.PLANES:
-		var ficha: Dictionary = Reglas.PLANES[id]
 		var motivo := Reglas.impedimento(id, recursos.estado())
-		var boton := Vista.boton(panel, ficha.titulo, Rect2(34, fila, 275, 34), _elegir.bind(id))
+		var boton := Vista.boton(panel, Reglas.titulo_plan(id), Rect2(34, fila, 275, 34), _elegir.bind(id))
 		boton.disabled = not motivo.is_empty()
 		Vista.rotulo(panel, descripciones[id] + (" " + motivo if not motivo.is_empty() else ""),
 			Rect2(327, fila, 580, 36), 15, Vista.PAPEL)
 		fila += 41
-	Vista.rotulo(panel, "Reserva 6 de energía y 1 de agua para el aire.", Rect2(34, 359, 615, 24), 15, Vista.AMBAR)
-	Vista.boton(panel, "Mapa SWIM · NASA", Rect2(710, 354, 200, 32), _abrir_fuente.bind(ArchivoNASA.SWIM))
+	Vista.rotulo(panel, I18n.t("tramo.s4.reserva_aire"), Rect2(34, 359, 615, 24), 15, Vista.AMBAR)
+	Vista.boton(panel, I18n.t("tramo.s4.swim_btn"), Rect2(710, 354, 200, 32), _abrir_fuente.bind(ArchivoNASA.SWIM))
 
 func _elegir(id: String) -> void:
 	if not Reglas.impedimento(id, recursos.estado()).is_empty():
@@ -284,19 +285,19 @@ func _elegir(id: String) -> void:
 	if id == "refuerzo":
 		_ir_taller()
 	else:
-		_paso("salida_hielo", "Cruza la esclusa y reúnete con Percy en el barranco.", {"afuera": ESCLUSA})
-		vista.decir("Pluto", "El hielo que traigas pasará por el laboratorio. Sigue las marcas de Percy.")
+		_paso("salida_hielo", I18n.t("tramo.pista.barranco"), {"afuera": ESCLUSA})
+		vista.decir("Pluto", I18n.t("tramo.pluto.swim"))
 
 func _ir_taller() -> void:
-	_paso("recoger_blindaje", "Entra al Taller por la derecha de Control y recoge las protecciones.", {"taller": TALLER})
+	_paso("recoger_blindaje", I18n.t("tramo.pista.taller_recoger"), {"taller": TALLER})
 
 func _sondear(id: String) -> void:
 	if not _lecturas.has(id):
 		_lecturas.append(id)
-		var lectura := "Se ve blanco arriba, pero debajo solo hay tierra seca." if id == "escarcha" else "Aquí aparece una franja gruesa de hielo bajo la tierra."
+		var lectura := I18n.t("tramo.sondeo.a") if id == "escarcha" else I18n.t("tramo.sondeo.b")
 		vista.decir("Percy", lectura)
 		if _lecturas.size() == 2:
-			_paso("sondeos", "Vuelve al punto con hielo debajo y extrae la muestra.", {"veta": PuestoUmbra.MUESTRA})
+			_paso("sondeos", I18n.t("tramo.pista.extraer"), {"veta": PuestoUmbra.MUESTRA})
 	elif id == "veta" and _lecturas.size() == 2:
 		_ocupado = true
 		mapa.perforando = true
@@ -306,10 +307,10 @@ func _sondear(id: String) -> void:
 		mapa.perforando = false
 		mapa.carga = "hielo"
 		_ocupado = false
-		_paso("vuelta_hielo", "Regresa por la izquierda con la caja de hielo.", {"retorno": RETORNO_HIELO})
-		vista.decir("Percy", "Muestra guardada. Llévala a derretir y limpiar antes de usar el agua.")
+		_paso("vuelta_hielo", I18n.t("tramo.pista.volver_hielo"), {"retorno": RETORNO_HIELO})
+		vista.decir("Percy", I18n.t("tramo.percy.guardada"))
 	else:
-		vista.decir("Percy", "Aún falta comparar el otro punto.")
+		vista.decir("Percy", I18n.t("tramo.percy.falta_otro"))
 
 func _purificar() -> void:
 	_ocupado = true
@@ -320,7 +321,7 @@ func _purificar() -> void:
 	mapa.carga = ""
 	_ocupado = false
 	if plan == "ambas":
-		vista.decir("Pluto", "Muestra limpia. Terminemos el refuerzo y haremos el recuento de las dos tareas.")
+		vista.decir("Pluto", I18n.t("tramo.pluto.muestra_limpia"))
 		_ir_taller()
 	else:
 		_completar_preparacion()
@@ -330,7 +331,7 @@ func _mostrar_soportes() -> void:
 	for soporte: String in SOPORTES:
 		if not mapa.placas.has(soporte):
 			puntos[soporte] = SOPORTES[soporte]
-	_paso("blindaje", "Arrastra el blindaje a tres soportes. Deja libre la rejilla.", puntos)
+	_paso("blindaje", I18n.t("tramo.pista.arrastrar_3"), puntos)
 
 func _instalar_proteccion(id: String) -> void:
 	if mapa.placas.has(id):
@@ -339,11 +340,11 @@ func _instalar_proteccion(id: String) -> void:
 	mapa.paneles = mapa.placas.size()
 	if mapa.paneles < SOPORTES.size():
 		_mostrar_soportes()
-		vista.decir("Teo", "Panel fijado. Quedan %d soportes libres." % (SOPORTES.size() - mapa.paneles))
+		vista.decir("Teo", I18n.tf("tramo.teo.panel", [SOPORTES.size() - mapa.paneles]))
 		return
 	mapa.carga = ""
-	_paso("probar_aire", "Comprueba que la rejilla de ventilación quedó libre.", {"ventilacion": AIRE_PROTEGIDO})
-	vista.decir("Teo", "Protecciones fijadas. Probemos que sigue llegando aire antes de cerrar.")
+	_paso("probar_aire", I18n.t("tramo.pista.vent"), {"ventilacion": AIRE_PROTEGIDO})
+	vista.decir("Teo", I18n.t("tramo.teo.probemos"))
 
 func _probar_aire() -> void:
 	mapa.entrar("base", ACCESO_NUCLEO)
@@ -352,7 +353,7 @@ func _probar_aire() -> void:
 func _completar_preparacion() -> void:
 	var antes: Dictionary = recursos.estado().reservas
 	if not Reglas.completar_plan(recursos, plan):
-		vista.decir("Pluto", "Las reservas cambiaron y ya no cubren el plan. Vuelve a Control.")
+		vista.decir("Pluto", I18n.t("tramo.pluto.plan_invalido"))
 		mapa.paneles = 0
 		mapa.placas.clear()
 		_lecturas.clear()
@@ -362,15 +363,15 @@ func _completar_preparacion() -> void:
 	historial.plan_dia4 = plan
 	historial.refugio_reforzado = Reglas.PLANES[plan].refuerzo
 	preparacion_completada.emit(historial.duplicate(true))
-	var resumen := "Agua añadida: %d. " % agua if plan != "refuerzo" else ""
-	resumen += "El núcleo está protegido." if historial.refugio_reforzado else "El núcleo conserva su protección original."
+	var resumen := I18n.tf("tramo.agua_anadida", [agua]) if plan != "refuerzo" else ""
+	resumen += I18n.t("tramo.nucleo_protegido") if historial.refugio_reforzado else I18n.t("tramo.nucleo_original")
 	vista.decir("Pluto", resumen)
 	_preparar_noche()
 
 func _preparar_noche() -> void:
-	var meta := "Pasa por Energía para llegar al laboratorio. Prepara el aire antes de descansar."
+	var meta := I18n.t("tramo.pista.paso_ox")
 	if recursos.estado().aire_asegurado:
-		meta = "Aire asegurado. Comprueba la comida y ve al dormitorio."
+		meta = I18n.t("tramo.pista.ir_dormitorio")
 	_paso("noche", meta, {"aire": AIRE, "descanso": DORMITORIO,
 		"carga": PuestoUmbra.TERMINALES.energia, "plantas": HUERTO})
 
@@ -379,13 +380,13 @@ func _estacion_final_dia(id: String) -> void:
 	match id:
 		"aire":
 			if recursos.estado().aire_asegurado:
-				vista.decir("Iris", "El aire está asegurado para esta noche.")
+				vista.decir("Iris", I18n.t("tramo.iris.aire_noche"))
 			elif recursos.activar_oxigeno():
-				vista.decir("Iris", "El agua y la batería nos dieron aire para la noche.")
+				vista.decir("Iris", I18n.t("tramo.iris.aire_bateria"))
 				if etapa == "noche":
 					_preparar_noche()
 			else:
-				vista.decir("Iris", "Necesitamos 6 de energía y 1 de agua. Puedes esperar carga junto a las baterías.")
+				vista.decir("Iris", I18n.t("tramo.iris.falta_aire"))
 		"carga":
 			_esperar_carga()
 		"plantas":
@@ -397,17 +398,17 @@ func _esperar_carga() -> void:
 	var estado := recursos.estado()
 	var periodo: float = Recursos.RECARGA_SOLAR[estado.polvo]
 	if not is_finite(periodo):
-		vista.decir("Pluto", "Los paneles no reciben luz ahora.")
+		vista.decir("Pluto", I18n.t("tramo.pluto.sin_luz"))
 		return
-	var cambio := "Los paneles recuperarán un punto de energía."
+	var cambio := I18n.t("tramo.pluto.carga_1")
 	if estado.reservas.energia == Recursos.LIMITES.energia:
-		cambio = "La batería está llena. La espera puede servir para que crezcan los cultivos."
+		cambio = I18n.t("tramo.pluto.bat_llena")
 	if _confirmacion == "carga":
 		_confirmacion = ""
 		_avanzar_carga(periodo)
 	else:
 		_confirmacion = "carga"
-		vista.decir("Pluto", cambio + " Mientras esperamos usamos aire y comida. Vuelve a tocar para esperar.")
+		vista.decir("Pluto", I18n.tf("tramo.pluto.esperar", [cambio]))
 
 func _avanzar_carga(periodo: float) -> void:
 	vista.cerrar()
@@ -415,39 +416,39 @@ func _avanzar_carga(periodo: float) -> void:
 	if not recursos.estado().derrota.is_empty():
 		_emitir_final("derrota")
 	else:
-		vista.decir("Pluto", "Compara lo que ganamos con lo que se usó durante la espera.")
+		vista.decir("Pluto", I18n.t("tramo.pluto.comparar_espera"))
 
 func _atender_huerto() -> void:
 	var estado := recursos.estado()
 	for cultivo: String in estado.bandejas:
 		if recursos.comer(cultivo):
-			vista.decir("Iris", "Comimos de la cosecha. Ahora tenemos más reservas para descansar.")
+			vista.decir("Iris", I18n.t("tramo.iris.cosecha"))
 			return
 	if estado.bandejas.has("lechuga"):
-		vista.decir("Iris", "Aún está creciendo. Puedes dejar pasar una carga solar para darle tiempo.")
+		vista.decir("Iris", I18n.t("tramo.iris.creciendo"))
 		return
 	if recursos.sembrar("lechuga"):
-		vista.decir("Iris", "Acabamos de sembrar. La planta necesita agua, energía y tiempo. Espera una carga solar y vuelve.")
+		vista.decir("Iris", I18n.t("tramo.iris.recien"))
 	else:
-		vista.decir("Iris", "Sembrar necesita 1 de agua y 1 de energía.")
+		vista.decir("Iris", I18n.t("tramo.iris.falta_sembrar"))
 
 func _consultar_descanso() -> void:
 	var estado := recursos.estado()
-	var riesgo := "Las reservas que queden pasarán a la mañana."
+	var riesgo := I18n.t("tramo.pista.pasan_manana")
 	if not estado.aire_asegurado:
-		riesgo = "Aún falta preparar el aire. Si cierras el día así, la misión termina."
+		riesgo = I18n.t("tramo.riesgo.aire")
 	elif estado.reservas.alimento == 0:
-		riesgo = "No queda comida. Si cierras el día así, la misión termina."
+		riesgo = I18n.t("tramo.riesgo.comida")
 	elif historial.refugio_reforzado:
 		var margen := 7 if historial.get("sistemas_danados", false) else 6
 		if estado.reservas.energia < margen:
-			riesgo = "El aire está preparado. Con %d de energía, mañana tendríamos margen para seguir trabajando." % margen
+			riesgo = I18n.tf("tramo.riesgo.margen", [margen])
 	if _confirmacion == "descanso":
 		_confirmacion = ""
 		_dormir()
 	else:
 		_confirmacion = "descanso"
-		vista.decir("Iris", riesgo + " Vuelve a tocar la cama para descansar.")
+		vista.decir("Iris", I18n.tf("tramo.iris.tocar_cama", [riesgo]))
 
 func _dormir() -> void:
 	vista.cerrar()
@@ -457,12 +458,12 @@ func _dormir() -> void:
 func _avisar_tierra() -> void:
 	vista.cerrar()
 	mapa.radio_enviada = true
-	_paso("ir_refugio", "Baja al refugio por el acceso interior de la esclusa.", {"refugio": ACCESO_NUCLEO})
-	vista.decir("Pluto", "Tierra todavía no puede responder. Sigue por la puerta sur de Control y baja al núcleo protegido.")
+	_paso("ir_refugio", I18n.t("tramo.pista.bajar_nucleo"), {"refugio": ACCESO_NUCLEO})
+	vista.decir("Pluto", I18n.t("tramo.pluto.s5_control"))
 
 func _entrar_al_nucleo() -> void:
 	_ocupado = true
-	_paso("cruzar_umbral", "Cruza al lado protegido.", {})
+	_paso("cruzar_umbral", I18n.t("tramo.pista.cruzar"), {})
 	var velo := ColorRect.new()
 	velo.size = Vector2(1280, 720)
 	velo.color = Color("#16131a")
@@ -474,18 +475,18 @@ func _entrar_al_nucleo() -> void:
 	mapa.entrada_nucleo = 0.0
 	mapa.entrar("refugio", UMBRAL_NUCLEO)
 	mapa.direccion_izquierda = false
-	vista.decir("Teo", "Pasa, Nora. Iris y yo estamos dentro. El cierre está junto a la puerta.", Vector2(866, 331))
+	vista.decir("Teo", I18n.t("tramo.teo.pasa_nora"), Vector2(866, 331))
 	var cruzar := create_tween().set_parallel(true).set_trans(Tween.TRANS_SINE)
 	cruzar.tween_property(velo, "modulate:a", 0.0, 0.30)
 	cruzar.tween_property(mapa, "entrada_nucleo", 1.0, 0.85)
 	await cruzar.finished
 	velo.queue_free()
 	_ocupado = false
-	_paso("sellar", "Cierra la compuerta detrás de la tripulación.", {"sello": PUERTA_PROTEGIDA})
+	_paso("sellar", I18n.t("tramo.pista.sellar"), {"sello": PUERTA_PROTEGIDA})
 
 func _tormenta() -> void:
-	_paso("impacto", "Compuerta cerrada. Mantente en el núcleo protegido.", {})
-	vista.decir("Iris", "Compuerta cerrada. Las paredes nos protegen. Esperemos aquí hasta que baje la alerta.", Vector2(473, 142))
+	_paso("impacto", I18n.t("tramo.pista.impacto"), {})
+	vista.decir("Iris", I18n.t("tramo.iris.impacto"), Vector2(473, 142))
 	_ocupado = true
 	var pulso := create_tween().set_trans(Tween.TRANS_SINE)
 	pulso.tween_property(mapa, "compuerta", 1.0, 0.36)
@@ -496,15 +497,14 @@ func _tormenta() -> void:
 	_ocupado = false
 	var registro := Reglas.impacto(recursos, historial)
 	if registro.is_empty():
-		push_error("No se pudo registrar el impacto solar.")
+		push_error(I18n.t("tramo.err.impacto"))
 		return
 	historial.impacto_solar = registro
 	impacto_registrado.emit(historial.duplicate(true))
 	_restaurar_impacto(registro)
 
 func _mostrar_lectura(indice: int) -> void:
-	var lectura: Dictionary = ArchivoNASA.LECTURAS[indice]
-	mapa.fase_radiacion = lectura.fase
+	mapa.fase_radiacion = ArchivoNASA.fase_texto(indice)
 	mapa.nivel_radiacion = ArchivoNASA.nivel(indice)
 
 func _restaurar_impacto(registro: Dictionary) -> void:
@@ -515,32 +515,32 @@ func _restaurar_impacto(registro: Dictionary) -> void:
 		await create_tween().tween_property(mapa, "impacto", 1.0, 0.55).finished
 		_emitir_final("derrota")
 		return
-	_paso("informar", "La alerta bajó. Revisa qué cambió en la emisora del refugio.", {"emisora": RADIO_PROTEGIDA})
-	var consecuencia: String = "Las protecciones ayudaron a conservar aire y energía." if mapa.paneles == 3 else "La tormenta afectó más equipos. Comprueba las reservas."
+	_paso("informar", I18n.t("tramo.pista.informar"), {"emisora": RADIO_PROTEGIDA})
+	var consecuencia: String = I18n.t("tramo.iris.res_ok") if mapa.paneles == 3 else I18n.t("tramo.iris.res_afectado")
 	if historial.get("sistemas_danados", false):
-		consecuencia += " El daño del día 2 empeoró las pérdidas."
+		consecuencia += I18n.t("tramo.iris.res_dano2")
 	vista.decir("Iris", consecuencia)
 
 func _informe_final() -> void:
 	mapa.fase_radiacion = ""
 	var registro: Dictionary = historial.impacto_solar
 	var logrado: bool = registro.final == "mision_cumplida"
-	var orden := "Recibimos su informe. Pueden enviar la investigación y volver a casa." if logrado else "Tienen reservas para evacuar. Dejen la investigación y regresen a salvo."
-	var explicacion := "El blindaje ayudó a conservar el aire." if historial.get("refugio_reforzado", false) else "El núcleo sin refuerzo perdió más aire."
+	var orden := I18n.t("tramo.tierra.cumplida") if logrado else I18n.t("tramo.tierra.evacuacion")
+	var explicacion := I18n.t("tramo.causa.blindaje") if historial.get("refugio_reforzado", false) else I18n.t("tramo.causa.sin_refuerzo")
 	if historial.get("sistemas_danados", false):
-		explicacion += " El daño previo costó más energía y oxígeno."
+		explicacion += I18n.t("tramo.causa.dano2")
 	vista.decir("Tierra", orden)
 	vista.mostrar_lecturas(registro, explicacion, ArchivoNASA.DONKI, ArchivoNASA.GUIA_RAD)
-	_paso("salida5", "Responde a Tierra desde la emisora.", {"emisora": RADIO_PROTEGIDA})
+	_paso("salida5", I18n.t("tramo.pista.salida5"), {"emisora": RADIO_PROTEGIDA})
 
 func _preparar_salida() -> void:
 	vista.cerrar_lecturas()
-	_paso("volver_capsula", "Vuelve a la compuerta para salir hacia la cápsula.", {"volver_capsula": UMBRAL_NUCLEO})
-	vista.decir("Teo", "La alerta bajó. Ya podemos abrir y volver juntos a la cápsula.", Vector2(865, 326))
+	_paso("volver_capsula", I18n.t("tramo.pista.volver_cap"), {"volver_capsula": UMBRAL_NUCLEO})
+	vista.decir("Teo", I18n.t("tramo.teo.salir"), Vector2(865, 326))
 
 func _salir_del_nucleo() -> void:
 	_ocupado = true
-	_paso("salir_umbral", "Sal del núcleo con la tripulación.", {})
+	_paso("salir_umbral", I18n.t("tramo.pista.salir_umbral"), {})
 	mapa.punto = UMBRAL_NUCLEO
 	var salida := create_tween().set_trans(Tween.TRANS_SINE)
 	salida.tween_property(mapa, "compuerta", 0.0, 0.45)

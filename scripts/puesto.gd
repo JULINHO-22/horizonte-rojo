@@ -481,7 +481,7 @@ func _dibujar_exterior() -> void:
 			draw_line(torre, torre + Vector2(0, -34), OSCURO, 5, true)
 			draw_circle(torre + Vector2(0, -35), 5, LUZ if i <= rele_actual else OCRE)
 		var objetivo: Vector2 = RELES[rele_actual] if rele_actual < RELES.size() else ESCLUSA
-		_baliza(objetivo + Vector2(0, -91), "PUESTO %d" % (rele_actual + 1) if rele_actual < RELES.size() else "REGRESO", LUZ)
+		_baliza(objetivo + Vector2(0, -91), I18n.tf("puesto.marcador", [rele_actual + 1]) if rele_actual < RELES.size() else I18n.t("puesto.regreso"), LUZ)
 	elif sondeo:
 		if caja_abierta:
 			_marca_sondeo(CAJA_HIELO if hielo_en_mano else MUESTRA, LUZ, true)
@@ -510,13 +510,13 @@ func _dibujar_exterior() -> void:
 		for deposito: Dictionary in depositos_sol_uno:
 			var sitio := Vector2(deposito.x, SUELO)
 			_marca_sondeo(sitio, LUZ, absf(punto.x - sitio.x) <= 32.0)
-			_baliza(sitio - Vector2(0, 91), deposito.nombre.to_upper(), LUZ)
-		_baliza(ESCLUSA - Vector2(0, 102), "REFUGIO", LUZ)
+			_baliza(sitio - Vector2(0, 91), I18n.t("sol1.dep." + deposito.get("clave", "cercano") + ".baliza"), LUZ)
+		_baliza(ESCLUSA - Vector2(0, 102), I18n.t("puesto.refugio"), LUZ)
 	elif chequeo and not campo:
-		_baliza(ESCLUSA + Vector2(0, -102), "REFUGIO", LUZ)
+		_baliza(ESCLUSA + Vector2(0, -102), I18n.t("puesto.refugio"), LUZ)
 	elif carrera or evacuacion:
 		var meta := Vector2(60, SUELO) if campo else ESCLUSA
-		_baliza(meta + Vector2(0, -102), "←  REGRESO" if campo else "REFUGIO", LUZ)
+		_baliza(meta + Vector2(0, -102), I18n.t("puesto.flecha_regreso") if campo else I18n.t("puesto.refugio"), LUZ)
 		for refugio: Vector2 in ABRIGOS:
 			draw_arc(refugio, 21, 0.0, TAU, 28, Color(0.68, 0.94, 0.82, 0.52), 1.5, true)
 	draw_set_transform(Vector2.ZERO)
@@ -637,7 +637,7 @@ func _dibujar_corte() -> void:
 	draw_rect(Rect2(372, 310, 133, 25), Color(0.26, 0.16, 0.17, sin_sol * 0.58))
 	var baliza := Vector2(608, 308)
 	draw_circle(baliza, 2.5, LUZ.lerp(OCRE, sin_sol), true, -1.0, true)
-	_baliza(Vector2(531, 215), "FUNCIONANDO CON BATERÍA" if sin_sol > 0.9 else "PANELES SOLARES", OCRE if sin_sol > 0.9 else LUZ)
+	_baliza(Vector2(531, 215), I18n.t("puesto.bateria") if sin_sol > 0.9 else I18n.t("puesto.paneles"), OCRE if sin_sol > 0.9 else LUZ)
 
 
 func _dibujar_desvio() -> void:
@@ -813,21 +813,21 @@ func _dibujar_interior() -> void:
 		direccion_izquierda, int(paso * 8) if caminando else -1)
 	draw_set_transform(Vector2.ZERO)
 	var carteles := {
-		Vector2(302, 227): "← ENERGÍA",
-		Vector2(187, 155): "↑ AGUA Y OXÍGENO",
-		Vector2(188, 29): "← AGUA Y OXÍGENO",
-		Vector2(529, 211): "↑ PLANTAS Y DORMITORIO",
-		Vector2(549, 255): "TALLER →",
-		Vector2(538, 110): "← PLANTAS   ·   DORMITORIO →",
+		Vector2(302, 227): I18n.t("puesto.cartel.energia"),
+		Vector2(187, 155): I18n.t("puesto.cartel.agua_arr"),
+		Vector2(188, 29): I18n.t("puesto.cartel.agua_izq"),
+		Vector2(529, 211): I18n.t("puesto.cartel.plantas_arr"),
+		Vector2(549, 255): I18n.t("puesto.cartel.taller_der"),
+		Vector2(538, 110): I18n.t("puesto.cartel.bunkers"),
 	}
 	for sitio: Vector2 in carteles:
 		if not plano and not vista_esclusa and punto.distance_to(sitio) < 72:
 			_baliza(_origen_mundo() + sitio * escala_camara, carteles[sitio], LUZ)
 	if plano:
 		var nombres_plano := {
-			"taller": "TALLER",
-			"energia": "ENERGÍA", "radio": "CONTROL", "dormitorio": "DORMITORIO",
-			"cultivos": "PLANTAS", "agua": "AGUA Y OXÍGENO", "cierre": "PUERTA",
+			"taller": I18n.t("puesto.plano.taller"),
+			"energia": I18n.t("puesto.nom.energia"), "radio": I18n.t("puesto.nom.radio"), "dormitorio": I18n.t("puesto.nom.dormitorio"),
+			"cultivos": I18n.t("puesto.plano.plantas"), "agua": I18n.t("puesto.nom.agua"), "cierre": I18n.t("puesto.plano.puerta"),
 		}
 		for id: String in nombres_plano:
 			var encuadre: Rect2 = ENCUADRES[id]
@@ -839,11 +839,11 @@ func _dibujar_interior() -> void:
 			var rotulo := acceso + Vector2(123, -4)
 			draw_line(acceso, rotulo - Vector2(79, 0), LUZ, 1.6, true)
 			draw_circle(acceso, 5, LUZ, true, -1.0, true)
-			_baliza(rotulo, "NÚCLEO PROTEGIDO", LUZ)
+			_baliza(rotulo, I18n.t("puesto.plano.nucleo"), LUZ)
 	if en_esclusa() and not plano:
 		var entrada_control := _origen_mundo() + Vector2(CENTRO_ESCLUSA_X, 338) * escala_camara
 		entrada_control.y = maxf(entrada_control.y, 70.0)
-		_baliza(entrada_control, "↑ CONTROL", LUZ)
+		_baliza(entrada_control, I18n.t("puesto.cartel.control_arr"), LUZ)
 	elif not plano and not agua_en_curso and terminal != objetivo_mision and (TERMINALES.has(objetivo_mision) or objetivo_mision in ["agua", "oxigeno"]):
 		var oeste := objetivo_mision in ["agua", "oxigeno"]
 		var destino: Vector2 = TERMINALES.get(objetivo_mision, EQUIPO_AGUA[0])
@@ -872,7 +872,7 @@ func _dibujar_interior() -> void:
 			var hacia := (marca - visible).normalized()
 			draw_line(visible - hacia * 18, visible, LUZ, 2.2, true)
 			draw_circle(visible, 3, LUZ, true, -1, true)
-		_baliza(visible, NOMBRES.get(objetivo_mision, "OXÍGENO" if oeste else "ESCLUSA"), LUZ)
+		_baliza(visible, I18n.t("puesto.nom." + objetivo_mision, I18n.t("puesto.nom.oxigeno" if oeste else "puesto.nom.esclusa")), LUZ)
 
 
 func _sprite(textura: Texture2D, ancla: Vector2, alto: float, balanceo := 0.0,
