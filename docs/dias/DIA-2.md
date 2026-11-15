@@ -28,13 +28,19 @@ Queda pendiente acordar con el coordinador la conexión en `scripts/guion_inicio
 
 ## Arte y ciencia
 
-La base es `main` en `54a93c2`. La escena reutiliza `PuestoUmbra` para el refugio, las colisiones, los sprites de la tripulación y el polvo. En [Control](../ARTE-CONTROL.md), la marca usa las coordenadas de la terminal compartida y rodea la huella de la supercomputadora. Pluto habla junto a su sprite con `dialogo_escena.gd`. Las opciones aparecen junto al equipo o al acceso, y los medidores quedan arriba. La superficie reutiliza los paneles de `assets/refugio_horizonte.png`. Un filtro oscuro en el interior indica batería agotada.
+La base es `origin/main` en `4030c9d` (con los instrumentos pixel art generados y lecturas integradas). La escena reutiliza `PuestoUmbra` para el refugio, las colisiones, los sprites de la tripulación y el polvo marciano. En [Control](../ARTE-CONTROL.md), la supercomputadora muestra en vivo el componente `Indicadores` con los 12 rayos de energía, 8 burbujas de oxígeno y gota de agua con animación de llenado, destacando en rojo la alerta `Solar: Pausado`. La comida se refleja con los iconos de tomate arriba a la derecha.
 
-Pancam estimó la opacidad atmosférica de Marte con imágenes del Sol. El polvo en suspensión reduce la luz que alcanza los paneles. La generación en cero, las ráfagas, el coste y la duración son reglas de juego. [NASA PDS, opacidad atmosférica MER Pancam](https://pds.nasa.gov/ds-view/pds/viewProfile.jsp?dsid=MER1%2FMER2-M-PANCAM-5-ATMOS-OPACITY-V1.0)
+Pluto ofrece diálogos contextuales reactivos mediante `dialogo_escena.gd`, advirtiendo al jugador si reparar dejaría la batería por debajo de las 6 unidades necesarias para el aire. En el exterior, se dibuja una baliza sobre los paneles (`EXPUESTOS` / `ASEGURADOS`) y el panel de interacción se ancla dinámicamente en el suelo sin tapar a Nora, Iris ni la esclusa.
+
+El nivel incorpora audio procedural en `dia_2_audio.gd` mediante síntesis de ondas PCM en memoria (WAV): ráfagas de viento marciano moduladas por la intensidad de la tormenta, despresurización de la esclusa, sonido mecánico de pestillos térmicos al reparar, acorde de soporte vital al activar oxígeno y tonos táctiles de interfaz, sin dependencias de archivos de sonido externos.
+
+Pancam estimó la opacidad atmosférica de Marte con imágenes del Sol. El polvo en suspensión reduce la luz que alcanza los paneles. La generación en cero, las ráfagas, el coste y la duración son reglas de juego acordadas. [NASA PDS, opacidad atmosférica MER Pancam](https://pds.nasa.gov/ds-view/pds/viewProfile.jsp?dsid=MER1%2FMER2-M-PANCAM-5-ATMOS-OPACITY-V1.0)
 
 ## Verificación
 
-- Ejecutar la escena con F6 desde `dia_2.tscn`.
-- `Godot --headless --path . --script res://scenes/dias/dia_2/dia_2_smoke.gd --quit-after 2000`. Resultado esperado `DIA_2_OK`. Recorre las colisiones, comprueba ambas decisiones, el coste exacto, el aire antes y después de decidir, el relevo al Día 3, la falta de reservas y la derrota. Para comprobar también el dibujo, crea `build/qa/` y ejecuta la prueba en modo gráfico a 1280 × 720. La prueba usa eventos de clic y teclado, vuelve a dibujar al elegir «Ir a reparar», captura las transiciones y falla si Godot registra un error de script.
+- Ejecutar la escena con F6 desde `scenes/dias/dia_2/dia_2.tscn`.
+- `Godot --headless --path . --script res://scenes/dias/dia_2/dia_2_smoke.gd --quit-after 2000`. Resultado esperado `DIA_2_OK`. Recorre las colisiones, comprueba ambas decisiones, el coste exacto, el aire antes y después de decidir, el relevo al Día 3, la falta de reservas y la derrota.
+- `Godot --path . --script res://scenes/dias/dia_2/dia_2_smoke.gd --quit-after 2000`. Ejecuta la prueba en ventana gráfica a 1280 × 720, captura las transiciones en `build/qa/` y confirma que no existen errores ni advertencias de script al renderizar.
 - `Godot --headless --path . --script res://tests/recursos_smoke.gd --quit-after 140`. Resultado esperado `RECURSOS_OK`.
-- `git diff --check`. El cambio añade escena, controlador, interfaz, prueba y archivos `.uid` en `scenes/dias/dia_2/`, además de esta guía y la entrada en el changelog.
+- `Godot --headless --path . --script res://tests/narrativa_smoke.gd --quit-after 500`. Resultado esperado `NARRATIVA_OK`.
+- `git diff --check`. Verifica que no existan conflictos ni espacios espurios.

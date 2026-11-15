@@ -1,5 +1,13 @@
 # Cambios
 
+## 2026-11-15 | Día 2 mejorado: Audio procedural, telemetría integrada y pulido ambiental
+
+- Integración de la supercomputadora de Control con el nuevo componente de `Indicadores` (rayos, burbujas y gota animada con aviso de generación solar pausada) y visualización de comida con tomates en la interfaz.
+- Audio procedural sintetizado en memoria (`dia_2_audio.gd`) para viento marciano modulado según ráfagas, esclusa neumática, cobertores mecánicos de paneles, soporte vital y confirmaciones táctiles.
+- Baliza exterior para paneles solares y anclaje dinámico de paneles de interacción para no obstaculizar la visión de los astronautas, compuertas ni maquinaria.
+- Diálogos reactivos de Pluto con prevención de soft-lock si la batería restante es insuficiente para activar el oxígeno tras reparar.
+- Integración completa con `origin/main` en `4030c9d`. Pruebas gráficas y de recursos verificadas sin errores de script.
+
 ## 2026-11-15 | Iconos de Control
 
 - Se sustituyen las máscaras de píxeles por iconos generados con bordes suaves. El nivel del agua se anima dentro de la gota.
