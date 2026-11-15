@@ -1,8 +1,8 @@
 # Sol 1
 
-Pluto acompaña a Nora dentro de Umbra y sugiere el siguiente paso. Las estaciones y el descanso están disponibles desde la llegada, con sus requisitos de recursos habituales. En el laboratorio, asegurar el oxígeno consume 6 de energía y 1 de agua. Los relojes siguen activos durante la exploración y en el menú de Plantas. Los mensajes aparecen arriba a la izquierda y los controles de actividad arriba a la derecha. Los botones de Plantas usan fondos opacos y texto legible durante la cuenta regresiva.
+Pluto acompaña a Nora dentro de Umbra y sugiere el siguiente paso. Las estaciones y el descanso están disponibles desde la llegada, con sus requisitos de recursos habituales. En el laboratorio, asegurar el oxígeno consume 6 de energía y 1 de agua. Los relojes siguen activos durante la exploración y al atender las bandejas.
 
-En Plantas puedes sembrar varias bandejas si tienes recursos. El menú muestra el costo y el tiempo de cada cultivo. Una cuenta regresiva por bandeja indica cuánto falta para recoger y comer en la misma estación. Puedes quedarte allí a esperar o seguir explorando. Si sales por la esclusa, Iris acompaña a Nora hacia el este. Percy explica que hay hielo bajo el suelo y que el mapa SWIM ayuda a decidir dónde buscar. El juego reutiliza el paisaje, los personajes, el taladro y los sprites de hielo y caja del simulador.
+En Plantas, elige una bandeja con el ratón o **1–4**, coloca la semilla y riega con **E** o tocando la tierra. El coste se aplica al regar. El reloj y el aspecto de la planta muestran cuánto falta para recoger y comer en esa misma bandeja. Puedes quedarte o seguir explorando. Si sales por la esclusa, Iris acompaña a Nora hacia el este. Percy explica que hay hielo bajo el suelo y que el mapa SWIM ayuda a decidir dónde buscar. El juego reutiliza el paisaje, los personajes, el taladro y los sprites de hielo y caja del simulador.
 
 | Depósito | Extracción | Purificación | Resultado con 1 de agua inicial |
 | --- | --- | --- | --- |

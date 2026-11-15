@@ -66,6 +66,8 @@ func _probar() -> void:
 	assert(not Reglas.impedimento("ambas", nivel.recursos.estado()).is_empty())
 	assert(not Reglas.completar_plan(nivel.recursos, "ambas"))
 	banco.iniciar(0)
+	await _probar_huerto(banco._pantalla)
+	banco.iniciar(0)
 	nivel = banco._pantalla
 	nivel.set_process(false)
 	_camino(nivel, [Tramo.RADIO])
@@ -249,6 +251,25 @@ func _probar_cinematica(cierre: Control, cumplida: bool) -> void:
 	assert(cierre.fase == ("victoria" if cumplida else "noticia"))
 	if not cumplida:
 		assert(cierre.accion.text == "Repetir final" and cierre.voz.frase.text.contains("a salvo"))
+
+func _probar_huerto(nivel: Tramo) -> void:
+	_camino(nivel, [Tramo.RADIO, Vector2(538, 245), Vector2(538, 133), Vector2(407, 133), Tramo.HUERTO])
+	var antes := nivel.recursos.estado()
+	_clic(nivel, "plantas", Tramo.HUERTO)
+	assert(nivel.recursos.estado() == antes and nivel._confirmacion == "plantas")
+	_clic(nivel, "plantas", Tramo.HUERTO)
+	assert(nivel.recursos.estado().bandejas.lechuga == 15.0)
+	assert(nivel.recursos.estado().reservas.agua == antes.reservas.agua - 1)
+	assert(nivel.mapa._cultivos.lechuga.etapa == 0)
+	_camino(nivel, [Vector2(407, 133), Vector2(538, 133), Vector2(538, 245), Vector2(402, 245), PuestoUmbra.TERMINALES.energia])
+	for i in 4:
+		_clic(nivel, "carga", PuestoUmbra.TERMINALES.energia)
+	assert(nivel.mapa._cultivos.lechuga.etapa == 2)
+	_camino(nivel, [Vector2(402, 245), Vector2(538, 245), Vector2(538, 133), Vector2(407, 133), Tramo.HUERTO])
+	await _captura("dia4-huerto")
+	_clic(nivel, "plantas", Tramo.HUERTO)
+	assert(nivel.recursos.estado().bandejas.is_empty())
+	assert(nivel.recursos.estado().reservas.alimento == antes.reservas.alimento + 1)
 
 func _probar_planes_y_proteccion() -> void:
 	for id in ["hielo", "refuerzo"]:

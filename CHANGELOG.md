@@ -1,5 +1,11 @@
 # Cambios
 
+## 2026-11-15 | Invernadero de Umbra
+
+- Los soles 1 a 3 comparten una vista pixel art de las bandejas. Coloca la semilla, riega la tierra y observa cómo el brote crece hasta la cosecha. La cuenta regresiva sigue avanzando al volver al recorrido.
+- La vista indica el coste, el tiempo y la comida que aporta cada cultivo. El riego aplica el coste existente y guarda la bandeja. Recoger y comer muestra cuánto alimento se recuperó.
+- En el Sol 4 las plantas crecen en el escenario. La siembra y el riego se hacen junto a las bandejas y la espera se confirma en Energía.
+
 ## 2026-11-15 | Entrada al Sol 2 y acceso a reservas
 
 - Se fija el tamaño de las escenas de campaña. El Sol 2 ya muestra el refugio y sus controles al cargar en navegador.

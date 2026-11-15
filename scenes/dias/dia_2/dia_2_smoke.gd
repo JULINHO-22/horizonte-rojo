@@ -94,7 +94,6 @@ func _probar() -> void:
 	dia = _instanciar(partida)
 	resultados.clear()
 	dia.finalizado.connect(resultados.append)
-	_tecla(dia, KEY_E)
 	dia._process(45.0)
 	assert(partida.estado().reservas.oxigeno == 8, "Solo el controlador puede avanzar su reloj.")
 	partida.avanzar(16.0)
@@ -120,7 +119,6 @@ func _probar() -> void:
 	dia.free()
 
 	dia = _instanciar(_partida(12, 3))
-	_tecla(dia, KEY_E)
 	# Ir al Centro de agua antes de tomar la decisión de Control.
 	_caminar_a(dia, Dia.CRUCE_SUR)
 	_caminar_a(dia, Dia.CRUCE_OESTE)
@@ -140,7 +138,6 @@ func _probar() -> void:
 	dia.free()
 
 	dia = _instanciar(_partida(3, 0))
-	_tecla(dia, KEY_E)
 	await _accion(dia, Paso.DECISION)
 	await _caminar(dia)
 	_tecla(dia, KEY_F) # Se permite intentar salir antes del aire.
@@ -161,7 +158,6 @@ func _probar() -> void:
 
 	# Aire después de reparar: debe llevar a la cama, sin repetir la salida.
 	dia = _instanciar(_partida(12, 3))
-	_tecla(dia, KEY_E)
 	await _accion(dia, Paso.DECISION)
 	await _caminar(dia)
 	_tecla(dia, KEY_F)
@@ -178,7 +174,6 @@ func _probar() -> void:
 	partida = _partida(8, 0)
 	assert(partida.recoger_hielo())
 	dia = _instanciar(partida)
-	_tecla(dia, KEY_E)
 	await _caminar(dia)
 	_tecla(dia, KEY_F)
 	await _caminar(dia)
@@ -200,16 +195,22 @@ func _probar() -> void:
 	assert(partida.aplicar_decision(Dia.RESGUARDARSE, {}))
 	assert(partida.aplicar_perdidas("prueba_hambre", {"alimento": 10}))
 	dia = _instanciar(partida)
-	_tecla(dia, KEY_E)
 	await _caminar(dia)
 	_tecla(dia, KEY_F)
 	await _accion(dia, Paso.PLANTAS)
+	assert(is_instance_valid(dia.huerto))
+	_tecla(dia, KEY_E)
+	assert(partida.estado().bandejas.is_empty())
+	_clic(dia.huerto.accion)
 	assert(partida.estado().bandejas.has("lechuga"))
 	partida.avanzar(15.0)
+	await create_timer(0.7).timeout
 	dia._process(0.0)
 	await _captura(dia, "cosecha-lista")
-	_clic(dia.interfaz.alternativa)
+	assert(not dia.huerto.accion.disabled and "Recoger" in dia.huerto.accion.text)
+	_clic(dia.huerto.bandejas[0])
 	assert(partida.estado().reservas.alimento == 2)
+	_tecla(dia, KEY_ESCAPE)
 	_tecla(dia, KEY_F)
 	await _accion(dia, Paso.DESCANSO)
 	assert(dia.concluido)

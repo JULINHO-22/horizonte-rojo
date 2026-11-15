@@ -10,7 +10,7 @@ const DEPOSITOS := [
 const GUIA := {
 	"radio": "Consulta las tareas en la computadora de Control. Pulsa Q para consultar las reservas en tu tablet.",
 	"oxigeno": "Ve a la izquierda por Energía y sube al laboratorio de Agua y Oxígeno. Busca los depósitos verdes.",
-	"sembrar": "Ve a Plantas por el pasillo derecho. Siembra una bandeja. Cada semilla cuesta agua y energía y tarda un tiempo distinto.",
+	"sembrar": "Ve a Plantas por el pasillo derecho. Elige una bandeja, coloca una semilla y riégala. Revisa cuánta energía y agua necesita.",
 	"cosechar": "Mira el reloj de tu cultivo. Cuando esté listo, recógelo y come aquí mismo. En la tablet puedes revisar cuánta comida queda.",
 	"cierre": "Nos queda poca agua. Sal por la esclusa con Iris y busca hielo a la derecha. Aquí lo derretiremos y limpiaremos antes de beberlo.",
 	"agua": "Vuelve al filtro azul del laboratorio. Derrite el hielo, limpia el agua y comprueba que esté lista para beber.",

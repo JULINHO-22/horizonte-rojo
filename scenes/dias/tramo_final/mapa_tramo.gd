@@ -2,6 +2,10 @@ extends PuestoUmbra
 
 const REFUGIO_SOLAR := preload("res://assets/dias/dia_5/nucleo_radiacion.png")
 const PUERTA_ABIERTA := preload("res://assets/dias/dia_5/nucleo_paso_abierto.png")
+const CultivoPixel := preload("res://scripts/cultivo_pixel.gd")
+const Recursos := preload("res://scripts/mecanicas/recursos_mision.gd")
+const BANDEJAS := {"lechuga": Vector2(338, 77), "rabano": Vector2(372, 77),
+	"tomate": Vector2(442, 77), "papa": Vector2(476, 77)}
 const SUELO_PROTEGIDO := 319.0
 const UMBRAL := Vector2(342, PuestoUmbra.SUELO)
 const MARCO_PASO := Rect2(0.402, 0.431, 0.196, 0.333)
@@ -21,6 +25,37 @@ var impacto := 0.0
 var lecturas: Array[String] = []
 var compuerta := 0.0
 var entrada_nucleo := 1.0
+var huerto: Node2D
+var _cultivos: Dictionary = {}
+
+func mostrar_huerto(bandejas: Dictionary) -> void:
+	if huerto == null:
+		huerto = Node2D.new()
+		huerto.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		add_child(huerto)
+		for cultivo: String in BANDEJAS:
+			var planta := CultivoPixel.new()
+			planta.position = BANDEJAS[cultivo]
+			planta.altura_madura = 17.0
+			huerto.add_child(planta)
+			_cultivos[cultivo] = planta
+	for cultivo: String in _cultivos:
+		var planta: CultivoPixel = _cultivos[cultivo]
+		var resto: float = bandejas.get(cultivo, -1.0)
+		var etapa := CultivoPixel.etapa_del_cultivo(resto, Recursos.CULTIVOS[cultivo].segundos) if resto >= 0 else -1
+		planta.mostrar(cultivo, etapa)
+	ubicar_huerto()
+
+func ubicar_huerto() -> void:
+	if huerto == null:
+		return
+	huerto.visible = zona == "base" and not plano
+	huerto.position = _origen_mundo()
+	huerto.scale = Vector2.ONE * escala_camara
+
+func recoger_cultivo(cultivo: String) -> void:
+	var planta: CultivoPixel = _cultivos[cultivo]
+	planta.levantar().connect(planta.mostrar.bind(cultivo, -1, false), CONNECT_ONE_SHOT)
 
 func entrar(destino: String, sitio: Vector2) -> void:
 	zona = destino

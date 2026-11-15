@@ -85,6 +85,7 @@ func _process(delta: float) -> void:
 	if not _ocupado and not vista.abierta() and mapa.arrastre.is_empty():
 		mapa.avanzar(direccion.normalized(), minf(0.05, delta))
 		mapa.actualizar_camara(delta)
+	mapa.ubicar_huerto()
 	if not _confirmacion.is_empty() and _cercana() != _confirmacion:
 		_confirmacion = ""
 	mapa.permite_tocar = not _ocupado and not vista.abierta()
@@ -160,6 +161,8 @@ func _paso(id: String, objetivo: String, guias: Dictionary) -> void:
 	mapa.nombres.clear()
 	mapa.arrastre = ""
 	_confirmacion = ""
+	if _guias.has("plantas"):
+		mapa.mostrar_huerto(recursos.estado().bandejas)
 	for marca: String in _guias:
 		mapa.nombres[marca] = _texto_accion(marca)
 
@@ -174,6 +177,8 @@ func _cercana() -> String:
 	return seleccion
 
 func _texto_accion(id: String) -> String:
+	if id == "plantas":
+		return _accion_huerto(recursos.estado().bandejas)
 	if not id.is_empty() and id == _confirmacion:
 		return "Confirmar espera" if id == "carga" else "Confirmar descanso"
 	if id == "control" and etapa == "aviso5":
@@ -191,7 +196,7 @@ func _texto_accion(id: String) -> String:
 		"filtro": "Limpiar la muestra", "taller": "Recoger protecciones",
 		"refugio": "Entrar al núcleo protegido", "montaje": "Colocar blindaje",
 		"ventilacion": "Comprobar el paso del aire", "aire": "Revisar oxígeno",
-		"descanso": "Cerrar el día", "carga": "Esperar carga solar", "plantas": "Revisar los cultivos",
+		"descanso": "Cerrar el día", "carga": "Esperar carga solar",
 		"sello": "Cerrar desde dentro", "emisora": "Revisar la señal de Tierra",
 		"volver_capsula": "Abrir paso a la cápsula",
 	}.get(id, "")
@@ -412,24 +417,45 @@ func _esperar_carga() -> void:
 func _avanzar_carga(periodo: float) -> void:
 	vista.cerrar()
 	recursos.avanzar(periodo)
+	mapa.mostrar_huerto(recursos.estado().bandejas)
 	if not recursos.estado().derrota.is_empty():
 		_emitir_final("derrota")
 	else:
 		vista.decir("Pluto", "Compara lo que ganamos con lo que se usó durante la espera.")
 
+func _cosecha_lista(bandejas: Dictionary) -> String:
+	for cultivo: String in bandejas:
+		if bandejas[cultivo] == 0.0:
+			return cultivo
+	return ""
+
+func _accion_huerto(bandejas: Dictionary) -> String:
+	if not _cosecha_lista(bandejas).is_empty():
+		return "Recoger y comer"
+	if bandejas.has("lechuga"):
+		return "Brote en crecimiento · %d s" % ceili(bandejas.lechuga)
+	return "Regar la semilla" if _confirmacion == "plantas" else "Colocar semilla de lechuga"
+
 func _atender_huerto() -> void:
 	var estado := recursos.estado()
-	for cultivo: String in estado.bandejas:
+	var cultivo := _cosecha_lista(estado.bandejas)
+	if not cultivo.is_empty():
 		if recursos.comer(cultivo):
+			mapa.recoger_cultivo(cultivo)
 			vista.decir("Iris", "Comimos de la cosecha. Ahora tenemos más reservas para descansar.")
-			return
-	if estado.bandejas.has("lechuga"):
-		vista.decir("Iris", "Aún está creciendo. Puedes dejar pasar una carga solar para darle tiempo.")
-		return
-	if recursos.sembrar("lechuga"):
-		vista.decir("Iris", "Acabamos de sembrar. La planta necesita agua, energía y tiempo. Espera una carga solar y vuelve.")
-	else:
+		else:
+			vista.decir("Iris", "Tenemos comida suficiente. Podemos dejar la cosecha en la bandeja.")
+	elif estado.bandejas.has("lechuga"):
+		vista.decir("Iris", "La lechuga necesita %d s. La espera en Energía también ayuda a que crezca." % ceili(estado.bandejas.lechuga))
+	elif estado.reservas.agua < 1 or estado.reservas.energia < 1:
 		vista.decir("Iris", "Sembrar necesita 1 de agua y 1 de energía.")
+	elif _confirmacion != "plantas":
+		_confirmacion = "plantas"
+		vista.decir("Iris", "Semilla en tierra. Riega la bandeja con 1 de agua y 1 de energía.")
+	elif recursos.sembrar("lechuga"):
+		_confirmacion = ""
+		mapa.mostrar_huerto(recursos.estado().bandejas)
+		vista.decir("Iris", "Ya regamos la lechuga. Dale tiempo mientras recargas la batería en Energía.")
 
 func _consultar_descanso() -> void:
 	var estado := recursos.estado()

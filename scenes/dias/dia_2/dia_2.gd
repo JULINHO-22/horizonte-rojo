@@ -1,8 +1,10 @@
 extends Control
 
 signal finalizado(resultado: Dictionary)
+signal avance_plantas_guardado
 
 const Recursos := preload("res://scripts/mecanicas/recursos_mision.gd")
+const Invernadero := preload("res://scripts/invernadero_umbra.gd")
 const HUD := preload("res://scenes/dias/dia_2/dia_2_hud.gd")
 const PanelControl := preload("res://scripts/panel_control.gd")
 var panel_control: PanelControl
@@ -39,11 +41,12 @@ const OBJETIVOS := {
 	Paso.REPARAR: [PANELES, "3 · Sujeta los equipos", "Alinea y fija 3 cierres entre las ráfagas.\nSigue la marca hasta los paneles.", "Abrir caja de herramientas"],
 	Paso.ENTRAR: [PuestoUmbra.ESCLUSA, "4 · Vuelve a casa", "¡Los equipos están protegidos!\nLos paneles cargarán cuando pase la tormenta.", "Entrar al refugio"],
 	Paso.AIRE: [AIRE, "2 · Prepara el aire", "Ve a los tanques verdes del laboratorio.\nAgua + energía nos ayudan a tener aire.", "Conectar aire · 6 energía + 1 agua"],
-	Paso.PLANTAS: [PLANTAS, "Una pausa para comer", "Siembra una lechuga. En 15 segundos estará lista.\nDespués pulsa F para comerla.", "Sembrar · 1 energía + 1 agua"],
+	Paso.PLANTAS: [PLANTAS, "Una pausa para comer", "Recoge una cosecha lista o visita la bandeja de lechuga.\nCuando termines, vuelve al dormitorio.", "Atender las bandejas"],
 	Paso.DESCANSO: [CAMA, "4 · A descansar", "Aire listo, comida lista. ¡Buen trabajo!\nAcércate a la cama para terminar el día.", "Terminar el Sol 2"],
 }
 
 var taller: Taller
+var huerto: Invernadero
 var salida_pendiente := false
 var recursos: Recursos
 var puesto: PuestoUmbra
@@ -202,7 +205,7 @@ func _process(delta: float) -> void:
 			var direccion := Vector2(
 				float((Input.is_physical_key_pressed(KEY_D) or Input.is_key_pressed(KEY_D)) or Input.is_action_pressed("ui_right")) - float((Input.is_physical_key_pressed(KEY_A) or Input.is_key_pressed(KEY_A)) or Input.is_action_pressed("ui_left")),
 				float((Input.is_physical_key_pressed(KEY_S) or Input.is_key_pressed(KEY_S)) or Input.is_action_pressed("ui_down")) - float((Input.is_physical_key_pressed(KEY_W) or Input.is_key_pressed(KEY_W)) or Input.is_action_pressed("ui_up")))
-			if not taller.visible:
+			if not taller.visible and not is_instance_valid(huerto):
 				puesto.avanzar(direccion.normalized(), minf(delta, 0.05))
 			taller.avanzar(delta)
 			puesto.tiempo += delta
@@ -214,7 +217,7 @@ func _process(delta: float) -> void:
 	_actualizar()
 
 func _unhandled_key_input(event: InputEvent) -> void:
-	if not event is InputEventKey or not event.pressed or event.echo:
+	if is_instance_valid(huerto) or not event is InputEventKey or not event.pressed or event.echo:
 		return
 	var codigo: Key = event.keycode if event.keycode != KEY_NONE else event.physical_keycode
 	if is_instance_valid(panel_control):
@@ -274,7 +277,7 @@ func _cerca_del_aire(estado: Dictionary) -> bool:
 	return puesto.interior and _cerca(AIRE) and not estado.aire_asegurado
 
 func _actuar() -> void:
-	if not juego_activo() or taller.visible:
+	if not juego_activo() or taller.visible or is_instance_valid(huerto):
 		return
 	var estado := recursos.estado()
 	if _cerca_del_aire(estado):
@@ -283,6 +286,9 @@ func _actuar() -> void:
 		return
 	if puesto.interior and paso != Paso.DECISION and _cerca(CONTROL):
 		_abrir_control(false)
+		return
+	if puesto.interior and _cerca(PLANTAS):
+		_abrir_huerto()
 		return
 	var ficha: Array = OBJETIVOS[paso]
 	if not _cerca(ficha[0]):
@@ -300,13 +306,6 @@ func _actuar() -> void:
 			audio.sonar_esclusa()
 			_mundo(true, SALIDA)
 			_ir_al_cierre(estado, [CRUCE_SUR], [CRUCE_SUR])
-		Paso.PLANTAS:
-			if recursos.sembrar("lechuga"):
-				audio.sonar_clic()
-				aviso = "Lechuga sembrada en bandeja. Espera 15 s y pulsa F para comerla."
-			else:
-				audio.sonar_error()
-				aviso = "Necesitas una bandeja libre, 1 de energía y 1 de agua."
 		Paso.DESCANSO:
 			var derrota := ""
 			if not estado.aire_asegurado:
@@ -409,25 +408,35 @@ func _alternativa() -> void:
 		else:
 			_ir(Paso.AIRE, [GIRO_CAMA, GIRO_ESTE, CRUCE_ESTE, CRUCE_OESTE, GIRO_AGUA, ENTRADA_AGUA])
 	elif paso == Paso.PLANTAS and _cerca(PLANTAS):
-		var cosecha := _cosecha(estado)
-		if not cosecha.is_empty() and recursos.comer(cosecha):
-			audio.sonar_clic()
-			aviso = "Cosecha consumida. Recuperaste alimento."
-		else:
-			audio.sonar_clic()
-			_ir(Paso.DESCANSO, [GIRO_PLANTAS, GIRO_CAMA])
+		audio.sonar_clic()
+		_ir(Paso.DESCANSO, [GIRO_PLANTAS, GIRO_CAMA])
 	_actualizar()
 
-func _cosecha(estado: Dictionary) -> String:
-	if estado.reservas.alimento == Recursos.LIMITES.alimento:
-		return ""
-	for cultivo: String in estado.bandejas:
-		if estado.bandejas[cultivo] == 0:
-			return cultivo
-	return ""
+func _abrir_huerto() -> void:
+	huerto = Invernadero.new()
+	huerto.recursos = recursos
+	huerto.semillas_disponibles = ["lechuga"]
+	huerto.cerrar_solicitado.connect(_cerrar_huerto)
+	huerto.cultivo_atendido.connect(_registrar_cultivo)
+	interfaz.hide()
+	add_child(huerto)
+
+func _registrar_cultivo(cosechado: bool) -> void:
+	audio.sonar_clic()
+	if cosechado and paso == Paso.PLANTAS:
+		aviso = "Recuperaste comida. Ahora puedes volver al dormitorio."
+	avance_plantas_guardado.emit()
+
+func _cerrar_huerto() -> void:
+	remove_child(huerto)
+	huerto.queue_free()
+	huerto = null
+	interfaz.show()
 
 func _terminar(estado: Dictionary, derrota: String) -> void:
 	concluido = true
+	if is_instance_valid(huerto):
+		_cerrar_huerto()
 	taller.hide()
 	if derrota.is_empty():
 		audio.sonar_alerta()
@@ -464,6 +473,8 @@ func _actualizar() -> void:
 		_terminar(estado, estado.derrota)
 		if is_queued_for_deletion():
 			return
+	if is_instance_valid(huerto):
+		return
 
 	var ficha: Array = OBJETIVOS[paso]
 	var destino: Vector2 = ficha[0] if ruta.is_empty() else ruta.front()
@@ -483,8 +494,7 @@ func _actualizar() -> void:
 		Paso.AIRE:
 			opcion = "Preparar aire después · salir" if salida_pendiente else "Ir al dormitorio"
 		Paso.PLANTAS:
-			var lista := _cosecha(estado)
-			opcion = "Volver al dormitorio" if lista.is_empty() else "Comer cosecha · +%d alimento" % Recursos.CULTIVOS[lista].alimento
+			opcion = "Volver al dormitorio"
 		Paso.DESCANSO:
 			if not estado.aire_asegurado:
 				accion = "Dormir sin aire · termina la misión"
@@ -523,10 +533,9 @@ func _actualizar() -> void:
 		puede_elegir = true
 		destino = AGUA
 
-	if paso == Paso.PLANTAS and estado.bandejas.has("lechuga"):
-		var segundos := ceili(float(estado.bandejas.lechuga))
-		cerca = false
-		detalle = "Tu lechuga está creciendo: faltan %d s.\nCuando esté lista, pulsa F para comer." % segundos if segundos > 0 else "¡Lechuga lista! Pulsa F para comer.\nDespués puedes volver a la cama."
+	if puesto.interior and _cerca(PLANTAS):
+		cerca = true
+		accion = "Atender las bandejas"
 
 	if puesto.plano:
 		detalle = "M · Cerrar el plano y volver al recorrido."
@@ -557,6 +566,8 @@ func _actualizar() -> void:
 		pluto_texto = "¡Excelente! Paneles a salvo. Vuelve por la esclusa a asegurar el aire."
 	elif paso == Paso.AIRE and not estado.aire_asegurado:
 		pluto_texto = "Usa agua y batería para preparar el aire. Busca los tanques verdes."
+	elif paso == Paso.PLANTAS:
+		pluto_texto = "Ve a Plantas. Allí puedes regar una lechuga o comer de una bandeja madura."
 	elif estado.aire_asegurado:
 		pluto_texto = "Oxígeno asegurado para la noche. Descansa en el dormitorio cuando estés lista."
 

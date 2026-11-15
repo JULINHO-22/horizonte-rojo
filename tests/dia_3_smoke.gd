@@ -32,9 +32,11 @@ func _probar() -> void:
 	escena_protegida._comenzar_recorrido()
 	escena_protegida.puesto.punto = PuestoUmbra.TERMINALES.cultivos
 	escena_protegida._accion()
-	assert(escena_protegida.modal != null and escena_protegida.invernadero_revisado)
-	escena_protegida._sembrar("lechuga")
-	escena_protegida._cerrar_panel_plantas()
+	assert(is_instance_valid(escena_protegida.huerto) and escena_protegida.invernadero_revisado)
+	escena_protegida.huerto.accion.pressed.emit()
+	escena_protegida.huerto.accion.pressed.emit()
+	assert(protegidos.estado().bandejas.has("lechuga"))
+	escena_protegida.huerto.cerrar_solicitado.emit()
 	assert(escena_protegida.fase == "ir_oxigeno")
 	escena_protegida.puesto.punto = PuestoUmbra.ESTACION_OXIGENO
 	escena_protegida._accion()
@@ -62,8 +64,10 @@ func _probar() -> void:
 	assert(danados.estado().reservas.agua == 3)
 	assert(danados.estado().reservas.oxigeno == 5)
 	escena_danada._comenzar_recorrido()
-	escena_danada._abrir_panel_plantas()
-	escena_danada._cerrar_panel_plantas()
+	escena_danada.puesto.punto = PuestoUmbra.TERMINALES.cultivos
+	escena_danada._accion()
+	assert(escena_danada.huerto.plantas_visuales[1].etapa == 2)
+	escena_danada.huerto.cerrar_solicitado.emit()
 	escena_danada._activar_fallo()
 	escena_danada._elegir_invernadero()
 	var estado_danado: Dictionary = danados.estado()
@@ -82,7 +86,7 @@ func _probar() -> void:
 	prueba_local._comenzar_recorrido()
 	prueba_local.puesto.punto = PuestoUmbra.TERMINALES.cultivos
 	prueba_local._accion()
-	prueba_local._cerrar_panel_plantas()
+	prueba_local.huerto.cerrar_solicitado.emit()
 	prueba_local.puesto.punto = PuestoUmbra.ESTACION_OXIGENO
 	prueba_local._accion()
 	prueba_local._elegir_invernadero()

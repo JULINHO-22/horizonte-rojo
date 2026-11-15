@@ -818,7 +818,7 @@ func _dibujar_interior() -> void:
 		Vector2(188, 29): "← AGUA Y OXÍGENO",
 		Vector2(529, 211): "↑ PLANTAS Y DORMITORIO",
 		Vector2(549, 255): "TALLER →",
-		Vector2(538, 110): "← PLANTAS   ·   DORMITORIO →",
+		Vector2(538, 110): "< PLANTAS   ·   DORMITORIO >",
 	}
 	for sitio: Vector2 in carteles:
 		if not plano and not vista_esclusa and punto.distance_to(sitio) < 72:

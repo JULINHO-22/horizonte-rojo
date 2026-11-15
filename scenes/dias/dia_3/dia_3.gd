@@ -4,21 +4,19 @@ extends Control
 
 signal descanso_solicitado(resultado: Dictionary)
 signal dia_completado(resultado: Dictionary)
-signal decision_guardada
+signal avance_guardado
 
 const Recursos := preload("res://scripts/mecanicas/recursos_mision.gd")
 const PanelControl := preload("res://scripts/panel_control.gd")
 const DialogoEscena := preload("res://scripts/dialogo_escena.gd")
 const AccionEscena := preload("res://scripts/accion_escena.gd")
+const Invernadero := preload("res://scripts/invernadero_umbra.gd")
 const AREA := Rect2(0, 0, 1280, 720)
 const TINTA_CLARA := Color("#2a1c17")
 const PAPEL := Color("#fff1db")
 const CIAN := Color("#83eadc")
 const NARANJA := Color("#f6a44e")
 const ROJO := Color("#ff6b6b")
-const NOMBRES_CULTIVOS := {
-	"lechuga": "Lechuga", "rabano": "Rábano", "tomate": "Tomate", "papa": "Papa",
-}
 
 var recursos
 var sistemas_danados := false
@@ -36,8 +34,7 @@ var dialogo
 var pista: Label
 var boton_accion: Button
 var panel_control: PanelControl
-var bandejas_ui: Dictionary = {}
-var mensaje_panel := ""
+var huerto: Invernadero
 var plano := false
 
 
@@ -70,14 +67,15 @@ func _process(delta: float) -> void:
 		var paso := minf(delta, 0.05)
 		_caminar(paso)
 		recursos.avanzar(paso)
-	elif not bandejas_ui.is_empty():
+	elif is_instance_valid(huerto):
 		recursos.avanzar(delta)
+		return
 	_actualizar_guia()
 	_ubicar_interfaz()
 
 
 func _unhandled_key_input(event: InputEvent) -> void:
-	if not event is InputEventKey or not event.pressed or event.echo:
+	if is_instance_valid(huerto) or not event is InputEventKey or not event.pressed or event.echo:
 		return
 	if is_instance_valid(panel_control):
 		if event.physical_keycode == KEY_ESCAPE:
@@ -218,7 +216,7 @@ func _caminar(delta: float) -> void:
 
 
 func _juego_activo() -> bool:
-	return modal == null and not is_instance_valid(panel_control) and fase in ["ir_plantas", "ir_oxigeno", "cierre"]
+	return modal == null and not is_instance_valid(panel_control) and not is_instance_valid(huerto) and fase in ["ir_plantas", "ir_oxigeno", "cierre"]
 
 
 func _actualizar_guia() -> void:
@@ -230,9 +228,6 @@ func _actualizar_guia() -> void:
 			objetivo.text = "OBJETIVO · Escuchar a Pluto"
 		"ir_plantas":
 			objetivo.text = "OBJETIVO · Revisar Plantas"
-			if puesto.terminal_cercana() == "cultivos":
-				boton_accion.text = "E · Revisar el invernadero"
-				boton_accion.visible = modal == null
 		"ir_oxigeno":
 			objetivo.text = "OBJETIVO · Revisar Agua y Oxígeno"
 			if _oxigeno_cercano():
@@ -242,10 +237,7 @@ func _actualizar_guia() -> void:
 			objetivo.text = "EMERGENCIA · Elige un circuito"
 		"cierre":
 			objetivo.text = "OBJETIVO · Comer si hace falta y dormir"
-			if puesto.terminal_cercana() == "cultivos":
-				boton_accion.text = "E · Revisar alimento"
-				boton_accion.visible = modal == null
-			elif puesto.terminal_cercana() == "dormitorio":
+			if puesto.terminal_cercana() == "dormitorio":
 				boton_accion.text = "E · Dormir y cerrar el día"
 				boton_accion.visible = modal == null
 		"terminado":
@@ -253,14 +245,17 @@ func _actualizar_guia() -> void:
 	if _juego_activo() and not plano and puesto.terminal_cercana() == "radio":
 		boton_accion.text = "E · Consultar tareas"
 		boton_accion.show()
+	elif _juego_activo() and not plano and puesto.terminal_cercana() == "cultivos":
+		boton_accion.text = "E · Atender las bandejas"
+		boton_accion.show()
 	if boton_accion.visible:
 		_ubicar_accion()
 
 
 func _accion() -> void:
-	if modal != null or is_instance_valid(panel_control):
+	if not _juego_activo() or plano:
 		return
-	if _juego_activo() and not plano and puesto.terminal_cercana() == "radio":
+	if puesto.terminal_cercana() == "radio":
 		panel_control = PanelControl.new()
 		panel_control.configurar(3, false)
 		panel_control.cerrar_solicitado.connect(_cerrar_control)
@@ -272,17 +267,15 @@ func _accion() -> void:
 		}[fase]
 		panel_control.mostrar_tarea(tarea)
 		return
+	if puesto.terminal_cercana() == "cultivos":
+		_abrir_huerto()
+		return
 	match fase:
-		"ir_plantas":
-			if puesto.terminal_cercana() == "cultivos":
-				_abrir_panel_plantas()
 		"ir_oxigeno":
 			if _oxigeno_cercano():
 				_activar_fallo()
 		"cierre":
-			if puesto.terminal_cercana() == "cultivos":
-				_abrir_panel_plantas()
-			elif puesto.terminal_cercana() == "dormitorio":
+			if puesto.terminal_cercana() == "dormitorio":
 				_solicitar_dormir()
 
 func _cerrar_control() -> void:
@@ -290,72 +283,21 @@ func _cerrar_control() -> void:
 	panel_control.queue_free()
 	panel_control = null
 
-func _abrir_panel_plantas() -> void:
+func _abrir_huerto() -> void:
 	invernadero_revisado = true
-	var datos: Dictionary = recursos.estado()
-	var columna := _crear_modal("Sala de Plantas")
-	_texto_modal(columna, "Las bandejas, el alimento, el agua y la energía pertenecen al mismo estado persistente de la campaña.", 17)
-	if mensaje_panel != "":
-		_texto_modal(columna, mensaje_panel, 17, CIAN)
-		mensaje_panel = ""
-	for cultivo: String in Recursos.CULTIVOS:
-		var ficha: Dictionary = Recursos.CULTIVOS[cultivo]
-		var fila := HBoxContainer.new()
-		fila.add_theme_constant_override("separation", 10)
-		columna.add_child(fila)
-		var descripcion := "%s · %d energía + 1 agua · %d s · +%d alimento" % [
-			NOMBRES_CULTIVOS[cultivo], ficha.energia, int(ficha.segundos), ficha.alimento]
-		var texto := _texto_modal(fila, descripcion, 16)
-		texto.custom_minimum_size.x = 520
-		bandejas_ui[cultivo] = _boton_fila(fila, "", _usar_bandeja.bind(cultivo))
-	_actualizar_bandejas(datos)
-	var pie := HBoxContainer.new()
-	pie.add_theme_constant_override("separation", 12)
-	columna.add_child(pie)
-	var volver_texto := "Continuar hacia el oxígeno" if fase == "ir_plantas" else "Volver al recorrido"
-	_boton_fila(pie, volver_texto, _cerrar_panel_plantas)
-
-func _usar_bandeja(cultivo: String) -> void:
-	if recursos.estado().bandejas.has(cultivo):
-		_comer(cultivo)
-	else:
-		_sembrar(cultivo)
-
-func _actualizar_bandejas(datos: Dictionary) -> void:
-	for cultivo: String in bandejas_ui:
-		var control: Button = bandejas_ui[cultivo]
-		var espera: float = datos.bandejas.get(cultivo, -1.0)
-		if espera < 0:
-			control.text = "Sembrar"
-			control.disabled = datos.reservas.energia < Recursos.CULTIVOS[cultivo].energia or datos.reservas.agua == 0
-		elif espera > 0:
-			control.text = "Faltan %d s" % ceili(espera)
-			control.disabled = true
-		else:
-			control.text = "Recoger y comer"
-			control.disabled = datos.reservas.alimento >= Recursos.LIMITES.alimento
-
-func _sembrar(cultivo: String) -> void:
-	if recursos.sembrar(cultivo):
-		mensaje_panel = "%s sembrado. Puedes esperar aquí o seguir explorando." % NOMBRES_CULTIVOS[cultivo]
-	else:
-		mensaje_panel = "No se pudo sembrar: revisa energía, agua y bandejas disponibles."
-	_cerrar_modal()
-	_abrir_panel_plantas()
+	huerto = Invernadero.new()
+	huerto.recursos = recursos
+	huerto.cerrar_solicitado.connect(_cerrar_huerto)
+	huerto.cultivo_atendido.connect(func(_cosechado: bool): avance_guardado.emit())
+	boton_accion.hide()
+	add_child(huerto)
 
 
-func _comer(cultivo: String) -> void:
-	if recursos.comer(cultivo):
-		mensaje_panel = "La tripulación comió %s y recuperó alimento." % NOMBRES_CULTIVOS[cultivo].to_lower()
-	else:
-		mensaje_panel = "Ese cultivo todavía no está listo o la reserva de alimento ya está llena."
-	_cerrar_modal()
-	_abrir_panel_plantas()
-
-
-func _cerrar_panel_plantas() -> void:
-	_cerrar_modal()
-	if fase == "ir_plantas":
+func _cerrar_huerto() -> void:
+	remove_child(huerto)
+	huerto.queue_free()
+	huerto = null
+	if fase == "ir_plantas" and recursos.estado().derrota.is_empty():
 		fase = "ir_oxigeno"
 		puesto.objetivo_mision = "agua"
 		_decir_pluto("Bien. Ahora revisemos el oxígeno en el laboratorio conjunto antes de continuar con el día.")
@@ -373,7 +315,7 @@ func _activar_fallo() -> void:
 	_mostrar_decision()
 
 
-func _mostrar_decision() -> void:
+func _mostrar_decision(aviso := "") -> void:
 	var datos: Dictionary = recursos.estado()
 	var costo_oxigeno_energia := 7 if sistemas_danados else 6
 	var costo_oxigeno_agua := 2 if sistemas_danados else 1
@@ -381,6 +323,8 @@ func _mostrar_decision() -> void:
 	var columna := _crear_modal("Fallo eléctrico")
 	_decir_pluto("Espera… el regulador no responde. La energía disponible solo puede mantener uno de los circuitos: oxígeno o invernadero.")
 	_texto_modal(columna, "Elige después de revisar el costo y la consecuencia.", 17)
+	if not aviso.is_empty():
+		_texto_modal(columna, aviso, 17, ROJO)
 
 	var oxigeno := _boton_fila(columna,
 		"PRIORIZAR OXÍGENO · -%d energía · -%d agua · -2 alimento\nLlena y estabiliza el oxígeno; activación diaria cumplida." % [costo_oxigeno_energia, costo_oxigeno_agua],
@@ -416,26 +360,22 @@ func _elegir_oxigeno() -> void:
 	var costo_energia := 7 if sistemas_danados else 6
 	var costo_agua := 2 if sistemas_danados else 1
 	if not recursos.activar_oxigeno(costo_energia, costo_agua, 2, true):
-		mensaje_panel = "No hay reservas suficientes para priorizar el oxígeno."
-		_cerrar_modal()
-		_mostrar_decision()
+		_mostrar_decision("Faltan reservas para priorizar el oxígeno.")
 		return
 	decision = "oxigeno"
 	recursos.aplicar_decision("sol_3_oxigeno", {})
-	decision_guardada.emit()
+	avance_guardado.emit()
 	_cerrar_decision("Oxígeno estabilizado. Se perdió la cosecha, pero el aire quedó asegurado por hoy.")
 
 
 func _elegir_invernadero() -> void:
 	var costo_energia := 4 if sistemas_danados else 3
 	if not recursos.usar_tanques_emergencia(costo_energia):
-		mensaje_panel = "No hay reservas suficientes para activar los tanques de emergencia."
-		_cerrar_modal()
-		_mostrar_decision()
+		_mostrar_decision("Faltan reservas para activar los tanques de emergencia.")
 		return
 	decision = "invernadero"
 	recursos.aplicar_decision("sol_3_invernadero", {})
-	decision_guardada.emit()
+	avance_guardado.emit()
 	_cerrar_decision("Invernadero priorizado. Los tanques de emergencia cubrirán el suministro nocturno de hoy.")
 
 
@@ -485,7 +425,6 @@ func _actualizar_hud() -> void:
 	if recursos == null:
 		return
 	var datos: Dictionary = recursos.estado()
-	_actualizar_bandejas(datos)
 	if datos.derrota != "":
 		_mostrar_derrota(datos.derrota)
 
@@ -528,6 +467,8 @@ func _mostrar_fin(encabezado: String, texto: String) -> void:
 func _mostrar_derrota(motivo: String) -> void:
 	if fase == "terminado":
 		return
+	if is_instance_valid(huerto):
+		_cerrar_huerto()
 	var textos := {
 		"oxigeno_agotado": "El oxígeno llegó a cero.",
 		"aire_sin_activar": "Se intentó dormir sin asegurar el aire.",
@@ -569,7 +510,6 @@ func _crear_modal(encabezado: String) -> VBoxContainer:
 
 
 func _cerrar_modal() -> void:
-	bandejas_ui.clear()
 	if modal != null:
 		modal.queue_free()
 		modal = null

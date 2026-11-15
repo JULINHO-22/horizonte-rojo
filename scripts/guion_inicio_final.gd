@@ -4,6 +4,7 @@ const Campana := preload("res://scripts/campana_narrativa.gd")
 const Viaje := preload("res://scripts/viaje_espacial.gd")
 const DialogoEscena := preload("res://scripts/dialogo_escena.gd")
 const AccionEscena := preload("res://scripts/accion_escena.gd")
+const Invernadero := preload("res://scripts/invernadero_umbra.gd")
 const DerrotaUmbra := preload("res://scripts/derrota_umbra.gd")
 const VISTAS_FINALES := {
 	"--final-recursos": "res://scenes/pruebas/banco_recursos.tscn",
@@ -57,7 +58,7 @@ var extraccion_hasta := 0.0
 var estaciones: VBoxContainer
 var sombra_estacion: TextureRect
 var estacion := ""
-var turnos_cosecha: Dictionary = {}
+var huerto: Invernadero
 var campana = Campana.new()
 var fase := "portada"
 var reloj := 0.0
@@ -130,10 +131,9 @@ func _process(delta: float) -> void:
 			if is_instance_valid(panel_control):
 				return
 			if not estacion.is_empty():
-				if _sol_uno() and estacion == "cultivos":
+				if is_instance_valid(huerto):
 					if not _avanzar_recursos(delta):
 						return
-					_actualizar_cosecha(recursos.estado())
 					_refrescar_recursos()
 				return
 			if not _avanzar_recursos(delta):
@@ -211,7 +211,7 @@ func _input(evento: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 
 func _unhandled_key_input(event: InputEvent) -> void:
-	if is_instance_valid(nivel_activo) or is_instance_valid(menu_soles) or is_instance_valid(anuncio_sol):
+	if is_instance_valid(nivel_activo) or is_instance_valid(menu_soles) or is_instance_valid(anuncio_sol) or is_instance_valid(huerto):
 		return
 	if not event is InputEventKey or not event.pressed or event.echo:
 		return
@@ -495,10 +495,11 @@ func _montar_sol() -> void:
 						_guardar("base")
 			nivel_activo.configurar(recursos)
 			nivel_activo.finalizado.connect(_cerrar_sol_2, CONNECT_DEFERRED)
+			nivel_activo.avance_plantas_guardado.connect(_guardar.bind("base"))
 		3:
 			nivel_activo.configurar(recursos, historial_soles.get("sistemas_danados", false))
 			nivel_activo.descanso_solicitado.connect(_cerrar_sol_3, CONNECT_DEFERRED)
-			nivel_activo.decision_guardada.connect(_guardar.bind("base"))
+			nivel_activo.avance_guardado.connect(_guardar.bind("base"))
 		4, 5:
 			nivel_activo.configurar(recursos, historial_soles)
 			nivel_activo.terminado.connect(_cerrar_tramo, CONNECT_DEFERRED)
@@ -618,7 +619,6 @@ func _cambiar(destino: String) -> void:
 	if fase == "noche":
 		posicion = PuestoUmbra.TERMINALES.dormitorio
 	estacion = ""
-	turnos_cosecha.clear()
 	extraccion_hasta = 0
 	aviso_tiempo = 0
 	if fase == "base":
@@ -635,6 +635,7 @@ func _cambiar(destino: String) -> void:
 
 func _mostrar() -> void:
 	nivel_activo = null
+	huerto = null
 	interfaz_tablet = null
 	boton_tablet = null
 	anuncio_sol = null
@@ -850,6 +851,8 @@ func _alternar_tablet() -> void:
 	interfaz_tablet.cerrar_solicitado.connect(_cerrar_tablet)
 	if is_instance_valid(nivel_activo):
 		nivel_activo.process_mode = Node.PROCESS_MODE_DISABLED
+	elif is_instance_valid(huerto):
+		huerto.process_mode = Node.PROCESS_MODE_DISABLED
 	capa.add_child(interfaz_tablet)
 
 func _cerrar_tablet() -> void:
@@ -858,6 +861,8 @@ func _cerrar_tablet() -> void:
 	interfaz_tablet = null
 	if is_instance_valid(nivel_activo):
 		nivel_activo.process_mode = Node.PROCESS_MODE_INHERIT
+	elif is_instance_valid(huerto):
+		huerto.process_mode = Node.PROCESS_MODE_INHERIT
 
 func _refrescar_recursos() -> void:
 	var datos := recursos.estado()
@@ -938,6 +943,9 @@ func _estacion_cercana() -> String:
 func _abrir_estacion(id: String) -> void:
 	estacion = id
 	boton.hide()
+	if id == "cultivos":
+		_abrir_huerto()
+		return
 	estaciones = VBoxContainer.new()
 	estaciones.position = Vector2(818, 78 if _sol_uno() else 180)
 	estaciones.custom_minimum_size.x = 384
@@ -952,12 +960,6 @@ func _abrir_estacion(id: String) -> void:
 	elif id == "oxigeno":
 		voz.decir("Pluto", "Este equipo usa agua y batería para asegurar el aire de hoy.")
 		_opcion("Asegurar aire · 6 energía y 1 agua", recursos.activar_oxigeno)
-	else:
-		for cultivo: String in Recursos.CULTIVOS:
-			var ficha: Dictionary = Recursos.CULTIVOS[cultivo]
-			_opcion("Sembrar %s · %d energía, 1 agua, %d s, +%d comida" % [
-				cultivo.capitalize(), ficha.energia, int(ficha.segundos), ficha.alimento], recursos.sembrar.bind(cultivo))
-			_opcion("Comer %s" % cultivo, recursos.comer.bind(cultivo))
 	var cerrar := Button.new()
 	cerrar.text = "Cerrar · Esc"
 	cerrar.pressed.connect(_cerrar_estacion)
@@ -986,44 +988,32 @@ func _sombrear_estacion() -> void:
 	capa.move_child(sombra_estacion, estaciones.get_index())
 
 func _opciones_sol_uno(id: String) -> void:
-	var datos := recursos.estado()
 	if id == "oxigeno":
 		voz.decir("Pluto", "Si se acaba el oxígeno, no podemos respirar. Asegura el aire al inicio de cada día. Reserva 6 de energía y 1 de agua.")
 		_opcion("Asegurar aire · 6 energía y 1 agua", recursos.activar_oxigeno)
 	elif id == "agua":
 		voz.decir("Pluto", "El hielo trae polvo. Derrítelo, fíltralo y revisa el agua antes de llenar el tanque.")
 		_opcion("Purificar 1 hielo · 2 energía", recursos.purificar_hielo)
-	else:
-		voz.decir("Pluto", "Elige qué sembrar. El reloj te muestra cuánto falta. Cuando esté listo, recoge y come aquí mismo.")
-		for cultivo: String in Recursos.CULTIVOS:
-			turnos_cosecha[cultivo] = _opcion("", _usar_bandeja.bind(cultivo))
+
+func _abrir_huerto() -> void:
+	huerto = Invernadero.new()
+	huerto.recursos = recursos
+	if _sol_uno():
+		var datos := recursos.estado()
 		var anterior := Tutorial.cosecha(datos)
 		if Recursos.CULTIVOS.has(anterior) and Tutorial.COMIDA not in datos.decisiones:
-			_opcion("Comer la cosecha guardada", _comer_guardado.bind(anterior))
-		_actualizar_cosecha(datos)
+			huerto.cosecha_guardada = anterior
+			huerto.comer_guardado = _comer_guardado
+	huerto.cerrar_solicitado.connect(_cerrar_estacion)
+	huerto.cultivo_atendido.connect(_guardar_huerto)
+	capa.add_child(huerto)
+	capa.move_child(boton_tablet, -1)
 
-func _actualizar_cosecha(datos: Dictionary) -> void:
-	for cultivo: String in turnos_cosecha:
-		var control: Button = turnos_cosecha[cultivo]
-		var ficha: Dictionary = Recursos.CULTIVOS[cultivo]
-		if not datos.bandejas.has(cultivo):
-			control.text = "Sembrar %s · %d energía, 1 agua · %d s" % [cultivo.capitalize(), ficha.energia, int(ficha.segundos)]
-			control.disabled = false
-			continue
-		var espera := ceili(datos.bandejas[cultivo])
-		var reloj_cultivo := "%02d:%02d" % [int(espera / 60.0), espera % 60]
-		var lleno: bool = datos.reservas.alimento == Recursos.LIMITES.alimento
-		var estado := "lista · comida llena" if lleno else "recoger y comer · +%d comida" % ficha.alimento
-		control.text = "%s · %s" % [cultivo.capitalize(), "faltan " + reloj_cultivo if espera > 0 else estado]
-		control.disabled = espera > 0 or lleno
-
-func _usar_bandeja(cultivo: String) -> bool:
-	if not recursos.estado().bandejas.has(cultivo):
-		return recursos.sembrar(cultivo)
-	if not recursos.comer(cultivo):
-		return false
-	recursos.aplicar_decision(Tutorial.COMIDA, {})
-	return true
+func _guardar_huerto(cosechado: bool) -> void:
+	if _sol_uno() and cosechado:
+		recursos.aplicar_decision(Tutorial.COMIDA, {})
+	_refrescar_recursos()
+	_guardar()
 
 func _comer_guardado(cultivo: String) -> bool:
 	if recursos.estado().reservas.alimento == Recursos.LIMITES.alimento:
@@ -1041,7 +1031,6 @@ func _usar_estacion(accion: Callable) -> void:
 	var aplicada: bool = accion.call()
 	if _sol_uno() and aplicada:
 		var datos := recursos.estado()
-		_actualizar_cosecha(datos)
 		voz.decir("Pluto", Tutorial.GUIA[Tutorial.objetivo(datos)])
 	else:
 		voz.decir("Pluto", "Listo. Revisa las reservas." if aplicada else "Revisa las reservas y si la tarea ya está lista.")
@@ -1057,7 +1046,12 @@ func _hielo_prueba() -> bool:
 
 func _cerrar_estacion() -> void:
 	estacion = ""
-	turnos_cosecha.clear()
+	if is_instance_valid(huerto):
+		capa.remove_child(huerto)
+		huerto.queue_free()
+		huerto = null
+		_actualizar_guia()
+		return
 	estaciones.hide()
 	estaciones.queue_free()
 	if is_instance_valid(sombra_estacion):
