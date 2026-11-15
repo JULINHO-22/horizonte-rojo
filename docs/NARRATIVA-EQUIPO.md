@@ -89,6 +89,10 @@ SPEECH
 | Final terrestre | Epílogo de 10 s con la tripulación y agradecimiento; fondo de laboratorio reutilizado. Quedan pendientes el arte propio del laboratorio, los tres científicos animados y la revisión de signos vitales. No presentar este epílogo provisional como la escena final terminada. |
 | Actividades | No se activan tareas de hielo, radio, tormenta, agua ni balance de recursos. El simulador anterior se conserva en una escena separada. |
 
+## Finales alternativos
+
+Las escenas independientes de misión incompleta y misión cumplida ya se pueden revisar con F6. Las condiciones de campaña y el final trágico se decidirán con las actividades. Consulta [Finales en la Tierra](FINALES.md).
+
 ## Ciencia y ficción
 
 Los cinco días son la estancia de la historia, no el viaje total. Los viajes reales dependen de la trayectoria y de las oportunidades de salida; no asumir que la misma nave puede volver de inmediato tras cinco días. El montaje comprime los tiempos y no pretende validar ese plan de vuelo. [NASA: duración típica del traslado, 6–9 meses](https://blogs.nasa.gov/redplanetdispatch/).

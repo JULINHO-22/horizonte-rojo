@@ -1,5 +1,28 @@
 # Cambios
 
+## 2026-11-14 | Encuadre, diálogos y arranque web
+
+- Se aleja la cámara interior alrededor de un 10 % respecto de la revisión anterior y se aumenta la altura de los personajes humanos dentro de la base.
+- Los diálogos de la campaña principal y los finales usan una sombra difuminada y el nombre con dos puntos. Las vistas previas tienen una salida a la portada.
+- La portada prepara el motor y el paquete mientras el jugador la lee. Se comprimen fondos seleccionados para reducir la descarga.
+
+## 2026-11-14 | Regreso de la cápsula y cierre de victoria
+
+- La cápsula regresa sola a la Tierra. La etapa desprendida y su estela solo aparecen en la ida.
+- Los finales muestran diálogos breves con el nombre del personaje y un fondo de alto contraste.
+- El final de misión cumplida cierra con la aparición animada de la medalla y «¡Has ganado!».
+
+## 2026-11-14 | Control, cámara y vistas previas web
+
+- Control tiene una supercomputadora central con colisión y acceso desde el pasillo.
+- Se reduce aproximadamente un 6 % el acercamiento interior y de la esclusa.
+- La portada web ofrece los dos finales como vistas previas independientes de la campaña. Firebase revalida el HTML y los archivos de la compilación al volver a abrir el juego.
+
+## 2026-11-14 | Dos finales alternativos en la Tierra
+
+- Dos escenas independientes para revisar el regreso con la misión incompleta y el regreso con ceremonia de reconocimiento.
+- Arte pixel art generado para hangar, sala de ceremonia, directora y medalla. El selector de finales de campaña sigue pendiente.
+
 ## 2026-11-14 | Desacople visible y arranque directo
 
 - Se reduce aproximadamente un 6 % la velocidad normal al caminar dentro y fuera del refugio.

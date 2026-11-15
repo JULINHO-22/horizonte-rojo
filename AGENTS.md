@@ -6,6 +6,7 @@ Horizonte Rojo es un juego narrativo 2D de cinco soles en Godot 4.7.2. El alcanc
 2. Abre solo la guía que corresponda a tu tarea.
    - [Reto NASA](docs/RETO-NASA.md) para el enunciado, los criterios y las propuestas de niveles.
    - [Datos NASA](docs/DATOS-NASA.md) para fuentes verificadas y su uso en el juego.
+   - [Finales en la Tierra](docs/FINALES.md) para las dos cinemáticas independientes y su futura integración.
    - [Historia](docs/HISTORIA.md) para personajes, escenas y continuidad.
    - [Diseño](docs/DISEÑO.md) para reglas, balance y ciencia.
    - [Arquitectura](docs/ARQUITECTURA.md) para código, arte, contrato de estado y pruebas.
@@ -18,6 +19,6 @@ En el mismo PR, registra los cambios relevantes en `CHANGELOG.md` y actualiza la
 
 Para mecánicas nuevas, separa las reglas de la entrada, el dibujo y el diálogo. Mantén una sola fuente de verdad para cada estado y usa la misma acción para teclado y botones cuando hagan lo mismo. Comprueba el recorrido normal y los casos de error recuperables.
 
-Regla visual definitiva del usuario: el juego y toda imagen nueva deben conservar una temática **2D pixel art**. No mezclar fondos realistas con sprites pixelados ni sustituir el arte final por formas geométricas provisionales. En la cinemática, la nave grande debe verse acoplada durante el trayecto y desprender físicamente el módulo que después aterriza. Evita franjas inferiores de ancho completo para diálogos, pistas o botones. Usa texto breve y acciones cerca del personaje o del equipo. Registra recursos, prompts y cambios en los `.md`. Percy representa al rover Perseverance en la ficción; Pluto es otro personaje, el asistente ficticio del refugio.
+Regla visual definitiva del usuario: el juego y toda imagen nueva deben conservar una temática **2D pixel art**. No mezclar fondos realistas con sprites pixelados ni sustituir el arte final por formas geométricas provisionales. En la cinemática, la nave grande debe verse acoplada durante el trayecto y desprender físicamente el módulo que después aterriza. Evita franjas inferiores de ancho completo para diálogos, pistas o botones. Usa el componente `dialogo_escena.gd` para conversaciones del recorrido principal y los finales. Presenta el nombre seguido de dos puntos y coloca la frase cerca de quien habla con una sombra difuminada. Usa acciones cerca del personaje o del equipo. Registra recursos, prompts y cambios en los `.md`. Percy representa al rover Perseverance en la ficción; Pluto es otro personaje, el asistente ficticio del refugio.
 
 Trabaja en ramas por tarea y acuerda con el equipo los cambios al contrato de relevo. Antes de integrar, abre el proyecto, prueba los accesos, las cinco noches y el regreso; comprueba guardado y reanudación. Incluye en el PR los archivos de Godot junto a sus `.uid` y `.import` asociados. El binario local y la caché `.godot/` se excluyen.

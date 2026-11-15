@@ -44,7 +44,7 @@ El arte está en `assets/`. Los panoramas activos son `refugio_horizonte.png` y 
 
 El taller usa `PASO_TALLER` para su corredor. `PRUEBAS_ANEXOS` conserva la comprobación opcional del traje. Los guardados anteriores migran al nuevo esquema. Si su posición quedó en un módulo retirado, Nora reaparece en la esclusa.
 
-Control usa la ilustración cenital generada con ImageGen en `assets/control_pasillos.png`. El encargo situó monitores y sillas al norte, dejó un piso continuo entre las puertas laterales y mantuvo la puerta sur hacia la esclusa. Las áreas de paso deben seguir las tres aberturas del dibujo. La entrada a Plantas se alcanza por el corredor este.
+Control usa [la ilustración cenital de una supercomputadora](ARTE-CONTROL.md). La supercomputadora ocupa el centro de la mitad norte. El piso conecta las dos puertas laterales y la puerta sur lleva a la esclusa. Las áreas de paso deben seguir las tres aberturas del dibujo. La cámara de salas amplía el campo de visión un poco con un factor de zoom de 0,84 sobre el encuadre ajustado. Los personajes humanos conservan el anclaje en los pies y su altura pasa de 25 a 30 unidades de mundo. La colisión sigue usando la posición de los pies. La entrada a Plantas se alcanza por el corredor este.
 
 
 

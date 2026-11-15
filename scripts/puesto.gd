@@ -4,7 +4,7 @@ extends Node2D
 const SENDERO := preload("res://assets/refugio_horizonte.png")
 const CAMPO := preload("res://assets/barranco_horizonte.png")
 const TALLER := preload("res://assets/taller_umbra.png")
-const CONTROL := preload("res://assets/control_pasillos.png")
+const CONTROL := preload("res://assets/control_supercomputadora.png")
 const PLANTAS := preload("res://assets/plantas_horizonte.png")
 const DORMITORIO := preload("res://assets/dormitorio_umbra.png")
 const NAVE := preload("res://assets/NarrativaInicio/ModuloDescensoAterrizajePixelArt.png")
@@ -49,7 +49,7 @@ const ENTRADA_AGUA := Vector2(191, 42)
 const PASO_AGUA := [Rect2(166, 32, 40, 20), Rect2(182, 41, 24, 129)]
 const PASO_TALLER := Rect2(526, 235, 48, 20)
 const INSPECCIONES := {
-	"aire": Vector2(167, 280), "mapa": Vector2(442, 215), "plantas": Vector2(466, 93),
+	"aire": Vector2(167, 280), "mapa": Vector2(472, 222), "plantas": Vector2(466, 93),
 	"literas": Vector2(616, 89),
 	"rover_taller": Vector2(713, 229),
 	"sello_traje": Vector2(716, 277), "repuestos": Vector2(816, 229),
@@ -84,15 +84,16 @@ const PASILLOS := [
 ]
 const TERMINALES := {
 	"cultivos": Vector2(407, 97), "energia": Vector2(185, 242),
-	"radio": Vector2(450, 218),
+	"radio": Vector2(402, 251),
 	"cierre": Vector2(400, 382), "dormitorio": Vector2(685, 89),
 }
 const EQUIPOS := [
+	Rect2(356, 183, 92, 56),
 	Rect2(34, 144, 106, 77), Rect2(124, 144, 34, 78), Rect2(42, 253, 104, 49),
 	Rect2(313, 55, 56, 27), Rect2(380, 55, 43, 27), Rect2(436, 55, 52, 27),
 	Rect2(356, 372, 19, 29), Rect2(431, 351, 18, 57),
 ]
-const ALTURA_INTERIOR := 25.0
+const ALTURA_INTERIOR := 30.0
 const EQUIPO_AGUA := [Vector2(25, 19), Vector2(-1, 19), Vector2(51, 19)]
 const ALCANCE_AGUA := 10.0
 const FIN_LLEGADA := 13.5
@@ -235,10 +236,10 @@ func actualizar_camara(delta: float) -> void:
 		return
 	var marco := Vector2(ancho_visible, 527)
 	var objetivo := punto - Vector2(0, 12)
-	var escala := 3.25
+	var escala := 2.78
 	if not plano and (esclusa_activa or en_esclusa()):
 		objetivo = Vector2(CENTRO_ESCLUSA_X, clampf(punto.y - 2.0, 354.0, 408.0))
-		escala = 6.45
+		escala = 5.45
 	elif plano:
 		objetivo = LIMITES_BASE.get_center()
 		escala = minf(ancho_visible / LIMITES_BASE.size.x, marco.y / LIMITES_BASE.size.y)
@@ -249,12 +250,16 @@ func actualizar_camara(delta: float) -> void:
 				continue
 			var vista: Rect2 = VISTAS[zona]
 			var anexo := zona in ["agua", "taller"]
+			if zona == "radio":
+				objetivo.y -= 12.0
 			var zoom_sala := 3.85 if anexo else 4.45
 			if anexo:
 				# Al acercarse a los bancos del sur, la cámara deja ver el equipo.
 				objetivo.y += 33.0 * smoothstep(suelo.get_center().y, suelo.end.y - 6.0, punto.y)
-			escala = maxf(zoom_sala, maxf(marco.x / vista.size.x, marco.y / vista.size.y))
-			var margen := marco / (2.0 * escala)
+			var escala_ajustada := maxf(zoom_sala, maxf(marco.x / vista.size.x, marco.y / vista.size.y))
+			escala = escala_ajustada * 0.84
+			# Mantener los límites de recorrido de la cámara original al mostrar más alrededor.
+			var margen := marco / (2.0 * escala_ajustada)
 			objetivo = objetivo.clamp(vista.position + margen, vista.end - margen)
 			break
 	var peso := 1.0 - exp(-delta * 8.0)
@@ -753,7 +758,7 @@ func _dibujar_interior() -> void:
 	if not cultivo_activo:
 		draw_rect(Rect2(259, 33, 282, 88), Color(0.14, 0.19, 0.26, 0.52))
 	if radio_enviada:
-		draw_circle(Vector2(402, 181), 4.0, Color(0.34, 1.0, 0.84, 0.55))
+		draw_circle(Vector2(402, 229), 4.0, Color(0.34, 1.0, 0.84, 0.55))
 	_sprite(TEO_NORMAL, Vector2(635, 89), ALTURA_INTERIOR)
 	var patrulla := fposmod(tiempo - 17.0, 8.0)
 	var iris_x := 457.0 + 21.0 * (smoothstep(0.5, 2.7, patrulla) - smoothstep(4.1, 6.3, patrulla))

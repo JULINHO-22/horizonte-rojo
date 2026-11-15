@@ -46,7 +46,7 @@ func _ready() -> void:
 func etapa() -> String:
 	if regreso:
 		if progreso < 0.30:
-			return "El módulo se acopla para volver"
+			return "La cápsula deja atrás Marte"
 		if progreso < 0.68:
 			return "Meses de viaje después…"
 		return "Nos acercamos a la Tierra"
@@ -89,10 +89,19 @@ func _actualizar_toma() -> void:
 	_colocar_fondo(fondo_espacio, lerpf(1.02, 1.16, progreso), Vector2(-82, 18) * progreso)
 	_colocar_fondo(fondo_llegada, lerpf(1.01, 1.22, progreso), Vector2(-94, -32) * progreso)
 
-	var separacion := 1.0 - smoothstep(0.10, 0.31, progreso) if regreso else smoothstep(INICIO_SEPARACION, FIN_SEPARACION, progreso)
-	var escala_conjunto := lerpf(0.78, 1.07, smoothstep(0.0, 0.66, progreso))
+	transferencia.visible = not regreso
+	estela.visible = not regreso
 	if regreso:
-		escala_conjunto = lerpf(1.07, 0.82, smoothstep(0.30, 1.0, progreso))
+		var centro := Vector2(275, 410).bezier_interpolate(Vector2(430, 225),
+			Vector2(755, 210), Vector2(1010, 365), progreso)
+		var ancho := lerpf(310.0, 218.0, progreso)
+		var dimensiones := Vector2(ancho, ancho * MODULO.get_height() / MODULO.get_width())
+		_colocar_capa(modulo, centro, dimensiones, lerpf(-0.18, 0.15, progreso))
+		modulo.modulate.a = 1.0 - smoothstep(0.97, 1.0, progreso)
+		return
+
+	var separacion := smoothstep(INICIO_SEPARACION, FIN_SEPARACION, progreso)
+	var escala_conjunto := lerpf(0.78, 1.07, smoothstep(0.0, 0.66, progreso))
 	var tam_transferencia := Vector2(560, 560.0 * TRANSFERENCIA.get_height() / float(TRANSFERENCIA.get_width())) * escala_conjunto
 	var tam_modulo := Vector2(218, 218.0 * MODULO.get_height() / float(MODULO.get_width())) * escala_conjunto
 
@@ -101,7 +110,7 @@ func _actualizar_toma() -> void:
 	var control_b := Vector2(720, 235)
 	var final := Vector2(930, 315)
 	var centro_ruta := inicio.bezier_interpolate(control_a, control_b, final, progreso)
-	var avance_descenso := smoothstep(FIN_SEPARACION, 1.0, progreso) if not regreso else 0.0
+	var avance_descenso := smoothstep(FIN_SEPARACION, 1.0, progreso)
 	var centro_transferencia := centro_ruta + Vector2(-270, -68) * separacion - Vector2(400, 95) * avance_descenso
 	var giro_base := lerpf(-0.09, 0.02, progreso)
 	var giro_transferencia := giro_base - 0.13 * separacion
@@ -116,7 +125,7 @@ func _actualizar_toma() -> void:
 	_colocar_capa(transferencia, centro_transferencia, tam_transferencia, giro_transferencia)
 	_colocar_capa(modulo, centro_modulo, tam_modulo * lerpf(1.0, 1.34, avance_descenso), giro_modulo)
 	transferencia.modulate.a = visible_general * (1.0 - avance_descenso)
-	modulo.modulate.a = visible_general * (1.0 - smoothstep(0.97, 1.0, progreso) if regreso else 1.0)
+	modulo.modulate.a = visible_general
 
 	# La estela aparece en los impulsos y palpita levemente; se apaga al separar el módulo.
 	var potencia := 0.24

@@ -41,3 +41,7 @@ Las coordenadas de acople consideran el margen transparente interno de los PNG; 
 ## Alcance
 
 Esta secuencia representa meses de viaje de forma ilustrativa; no es una simulación orbital ni valida un plan de vuelo. No añade actividades diarias. Percy sigue siendo Perseverance dentro de la ficción y Pluto es el asistente ficticio del refugio.
+
+## Regreso a la Tierra
+
+Solo viaja el módulo de descenso. La etapa de transferencia y su estela se ocultan durante todo el regreso.

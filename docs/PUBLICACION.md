@@ -11,7 +11,7 @@
 
 ## Publicar en Firebase
 
-El proyecto `horizonte-rojo-game` usa Firebase Hosting. Desde la raíz del repositorio, genera la exportación Web de Godot, inicia sesión con una cuenta con acceso al proyecto y ejecuta `firebase deploy --only hosting --project horizonte-rojo-game`. [Guía oficial de Firebase Hosting](https://firebase.google.com/docs/hosting/quickstart).
+El proyecto `horizonte-rojo-game` usa Firebase Hosting. La portada ofrece vistas previas de ambas cinemáticas finales. El motor y el paquete se descargan en paralelo al mostrar la portada. La partida arranca al elegir un botón. Algunos fondos usan compresión de textura con pérdida de calidad 0,90. Los sprites con transparencia siguen usando compresión sin pérdida. Los archivos `index.*` se revalidan para que el navegador use el paquete que corresponde a la versión publicada. Desde la raíz del repositorio, genera la exportación Web de Godot, inicia sesión con una cuenta con acceso al proyecto y ejecuta `firebase deploy --only hosting --project horizonte-rojo-game`. [Guía oficial de Firebase Hosting](https://firebase.google.com/docs/hosting/quickstart).
 
 `firebase.json` publica `build/web` y omite los metadatos de importación de Godot. Comprueba el enlace público con un perfil de navegador limpio. Inicia la expedición, revisa los paneles con Pluto y recarga. El guardado se conserva por dirección y por perfil del navegador.
 

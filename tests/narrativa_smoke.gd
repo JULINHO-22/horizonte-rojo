@@ -51,6 +51,8 @@ func _probar() -> void:
 	juego._process(3.6)
 	assert(juego.fase == "base")
 	var mapa: PuestoUmbra = juego.puesto
+	assert(not mapa.transitable(Vector2(402, 225)), "La supercomputadora ocupa el centro")
+	assert(mapa.transitable(PuestoUmbra.TERMINALES.radio), "La terminal debe quedar delante del equipo")
 	_tramo(mapa, Vector2(402, 394), Vector2(402, 245))
 	_tramo(mapa, Vector2(402, 245), Vector2(191, 245))
 	_tramo(mapa, Vector2(191, 245), Vector2(191, 42))
@@ -64,6 +66,9 @@ func _probar() -> void:
 	_tramo(mapa, Vector2(404, 133), Vector2(404, 97))
 	assert(not mapa.transitable(Vector2(1000, 160)))
 	assert(not mapa.transitable(Vector2(100, 190)))
+	juego.posicion = Vector2(402, 270)
+	juego._mostrar()
+	await _captura("control-supercomputadora")
 	juego.posicion = Vector2(402, 329)
 	juego._mostrar()
 	await _captura("umbral")
@@ -107,6 +112,9 @@ func _probar() -> void:
 	assert(juego.fase == "despegue")
 	juego._process(6.1)
 	assert(juego.fase == "regreso")
+	juego.viaje.progreso = 0.55
+	assert(not juego.viaje.transferencia.visible and not juego.viaje.estela.visible,
+		"La cápsula regresa sin recuperar la etapa de transferencia")
 	juego._process(9.1)
 	juego._process(1.1)
 	assert(juego.fase == "epilogo")

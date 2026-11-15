@@ -30,6 +30,9 @@
     #play { margin: 1.3rem 0 .65rem; min-height: 50px; padding: .75rem 1.65rem; color: #171320; background: #a9ecdf; border: 0; border-radius: .4rem; font-weight: bold; }
     #play:hover { background: #e1fff5; }
     #play:disabled { cursor: wait; opacity: .8; }
+    .finales { display: flex; flex-wrap: wrap; gap: .65rem 1rem; margin: 0 0 .8rem; padding: 0; border: 0; }
+    .finales legend { padding: 0; margin-bottom: .45rem; color: #f1ded2; font-size: .85rem; }
+    .finales button { padding: .45rem .7rem; border: 1px solid #ae988b; border-radius: .35rem; background: #231b27; color: #fff1db; font: inherit; font-size: .84rem; }
     #status { min-height: 2.4em; color: #e8d6d1; font-size: .86rem; line-height: 1.35; }
     #progreso { width: min(100%, 16rem); accent-color: #a9ecdf; display: block; }
     #fullscreen { position: absolute; right: .75rem; bottom: .6rem; background: #211b2adb; color: #fff6e8; border: 1px solid #c8bcc7; border-radius: .35rem; min-width: 40px; min-height: 36px; }
@@ -50,6 +53,12 @@
       <h2>Cinco días en Marte</h2>
       <p class="historia">Viaja con Nora, Iris y Teo. Conoce el refugio y acompaña su regreso. Inicio, noches y final en revisión; actividades por definir.</p>
       <button id="play" type="button">Entrar al recorrido</button>
+      <fieldset class="finales">
+        <legend>Vistas previas</legend>
+        <button type="button" data-final="recursos">Probar mecánicas</button>
+        <button type="button" data-final="incompleta">Misión incompleta</button>
+        <button type="button" data-final="cumplida">Misión cumplida</button>
+      </fieldset>
       <progress id="progreso" max="1" hidden></progress>
       <p id="status" role="status">Usa el teclado para moverte y el ratón para elegir.</p>
     </div>
@@ -74,20 +83,39 @@
     if (canvas.height !== height) canvas.height = height;
   }
   new ResizeObserver(fitCanvas).observe(canvas);
-  play.addEventListener("click", async () => {
+  const finales = [...document.querySelectorAll("[data-final]")];
+  const config = $GODOT_CONFIG;
+  const pack = config.mainPack || config.executable + ".pck";
+  let engine;
+  let preparacion;
+  function preparar() {
+    if (preparacion) return preparacion;
+    if (!Engine.isWebGLAvailable()) return Promise.reject(new Error("WebGL no disponible"));
+    engine = new Engine({
+      ...config,
+      onProgress(current, total) {
+        if (total > 0) progreso.value = current / total;
+      }
+    });
+    preparacion = Promise.all([engine.init(config.executable), engine.preloadFile(pack, pack)]);
+    preparacion.catch(() => { preparacion = undefined; });
+    return preparacion;
+  }
+  // Adelantar la descarga mientras se ve la portada. La partida arranca al elegir.
+  preparar().catch(() => {});
+  async function iniciar(final = "") {
+    if (play.disabled) return;
+    finales.forEach(button => { button.disabled = true; });
     play.disabled = true;
     play.textContent = "Cargando el juego…";
     status.textContent = "Descargando ilustraciones y motor.";
     progreso.hidden = false;
     try {
-      if (!Engine.isWebGLAvailable()) throw new Error("Activa la aceleración gráfica del navegador o prueba con otro navegador.");
       fitCanvas();
-      await new Engine($GODOT_CONFIG).startGame({
-        canvas,
-        onProgress(current, total) {
-          if (total > 0) progreso.value = current / total;
-        }
-      });
+      await preparar();
+      const args = ["--main-pack", pack];
+      if (final) args.push("--", "--final-" + final);
+      await engine.start({ canvas, args });
       document.querySelector("#launch").hidden = true;
       fullscreen.hidden = !stage.requestFullscreen;
       canvas.focus();
@@ -97,8 +125,11 @@
       progreso.hidden = true;
       play.textContent = "Volver a intentar";
       play.disabled = false;
+      finales.forEach(button => { button.disabled = false; });
     }
-  });
+  }
+  play.addEventListener("click", () => iniciar());
+  finales.forEach(button => button.addEventListener("click", () => iniciar(button.dataset.final)));
   fullscreen.addEventListener("click", async () => {
     if (document.fullscreenElement) await document.exitFullscreen();
     else await stage.requestFullscreen();

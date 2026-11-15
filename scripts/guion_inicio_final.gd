@@ -2,6 +2,12 @@ extends Control
 ## Presentación del guion aprobado. Las actividades se conectarán después.
 const Campana := preload("res://scripts/campana_narrativa.gd")
 const Viaje := preload("res://scripts/viaje_espacial.gd")
+const DialogoEscena := preload("res://scripts/dialogo_escena.gd")
+const VISTAS_FINALES := {
+	"--final-recursos": "res://scenes/pruebas/banco_recursos.tscn",
+	"--final-incompleta": "res://scenes/final_incompleta.tscn",
+	"--final-cumplida": "res://scenes/final_cumplida.tscn",
+}
 const AREA := Rect2(0, 0, 1280, 720)
 const TINTA := Color("#101c28")
 const PAPEL := Color("#fff1db")
@@ -25,7 +31,7 @@ var puesto: PuestoUmbra
 var viaje: Control
 var capa: Control
 var titulo: Label
-var voz: Label
+var voz: Control
 var pista: Label
 var boton: Button
 var velo: ColorRect
@@ -37,6 +43,10 @@ var restaurado := {}
 
 func _ready() -> void:
 	get_window().min_size = Vector2i(800, 450)
+	for argumento in OS.get_cmdline_user_args():
+		if VISTAS_FINALES.has(argumento):
+			get_tree().change_scene_to_file.call_deferred(VISTAS_FINALES[argumento])
+			return
 	restaurado = campana.cargar()
 	if OS.has_feature("web") and restaurado.is_empty():
 		_cambiar("ida")
@@ -68,7 +78,7 @@ func _process(delta: float) -> void:
 			puesto.paso = fposmod(reloj * 2.5, 1.0)
 			puesto.actualizar_camara(delta)
 			puesto.queue_redraw()
-			voz.text = "Pluto · Ya hay aire. Se abre la puerta interior." if reloj > 2.22 else "Pluto · Primero cerramos la puerta exterior para conservar el aire."
+			voz.decir("Pluto", "Ya hay aire. Se abre la puerta interior." if reloj > 2.22 else "Cerramos la puerta de fuera para que no escape el aire.")
 			if reloj >= 3.5:
 				posicion = puesto.punto
 				_cambiar("base")
@@ -129,7 +139,9 @@ func _caminar(delta: float) -> void:
 func _actualizar_guia() -> void:
 	boton.visible = false
 	if fase == "camino_base":
-		pista.text = "A / D o flechas   →   Refugio"
+		pista.text = "A / D o flechas   ·   Refugio a la derecha"
+		var rover := puesto.proyectar_suelo(Vector2(minf(puesto.punto.x + 85, PuestoUmbra.ESCLUSA.x - 44), PuestoUmbra.SUELO))
+		voz.position = Vector2(clampf(rover.x + 20, 40, 860), clampf(rover.y - 250, 74, 350))
 		voz.visible = reloj < 6.0
 	elif fase == "camino_nave":
 		pista.text = "A / D o flechas · Vuelve por el camino hasta la nave"
@@ -156,7 +168,7 @@ func _actualizar_guia() -> void:
 		if boton.visible:
 			_ubicar_accion()
 		if aviso_tiempo <= 0:
-			voz.text = "Pluto · El dormitorio está por el pasillo derecho, arriba." if not campana.listo_para_regresar() else "Pluto · Revisa la ruta en Control antes de salir."
+			voz.decir("Pluto", "El dormitorio está por el pasillo derecho, arriba." if not campana.listo_para_regresar() else "Revisa la ruta en Control antes de salir.")
 			voz.visible = reloj < 6.0
 		else:
 			voz.visible = true
@@ -177,7 +189,7 @@ func _accion() -> void:
 				_guardar()
 				_cambiar("noche")
 			elif cerca == "radio" and campana.listo_para_regresar():
-				voz.text = "Iris · La ruta está preparada. Salgamos juntos: la nave nos espera a la izquierda del refugio."
+				voz.decir("Iris", "La ruta está preparada. Salgamos juntos: la nave nos espera a la izquierda del refugio.")
 				puesto.objetivo_mision = "cierre"
 				aviso_tiempo = 9
 			elif cerca == "cierre" and campana.listo_para_regresar():
@@ -185,7 +197,7 @@ func _accion() -> void:
 				_cambiar("camino_nave")
 				_guardar()
 			elif FICHAS.has(cerca):
-				voz.text = "Pluto · " + FICHAS[cerca]
+				voz.decir("Pluto", FICHAS[cerca])
 				aviso_tiempo = 9
 		"camino_nave":
 			if absf(posicion.x - 220) < 30:
@@ -267,7 +279,9 @@ func _mostrar() -> void:
 			_etiqueta("Cinco días en Marte", Rect2(90, 255, 900, 60), 32)
 			_etiqueta("Acompaña a Nora, Iris y Teo hasta el refugio.", Rect2(90, 322, 480, 72), 24)
 	titulo = _etiqueta("", Rect2(34, 26, 590, 36), 23)
-	voz = _etiqueta("", Rect2(34, 82, 410, 105), 20)
+	voz = DialogoEscena.new()
+	voz.position = Vector2(45, 82)
+	capa.add_child(voz)
 	pista = _etiqueta("", Rect2(34, 653, 445, 35), 17)
 	boton = _boton("", Rect2(986, 28, 256, 45), _accion)
 	boton.visible = false
@@ -284,7 +298,7 @@ func _mostrar() -> void:
 			boton.visible = true
 		"regreso", "llegada_tierra":
 			titulo.text = "Marte → Tierra"
-			voz.text = "Iris · Nos llevamos las preguntas y lo que aprendimos. Percy seguirá explorando Marte."
+			voz.decir("Iris", "Nos llevamos las preguntas y lo que aprendimos. Percy seguirá explorando Marte.")
 			pista.text = "Meses después · Trayectoria ilustrativa, sin escala"
 		"aterrizaje":
 			titulo.text = "Aterrizaje en Marte"
@@ -292,28 +306,28 @@ func _mostrar() -> void:
 			boton.visible = true
 		"pilotaje":
 			titulo.text = "A bordo · Puesto de pilotaje"
-			voz.text = "Iris · Tripulación a bordo, puerta cerrada. Nora, cuando estés lista, inicia el vuelo de regreso."
+			voz.decir("Iris", "Tripulación a bordo, puerta cerrada. Nora, cuando estés lista, inicia el vuelo de regreso.")
 			pista.text = "Percy se queda en Marte · Ruta resumida, sin escala"
 			boton.text = "E · Iniciar vuelo"
 			boton.visible = true
 		"camino_base":
-			voz.text = "Percy · Soy Perseverance. Síganme al refugio."
+			voz.decir("Percy", "Soy Perseverance. Síganme al refugio.")
 			_actualizar_guia()
 		"camino_nave":
-			voz.text = "Percy · ¡Buen regreso! Yo seguiré aquí, buscando nuevas pistas."
+			voz.decir("Percy", "¡Buen regreso! Yo seguiré aquí, buscando nuevas pistas.")
 		"base":
 			titulo.text = "Día %d de 5 · Refugio Umbra" % campana.sol
 			_actualizar_guia()
 		"noche":
 			titulo.text = "Fin del día %d" % campana.sol
-			voz.text = "Pluto · Es hora de descansar. La base queda cerrada mientras dormimos."
+			voz.decir("Pluto", "Es hora de descansar. La base queda cerrada mientras dormimos.")
 		"amanecer":
-			voz.text = "Pluto · Buenos días. Es hora de preparar el regreso." if campana.listo_para_regresar() else "Pluto · Buenos días. Comienza el día %d." % campana.sol
+			voz.decir("Pluto", "Buenos días. Es hora de preparar el regreso." if campana.listo_para_regresar() else "Buenos días. Comienza el día %d." % campana.sol)
 		"despegue":
-			voz.text = "Nora · ¡Hasta la próxima, Percy! Tripulación lista para volver."
+			voz.decir("Nora", "¡Hasta la próxima, Percy! Tripulación lista para volver.")
 		"epilogo":
 			titulo.text = "Tierra · Cierre de la historia"
-			voz.text = "Equipo científico · ¡Gracias, astronautas! Sus preguntas y sus aportes nos ayudan a comprender Marte. ¡Sigan explorando!"
+			voz.decir("Equipo científico", "¡Gracias, astronautas! Sus preguntas y sus aportes nos ayudan a comprender Marte. ¡Sigan explorando!")
 			boton.text = "Volver al comienzo"
 	if fase in ["noche", "amanecer", "llegada_tierra", "aterrizaje"]:
 		velo = _sombra(AREA, Color(0, 0, 0, 1 if fase in ["amanecer", "aterrizaje"] else 0))
