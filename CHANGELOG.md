@@ -1,5 +1,10 @@
 # Cambios
 
+## 2026-11-15 | Paso del Sol 1 al Sol 2
+
+- El Sol 1 muestra la comida durante la exploración y explica cómo completar el descanso si faltan reservas.
+- El dormitorio comprueba que haya aire y comida para esta noche y reservas suficientes para preparar aire durante la tormenta. Las partidas anteriores que ya llegaron al Sol 2 con reservas insuficientes reciben un ajuste de emergencia una sola vez.
+
 ## 2026-11-15 | Paleta de la nave y la interfaz
 
 - La etapa de transferencia y la cápsula usan azul pizarra, verde petróleo y violeta apagado desde el acople hasta el hangar terrestre.

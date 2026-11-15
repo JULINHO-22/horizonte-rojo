@@ -146,6 +146,7 @@ func _probar() -> void:
 	juego._process(10.1)
 	assert(juego.boton.visible)
 	await _captura("epilogo")
+	_probar_descanso_sol_uno(juego)
 	_probar_relevo(juego)
 	print("NARRATIVA_OK: rutas, ida, esclusa, cinco noches, guardado y regreso verificados.")
 	quit()
@@ -233,6 +234,49 @@ func _sol_uno(juego) -> void:
 	assert(juego.recursos.estado().hielo == 0 and juego.recursos.estado().reservas.agua == 6)
 	assert(juego.puesto.objetivo_mision == "dormitorio")
 	juego._cerrar_estacion()
+
+
+func _probar_descanso_sol_uno(juego: Control) -> void:
+	juego.integrar_soles = true
+	juego._abrir_menu_soles()
+	juego._probar_sol(1)
+	assert(is_instance_valid(juego.indicador_comida))
+	var estado: Dictionary = juego.recursos.guardar_estado()
+	estado.aire_asegurado = true
+	estado.reservas.energia = 5
+	estado.reservas.agua = 1
+	estado.reservas.alimento = 8
+	estado.polvo = "medio"
+	assert(juego.recursos.restaurar_estado(estado))
+	_ir_a(juego, PuestoUmbra.TERMINALES.dormitorio)
+	juego._refrescar_recursos()
+	assert(juego.indicador_comida.text == "Comida 8 de 10")
+	juego._accion()
+	assert(juego.fase == "base" and juego.campana.sol == 1)
+	assert(juego.recursos.estado().derrota.is_empty())
+	juego.recursos.avanzar(20)
+	juego._refrescar_recursos()
+	assert(juego.indicador_comida.text == "Comida 7 de 10")
+	juego._accion()
+	assert(juego.fase == "noche")
+	juego._process(3.1)
+	assert(juego.fase == "amanecer" and juego.campana.sol == 2)
+	juego._process(1.6)
+	assert(juego.fase == "base" and is_instance_valid(juego.nivel_activo))
+	var relevo: Dictionary = juego.recursos.estado()
+	assert(relevo.reservas.energia == 6 and relevo.reservas.agua == 1 and relevo.reservas.alimento == 7)
+	assert(relevo.polvo == "tormenta" and relevo.decisiones.is_empty())
+	juego.nivel_activo.interfaz.confirmar.pressed.emit()
+	assert(juego.nivel_activo.juego_activo())
+	assert(juego.recursos.activar_oxigeno())
+
+	# Simula un guardado anterior que ya llegó sin reservas suficientes.
+	relevo = juego.recursos.guardar_estado()
+	relevo.aire_asegurado = false
+	assert(juego.recursos.restaurar_estado(relevo))
+	juego._cambiar("base")
+	assert(juego.recursos.estado().reservas.energia == 6 and juego.recursos.estado().reservas.agua == 1)
+	assert("sol_2_reserva_emergencia" in juego.recursos.estado().decisiones)
 
 
 func _probar_relevo(juego: Control) -> void:

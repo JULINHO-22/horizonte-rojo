@@ -152,7 +152,10 @@ func _preparar() -> void:
 	else:
 		_ir(Paso.DECISION)
 
-	interfaz.presentar("¡Se acerca una tormenta!",
+	var nota := ""
+	if "sol_2_reserva_emergencia" in estado.decisiones:
+		nota = "Pluto abrió la reserva de emergencia. Alcanza para preparar aire; puedes quedarte bajo techo.\n\n"
+	interfaz.presentar("¡Se acerca una tormenta!", nota +
 		"1   Elige tu plan en la computadora.\n\n" +
 		"2   Prepara el aire para respirar sin apuros.\n\n" +
 		"3   Protege los equipos o quédate dentro.\n\n" +

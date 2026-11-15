@@ -12,6 +12,8 @@ const CULTIVOS := {
 	"tomate": {"energia": 2, "alimento": 3, "segundos": 20.0},
 	"papa": {"energia": 2, "alimento": 5, "segundos": 30.0},
 }
+const COSTO_AIRE_ENERGIA := 6
+const COSTO_AIRE_AGUA := 1
 const TIEMPO_OXIGENO := 8.0
 const TIEMPO_ALIMENTO := 20.0
 const ULTIMO_SOL := 5
@@ -76,7 +78,7 @@ func avanzar(segundos: float) -> void:
 	if hubo_cambio:
 		cambiado.emit()
 
-func activar_oxigeno(energia := 6, agua := 1, alimento := 0) -> bool:
+func activar_oxigeno(energia := COSTO_AIRE_ENERGIA, agua := COSTO_AIRE_AGUA, alimento := 0) -> bool:
 	if _aire_asegurado or energia < 1 or agua < 1 or alimento < 0:
 		return false
 	if not _aplicar({"energia": -energia, "agua": -agua, "alimento": -alimento}):

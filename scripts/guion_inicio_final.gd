@@ -41,6 +41,7 @@ const MapaNucleo := preload("res://scenes/dias/tramo_final/mapa_tramo.gd")
 var visita_nucleo: MapaNucleo
 var marco_nucleo: Control
 var panel_control: PanelControl
+var indicador_comida: Label
 var extraccion_hasta := 0.0
 var estaciones: VBoxContainer
 var estacion := ""
@@ -88,7 +89,8 @@ func _process(delta: float) -> void:
 		return
 	if is_instance_valid(nivel_activo):
 		if campana.sol == 2 and nivel_activo.juego_activo():
-			recursos.avanzar(delta)
+			if not _avanzar_recursos(delta):
+				return
 		elif campana.sol == 3 and not recursos.estado().derrota.is_empty():
 			_cerrar_sol.call_deferred(false)
 		return
@@ -131,6 +133,7 @@ func _process(delta: float) -> void:
 		"expedicion_sol_1":
 			if not _avanzar_recursos(delta):
 				return
+			_actualizar_indicador_comida(recursos.estado())
 			if reloj < extraccion_hasta:
 				puesto.avance_muestra = 1.0 - (extraccion_hasta - reloj) / 1.5
 				puesto.queue_redraw()
@@ -374,6 +377,22 @@ func _accion_sol_uno(cerca: String) -> void:
 			_intentar_descanso()
 
 func _intentar_descanso() -> void:
+	if integrar_soles and _sol_uno():
+		var datos := recursos.estado()
+		var pendientes := PackedStringArray()
+		if not datos.aire_asegurado:
+			pendientes.append("Prepara el aire en el laboratorio.")
+		if datos.reservas.alimento == 0:
+			pendientes.append("Recoge y come algo en Plantas.")
+		var faltantes := _faltantes_para_tormenta(datos.reservas)
+		if faltantes.agua > 0:
+			pendientes.append("Purifica hielo para guardar agua para mañana.")
+		if faltantes.energia > 0:
+			pendientes.append("Deja que los paneles recarguen la batería.")
+		if not pendientes.is_empty():
+			voz.decir("Pluto", "Antes de dormir: " + " ".join(pendientes))
+			aviso_tiempo = 12
+			return
 	if recursos.dormir():
 		_cambiar("noche")
 	else:
@@ -434,10 +453,22 @@ func _accion() -> void:
 			if reloj >= 10:
 				_reiniciar()
 
+func _faltantes_para_tormenta(reservas: Dictionary) -> Dictionary:
+	return {
+		"energia": maxi(0, Recursos.COSTO_AIRE_ENERGIA - int(reservas.energia)),
+		"agua": maxi(0, Recursos.COSTO_AIRE_AGUA - int(reservas.agua)),
+	}
+
 func _montar_sol() -> void:
 	nivel_activo = SOLES_JUGABLES[campana.sol].instantiate()
 	match campana.sol:
 		2:
+			var datos := recursos.estado()
+			if datos.derrota.is_empty() and not datos.aire_asegurado:
+				var faltantes := _faltantes_para_tormenta(datos.reservas)
+				if faltantes.energia > 0 or faltantes.agua > 0:
+					if recursos.aplicar_decision("sol_2_reserva_emergencia", faltantes):
+						_guardar("base")
 			nivel_activo.configurar(recursos)
 			nivel_activo.finalizado.connect(_cerrar_sol_2, CONNECT_DEFERRED)
 		3:
@@ -573,6 +604,7 @@ func _cambiar(destino: String) -> void:
 
 func _mostrar() -> void:
 	nivel_activo = null
+	indicador_comida = null
 	panel_control = null
 	visita_nucleo = null
 	marco_nucleo = null
@@ -639,6 +671,10 @@ func _mostrar() -> void:
 	pista = _etiqueta("", Rect2(34, 653, 445, 35), 17)
 	boton = _boton("", Rect2(986, 28, 256, 45), _accion)
 	boton.visible = false
+	if _sol_uno() and fase in ["base", "expedicion_sol_1"]:
+		indicador_comida = _etiqueta("", Rect2(1020, 26, 225, 36), 22)
+		indicador_comida.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+		_actualizar_indicador_comida(recursos.estado())
 	match fase:
 		"portada":
 			boton.position = Vector2(90, 402)
@@ -698,8 +734,15 @@ func _mostrar() -> void:
 	if fase in ["noche", "amanecer", "llegada_tierra", "aterrizaje"]:
 		velo = _sombra(AREA, Color(0, 0, 0, 1 if fase in ["amanecer", "aterrizaje"] else 0))
 
+func _actualizar_indicador_comida(datos: Dictionary) -> void:
+	if is_instance_valid(indicador_comida):
+		var texto := "Comida %d de %d" % [datos.reservas.alimento, Recursos.LIMITES.alimento]
+		if indicador_comida.text != texto:
+			indicador_comida.text = texto
+
 func _refrescar_recursos() -> void:
 	var datos := recursos.estado()
+	_actualizar_indicador_comida(datos)
 	if _sol_uno():
 		var objetivo := Tutorial.objetivo(datos)
 		puesto.objetivo_mision = "cultivos" if objetivo in ["sembrar", "cosechar"] else objetivo
@@ -721,6 +764,8 @@ func _abrir_control() -> void:
 	capa.add_child(panel_control)
 	if not regreso:
 		var tarea := "El aire está asegurado. Ve al dormitorio para descansar." if estado.aire_asegurado else "Prepara el aire en el laboratorio de Agua y Oxígeno antes de descansar."
+		if _sol_uno() and estado.aire_asegurado:
+			tarea = "La tormenta puede dejar los paneles sin luz. Deja %d de energía y %d de agua para preparar aire mañana." % [Recursos.COSTO_AIRE_ENERGIA, Recursos.COSTO_AIRE_AGUA]
 		panel_control.mostrar_tarea(tarea)
 
 func _cerrar_control() -> void:

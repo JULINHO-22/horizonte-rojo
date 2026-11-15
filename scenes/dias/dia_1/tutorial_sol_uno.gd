@@ -11,10 +11,10 @@ const GUIA := {
 	"radio": "Acércate a la pantalla de Control. Revisemos las reservas.",
 	"oxigeno": "Ve a la izquierda por Energía y sube al laboratorio de Agua y Oxígeno. Busca los depósitos verdes.",
 	"sembrar": "Ve a Plantas por el pasillo derecho. Siembra una bandeja. Cada semilla cuesta agua y energía y tarda un tiempo distinto.",
-	"cosechar": "Mira el reloj de tu cultivo. Cuando esté listo, recógelo y come aquí mismo. Los tomates muestran cuánta comida te queda.",
+	"cosechar": "Mira el reloj de tu cultivo. Cuando esté listo, recógelo y come aquí mismo. La cantidad de comida aparece arriba a la derecha.",
 	"cierre": "Nos queda poca agua. Sal por la esclusa con Iris y busca hielo a la derecha. Aquí lo derretiremos y limpiaremos antes de beberlo.",
 	"agua": "Vuelve al filtro azul del laboratorio. Derrite el hielo, limpia el agua y comprueba que esté lista para beber.",
-	"dormitorio": "Cuando quieras terminar el día, revisa que tengas comida y aire asegurado. Puedes descansar en el dormitorio.",
+	"dormitorio": "Asegura el aire de hoy y guarda comida, 6 de energía y 1 de agua para la tormenta. Descansa en el dormitorio.",
 }
 
 static func deposito(datos: Dictionary) -> Dictionary:
