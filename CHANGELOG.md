@@ -1,5 +1,10 @@
 # Cambios
 
+## Indicadores en la supercomputadora
+
+- Energía, oxígeno y agua disponen de zonas separadas dentro de la pantalla del equipo. La comida se muestra en la esquina superior derecha.
+- Pluto explica el vínculo entre polvo y energía y cómo usar agua y batería para producir aire.
+
 ## 2026-11-14 | Recursos activos en el refugio
 
 - El recorrido principal muestra rayos, burbujas, una gota y tomates en vivo y usa el modelo compartido en Agua y Plantas, al dormir y al guardar.

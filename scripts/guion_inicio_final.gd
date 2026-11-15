@@ -27,6 +27,7 @@ const Recursos := preload("res://scripts/mecanicas/recursos_mision.gd")
 var recursos := Recursos.new()
 const Indicadores := preload("res://scripts/mecanicas/indicadores_refugio.gd")
 var lecturas: Control
+var comida_ui: Control
 var estaciones: VBoxContainer
 var estacion := ""
 var campana = Campana.new()
@@ -227,6 +228,9 @@ func _accion() -> void:
 				posicion = PuestoUmbra.ESCLUSA
 				_cambiar("camino_nave")
 				_guardar()
+			elif cerca == "energia":
+				voz.decir("Pluto", "Con más polvo en el aire, llega menos luz a los paneles. Fuente: NASA, Pancam.")
+				aviso_tiempo = 9
 			elif FICHAS.has(cerca):
 				voz.decir("Pluto", FICHAS[cerca])
 				aviso_tiempo = 9
@@ -361,8 +365,11 @@ func _mostrar() -> void:
 			boton.show()
 		"base":
 			lecturas = Indicadores.new()
-			lecturas.position = Vector2(842, 24)
 			capa.add_child(lecturas)
+			comida_ui = Indicadores.new()
+			comida_ui.solo_alimento = true
+			comida_ui.position = Vector2(958, 24)
+			capa.add_child(comida_ui)
 			_refrescar_recursos()
 			titulo.text = "Día %d de 5 · Refugio Umbra" % campana.sol
 			_actualizar_guia()
@@ -383,6 +390,13 @@ func _mostrar() -> void:
 func _refrescar_recursos() -> void:
 	var datos := recursos.estado()
 	lecturas.actualizar(datos)
+	comida_ui.actualizar(datos)
+	lecturas.visible = not plano and PuestoUmbra.ROOMS.radio.has_point(puesto.punto)
+	# Anclaje sobre el display cian de la computadora en la ilustración de Control.
+	var esquina := puesto.proyectar_suelo(Vector2(370, 198))
+	var borde := puesto.proyectar_suelo(Vector2(436, 198))
+	lecturas.position = esquina
+	lecturas.scale = Vector2.ONE * ((borde.x - esquina.x) / 386.0)
 	if datos.sin_luz:
 		puesto.modulate = Color("#59697d")
 	else:
@@ -396,6 +410,7 @@ func _abrir_estacion(id: String) -> void:
 	estaciones.custom_minimum_size.x = 384
 	capa.add_child(estaciones)
 	if id == "agua":
+		voz.decir("Pluto", "Primero limpia el hielo para obtener agua. Para preparar aire, el equipo necesita agua y batería.")
 		_opcion("Recoger hielo de la reserva de prueba", _hielo_prueba)
 		_opcion("Purificar hielo · 2 energía", recursos.purificar_hielo)
 		_opcion("Asegurar aire · 6 energía y 1 agua", recursos.activar_oxigeno)
