@@ -28,9 +28,7 @@ func _probar() -> void:
 	escena_protegida.configurar(protegidos, false)
 	root.add_child(escena_protegida)
 	await process_frame
-	assert(escena_protegida.fase == "inicio")
-	assert(escena_protegida.lecturas.datos.reservas == protegidos.estado().reservas)
-	assert(escena_protegida.comida_ui.datos.reservas.alimento == 6)
+	assert(escena_protegida.fase == "ir_plantas")
 	escena_protegida._comenzar_recorrido()
 	escena_protegida.puesto.punto = PuestoUmbra.TERMINALES.cultivos
 	escena_protegida._accion()
@@ -45,9 +43,8 @@ func _probar() -> void:
 	var estado_protegido: Dictionary = protegidos.estado()
 	assert(escena_protegida.decision == "oxigeno")
 	assert(estado_protegido.aire_asegurado)
+	assert(estado_protegido.bandejas.is_empty())
 	assert(estado_protegido.reservas == {"energia": 2, "agua": 2, "oxigeno": 8, "alimento": 4})
-	assert(escena_protegida.lecturas.datos.reservas == estado_protegido.reservas)
-	assert(escena_protegida.comida_ui.datos.reservas.alimento == 4)
 	var relevos: Array[Dictionary] = []
 	escena_protegida.descanso_solicitado.connect(func(resultado: Dictionary): relevos.append(resultado))
 	escena_protegida.puesto.punto = PuestoUmbra.TERMINALES.dormitorio
@@ -72,9 +69,8 @@ func _probar() -> void:
 	var estado_danado: Dictionary = danados.estado()
 	assert(escena_danada.decision == "invernadero")
 	assert(estado_danado.aire_asegurado)
+	assert(estado_danado.bandejas.has("rabano"))
 	assert(estado_danado.reservas == {"energia": 5, "agua": 2, "oxigeno": 3, "alimento": 8})
-	assert(escena_danada.lecturas.datos.reservas == estado_danado.reservas)
-	assert(escena_danada.comida_ui.datos.reservas.alimento == 8)
 	escena_danada.queue_free()
 	await process_frame
 

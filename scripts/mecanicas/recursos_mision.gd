@@ -78,7 +78,7 @@ func avanzar(segundos: float) -> void:
 	if hubo_cambio:
 		cambiado.emit()
 
-func activar_oxigeno(energia := COSTO_AIRE_ENERGIA, agua := COSTO_AIRE_AGUA, alimento := 0) -> bool:
+func activar_oxigeno(energia := COSTO_AIRE_ENERGIA, agua := COSTO_AIRE_AGUA, alimento := 0, perder_cultivos := false) -> bool:
 	if _aire_asegurado or energia < 1 or agua < 1 or alimento < 0:
 		return false
 	if not _aplicar({"energia": -energia, "agua": -agua, "alimento": -alimento}):
@@ -86,6 +86,8 @@ func activar_oxigeno(energia := COSTO_AIRE_ENERGIA, agua := COSTO_AIRE_AGUA, ali
 	_reservas.oxigeno = LIMITES.oxigeno
 	_aire_asegurado = true
 	_reloj_oxigeno = 0
+	if perder_cultivos:
+		_bandejas.clear()
 	cambiado.emit()
 	return true
 
@@ -101,10 +103,10 @@ func usar_tanques_emergencia(energia := 3) -> bool:
 	cambiado.emit()
 	return true
 
-func recoger_hielo(cantidad := 1, energia := 0, deposito := "") -> bool:
-	if cantidad < 1 or energia < 0 or (not deposito.is_empty() and _decisiones.has(deposito)):
+func recoger_hielo(cantidad := 1, energia := 0, deposito := "", alimento := 0) -> bool:
+	if cantidad < 1 or energia < 0 or alimento < 0 or (not deposito.is_empty() and _decisiones.has(deposito)):
 		return false
-	if not _aplicar({"energia": -energia}):
+	if not _aplicar({"energia": -energia, "alimento": -alimento}):
 		return false
 	_hielo += cantidad
 	if not deposito.is_empty():

@@ -166,6 +166,11 @@ func _probar() -> void:
 		nivel = banco._pantalla
 		_camino(nivel, [Tramo.RADIO])
 		_clic(nivel, "control", Tramo.RADIO)
+		assert(nivel.vista.abierta())
+		for control in nivel.vista._ventana.get_children():
+			if control is Button and control.text == "Transmitir aviso":
+				control.pressed.emit()
+				break
 		assert(not nivel.vista.abierta() and nivel.etapa == "ir_refugio")
 		_camino(nivel, [Vector2(402, 318), Vector2(402, 360), Tramo.ACCESO_NUCLEO])
 		assert(nivel.mapa.zona == "base")

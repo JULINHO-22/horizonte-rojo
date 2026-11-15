@@ -25,4 +25,4 @@ Abre `scenes/dias/tramo_final/prueba.tscn` con F6 y selecciona una entrada de d�
 
 El filtro y los depósitos se inspiran en funciones reales de recuperación de agua y de producción de oxígeno. El juego representa ambas con reservas simplificadas. [Soporte vital, NASA](https://www.nasa.gov/reference/environmental-control-and-life-support-systems-eclss/) · [Hielo subterráneo, NASA SWIM](https://science.nasa.gov/resource/swim-map-shows-subsurface-water-ice-on-mars/)
 
-Abre la computadora para consultar juntas las reservas y las tareas. Confirma la espera o el descanso volviendo a tocar el equipo. Alejarte cancela la confirmación.
+Abre la computadora para consultar la tarea y elegir el plan. En campaña, consulta las reservas con **T**. Confirma la espera o el descanso volviendo a tocar el equipo. Alejarte cancela la confirmación.

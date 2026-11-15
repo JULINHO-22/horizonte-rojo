@@ -1,18 +1,18 @@
 # Horizonte Rojo
 
-**Horizonte Rojo** es un proyecto de juego narrativo 2D de cinco días en Marte. La versión principal permite recorrer el viaje, explorar el refugio, completar el tutorial de gestión del Sol 1, pasar cinco noches y regresar.
+**Horizonte Rojo** es un juego narrativo 2D de cinco días en Marte. La campaña enlaza las decisiones de los cinco soles y calcula el desenlace tras la tormenta solar.
 
 ## Estado y ejecución actual
 
-La escena principal es un **recorrido narrativo en revisión**. La nave sale con el módulo acoplado, lo separa al aproximarse a Marte y conserva ese diseño en el aterrizaje. La secuencia pixel art usa imágenes locales de `assets/NarrativaInicio/`. Las actividades de los soles 2 a 5 están pendientes de definición. Consulta [Narrativa del equipo](docs/NARRATIVA-EQUIPO.md) para el documento fuente y las adaptaciones.
+La escena principal abre el viaje y la campaña completa. La nave sale con el módulo acoplado, lo separa al aproximarse a Marte y conserva ese diseño en el aterrizaje. Consulta [Flujo de campaña](docs/FLUJO-CAMPANA.md) para las decisiones y los desenlaces.
 
 1. Importa `project.godot` en Godot 4.7.2 y pulsa **F5**.
 2. Inicia el viaje. Puedes saltarlo con **Esc** o con el botón de la esquina. Percy te saluda mientras ya puedes caminar.
 3. Camina con **A/D o flechas** hacia la derecha hasta entrar al refugio. En el interior usa **WASD/flechas** y **M** para el plano.
 4. En el Sol 1, Pluto sugiere empezar en Control y visitar Oxígeno y Plantas. Siembra, recoge y come en Plantas. Puedes salir con Iris a buscar hielo a la derecha del refugio y llevarlo al filtro. Cuando tengas aire asegurado y comida, pulsa **E** o **Descansar** en el dormitorio. El fundido de tres segundos inicia la siguiente mañana. Consulta [Sol 1](docs/dias/DIA-1.md).
-5. Tras la quinta noche, revisa Control, sal por la esclusa y sigue el camino hacia la izquierda hasta la nave. **E** permite subir; en el puesto de pilotaje, **Iniciar vuelo** activa el regreso.
+5. En el Sol 5, consulta Control y avisa a Tierra. Baja al núcleo protegido, sella la compuerta y comunica el resultado para continuar al desenlace.
 
-Pulsa **E** junto a la computadora de Control para consultar las reservas y la tarea del día. En la esclusa sur, el acceso lateral baja al núcleo protegido que se usa en el Día 5.
+Pulsa **E** junto a la computadora de Control para consultar las tareas. Pulsa **T** o selecciona **Tablet** para consultar oxígeno, agua, energía, comida e hielo. La consulta pausa el juego. En la esclusa sur, el acceso lateral baja al núcleo protegido que se usa en el Sol 5.
 
 El laboratorio de Agua y Oxígeno está al noroeste, pasando por Energía. Purifica agua junto al filtro azul y prepara oxígeno junto a los depósitos verdes. El taller está inmediatamente al este de Control. Plantas se alcanza por el desvío norte del corredor este, girando a la izquierda. No hay Enfermería ni accidente de Teo.
 

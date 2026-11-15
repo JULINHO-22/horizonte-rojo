@@ -52,6 +52,7 @@ func _ready() -> void:
 	marco.mouse_filter = MOUSE_FILTER_IGNORE
 	add_child(marco)
 	mapa = Mapa.new()
+	mapa.pluto_acompana = true
 	marco.add_child(mapa)
 	mapa.entrar("base", RADIO + Vector2(0, 20))
 	mapa.lecturas = _lecturas
@@ -205,9 +206,10 @@ func _interactuar(id := "") -> void:
 		if etapa == "aviso4":
 			_elegir_plan()
 		elif etapa == "aviso5":
-			_avisar_tierra()
+			var panel := vista.abrir_control(5, "Avisa a Tierra y baja al núcleo protegido por la esclusa.")
+			Vista.boton(panel, "Transmitir aviso", Rect2(34, 234, 242, 42), _avisar_tierra)
 		else:
-			vista.abrir_control(recursos.estado(), _objetivo)
+			vista.abrir_control(recursos.estado().sol, _objetivo)
 		return
 	match etapa:
 		"aviso4":
@@ -256,8 +258,8 @@ func _preparar_aviso() -> void:
 		"carga": PuestoUmbra.TERMINALES.energia, "plantas": HUERTO})
 
 func _elegir_plan() -> void:
-	var panel := vista.abrir_control(recursos.estado(), "Mañana llega la tormenta solar. Elige cómo preparar la base.")
-	var fila := 514
+	var panel := vista.abrir_control(4, "Mañana llega la tormenta solar. Elige cómo preparar la base.", true)
+	var fila := 218
 	var descripciones := {
 		"hielo": "5 de energía y 1 de comida. Hasta 3 de agua.",
 		"refuerzo": "3 de energía. Reduce las pérdidas durante la tormenta.",
@@ -271,8 +273,8 @@ func _elegir_plan() -> void:
 		Vista.rotulo(panel, descripciones[id] + (" " + motivo if not motivo.is_empty() else ""),
 			Rect2(327, fila, 580, 36), 15, Vista.PAPEL)
 		fila += 41
-	Vista.rotulo(panel, "Reserva 6 de energía y 1 de agua para el aire.", Rect2(34, 638, 615, 24), 15, Vista.AMBAR)
-	Vista.boton(panel, "Mapa SWIM · NASA", Rect2(710, 633, 200, 28), _abrir_fuente.bind(ArchivoNASA.SWIM))
+	Vista.rotulo(panel, "Reserva 6 de energía y 1 de agua para el aire.", Rect2(34, 359, 615, 24), 15, Vista.AMBAR)
+	Vista.boton(panel, "Mapa SWIM · NASA", Rect2(710, 354, 200, 32), _abrir_fuente.bind(ArchivoNASA.SWIM))
 
 func _elegir(id: String) -> void:
 	if not Reglas.impedimento(id, recursos.estado()).is_empty():
@@ -453,6 +455,7 @@ func _dormir() -> void:
 	_emitir_final("dia4_listo")
 
 func _avisar_tierra() -> void:
+	vista.cerrar()
 	mapa.radio_enviada = true
 	_paso("ir_refugio", "Baja al refugio por el acceso interior de la esclusa.", {"refugio": ACCESO_NUCLEO})
 	vista.decir("Pluto", "Tierra todavía no puede responder. Sigue por la puerta sur de Control y baja al núcleo protegido.")

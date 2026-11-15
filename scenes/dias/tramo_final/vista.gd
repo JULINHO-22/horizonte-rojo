@@ -59,10 +59,10 @@ func cerrar_lecturas() -> void:
 func abierta() -> bool:
 	return is_instance_valid(_ventana)
 
-func abrir_control(estado: Dictionary, objetivo: String) -> Control:
+func abrir_control(sol: int, objetivo: String, opciones := false) -> Control:
 	cerrar()
 	_ventana = PanelControl.new()
-	_ventana.configurar(estado, false, 180.0)
+	_ventana.configurar(sol, false, 120.0 if opciones else 0.0)
 	_ventana.cerrar_solicitado.connect(cerrar)
 	add_child(_ventana)
 	_ventana.mostrar_tarea(objetivo)

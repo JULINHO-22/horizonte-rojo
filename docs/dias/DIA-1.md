@@ -7,7 +7,7 @@ En Plantas puedes sembrar varias bandejas si tienes recursos. El menú muestra e
 | Depósito | Extracción | Purificación | Resultado con 1 de agua inicial |
 | --- | --- | --- | --- |
 | Cercano | 1 de energía, 1 de hielo | 2 de energía | +3 de agua |
-| Profundo | 3 de energía, 2 de hielo | 4 de energía | +5 de agua, hasta llenar el tanque |
+| Profundo | 1 de energía y 1 de comida, 2 de hielo | 4 de energía | +5 de agua, hasta llenar el tanque |
 
 Se elige un depósito. Si falta batería, los paneles siguen recargando durante la caminata o la espera fuera del menú. Teo lleva la muestra en la caja. El filtro azul derrite, filtra y comprueba una unidad de hielo por uso. Pluto recuerda los requisitos del descanso cuando termina la purificación.
 
@@ -19,4 +19,4 @@ Para probarlo, inicia una partida nueva con **F5**. La prueba `tests/narrativa_s
 
 ## Relevo al Sol 2
 
-Durante el Sol 1, el contador de comida se actualiza al consumir reservas y al comer. Para descansar, prepara el aire, conserva comida y guarda 6 de energía y 1 de agua para el siguiente sol. La tormenta del Sol 2 detiene la recarga solar. Si falta algo, Pluto indica cómo conseguirlo. Los guardados anteriores que ya llegaron al Sol 2 sin batería o agua suficientes reciben solo lo que falta para activar el aire, una vez por sol.
+Consulta la comida y las demás reservas en la tablet con **T**. Para descansar, prepara el aire, conserva comida y guarda 6 de energía y 1 de agua para el siguiente sol. La tormenta del Sol 2 detiene la recarga solar. Si falta algo, Pluto indica cómo conseguirlo. Los guardados anteriores que ya llegaron al Sol 2 sin batería o agua suficientes reciben solo lo que falta para activar el aire, una vez por sol.

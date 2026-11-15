@@ -4,13 +4,14 @@ extends Control
 
 signal descanso_solicitado(resultado: Dictionary)
 signal dia_completado(resultado: Dictionary)
+signal decision_guardada
 
 const Recursos := preload("res://scripts/mecanicas/recursos_mision.gd")
-const Indicadores := preload("res://scripts/mecanicas/indicadores_refugio.gd")
+const PanelControl := preload("res://scripts/panel_control.gd")
 const DialogoEscena := preload("res://scripts/dialogo_escena.gd")
 const AREA := Rect2(0, 0, 1280, 720)
 const TINTA := Color("#101c28")
-const TINTA_CLARA := Color("#1b3140")
+const TINTA_CLARA := Color("#2a1c17")
 const PAPEL := Color("#fff1db")
 const CIAN := Color("#83eadc")
 const NARANJA := Color("#f6a44e")
@@ -34,8 +35,8 @@ var objetivo: Label
 var dialogo
 var pista: Label
 var boton_accion: Button
-var lecturas
-var comida_ui
+var panel_control: PanelControl
+var bandejas_ui: Dictionary = {}
 var mensaje_panel := ""
 var plano := false
 
@@ -69,12 +70,19 @@ func _process(delta: float) -> void:
 		var paso := minf(delta, 0.05)
 		_caminar(paso)
 		recursos.avanzar(paso)
+	elif not bandejas_ui.is_empty():
+		recursos.avanzar(delta)
 	_actualizar_guia()
 	_ubicar_interfaz()
 
 
 func _unhandled_key_input(event: InputEvent) -> void:
 	if not event is InputEventKey or not event.pressed or event.echo:
+		return
+	if is_instance_valid(panel_control):
+		if event.physical_keycode == KEY_ESCAPE:
+			_cerrar_control()
+		get_viewport().set_input_as_handled()
 		return
 	if event.physical_keycode in [KEY_E, KEY_ENTER]:
 		_accion()
@@ -109,7 +117,15 @@ func _preparar_dia() -> void:
 	fase = "inicio"
 	decision = ""
 	_actualizar_hud()
-	_mostrar_inicio()
+	if recursos.estado().aire_asegurado:
+		var decisiones: Array = recursos.estado().decisiones
+		decision = "invernadero" if "sol_3_invernadero" in decisiones else "oxigeno"
+		_cerrar_decision("El aire ya está asegurado.")
+	elif modo_prueba:
+		_mostrar_inicio()
+	else:
+		_comenzar_recorrido()
+		_decir_pluto("La tormenta terminó. Revisa los sistemas en Control y comprueba el invernadero.")
 
 
 func _crear_estado_de_prueba():
@@ -135,6 +151,7 @@ func _crear_mapa() -> void:
 	puesto = PuestoUmbra.new()
 	puesto.interior = true
 	puesto.laboratorio_activo = true
+	puesto.pluto_acompana = true
 	puesto.cielo_sereno = true
 	puesto.punto = PuestoUmbra.TERMINALES.dormitorio
 	puesto.objetivo_mision = "cultivos"
@@ -153,15 +170,6 @@ func _crear_interfaz() -> void:
 	objetivo = _etiqueta("", Rect2(24, 49, 480, 28), 17, PAPEL)
 	_aplicar_sombra(objetivo)
 	add_child(objetivo)
-
-	lecturas = Indicadores.new()
-	lecturas.position = Vector2(24, 86)
-	lecturas.scale = Vector2.ONE * 0.72
-	add_child(lecturas)
-	comida_ui = Indicadores.new()
-	comida_ui.solo_alimento = true
-	comida_ui.position = Vector2(974, 22)
-	add_child(comida_ui)
 
 	dialogo = DialogoEscena.new()
 	add_child(dialogo)
@@ -210,7 +218,7 @@ func _caminar(delta: float) -> void:
 
 
 func _juego_activo() -> bool:
-	return modal == null and fase in ["ir_plantas", "ir_oxigeno", "cierre"]
+	return modal == null and not is_instance_valid(panel_control) and fase in ["ir_plantas", "ir_oxigeno", "cierre"]
 
 
 func _actualizar_guia() -> void:
@@ -242,12 +250,27 @@ func _actualizar_guia() -> void:
 				boton_accion.visible = modal == null
 		"terminado":
 			objetivo.text = "DÍA 3 COMPLETADO"
+	if _juego_activo() and not plano and puesto.terminal_cercana() == "radio":
+		boton_accion.text = "E · Consultar tareas"
+		boton_accion.show()
 	if boton_accion.visible:
 		_ubicar_accion()
 
 
 func _accion() -> void:
-	if modal != null:
+	if modal != null or is_instance_valid(panel_control):
+		return
+	if _juego_activo() and not plano and puesto.terminal_cercana() == "radio":
+		panel_control = PanelControl.new()
+		panel_control.configurar(3, false)
+		panel_control.cerrar_solicitado.connect(_cerrar_control)
+		add_child(panel_control)
+		var tarea: String = {
+			"ir_plantas": "Revisa los cultivos y comprueba el regulador en el laboratorio de Agua y Oxígeno.",
+			"ir_oxigeno": "Comprueba el regulador en el laboratorio de Agua y Oxígeno.",
+			"cierre": "Comprueba que quede comida y descansa en el dormitorio.",
+		}[fase]
+		panel_control.mostrar_tarea(tarea)
 		return
 	match fase:
 		"ir_plantas":
@@ -262,6 +285,10 @@ func _accion() -> void:
 			elif puesto.terminal_cercana() == "dormitorio":
 				_solicitar_dormir()
 
+func _cerrar_control() -> void:
+	remove_child(panel_control)
+	panel_control.queue_free()
+	panel_control = null
 
 func _abrir_panel_plantas() -> void:
 	invernadero_revisado = true
@@ -280,25 +307,37 @@ func _abrir_panel_plantas() -> void:
 			NOMBRES_CULTIVOS[cultivo], ficha.energia, int(ficha.segundos), ficha.alimento]
 		var texto := _texto_modal(fila, descripcion, 16)
 		texto.custom_minimum_size.x = 520
-		var espera: float = datos.bandejas.get(cultivo, -1.0)
-		if espera < 0:
-			var sembrar := _boton_fila(fila, "Sembrar", _sembrar.bind(cultivo))
-			sembrar.disabled = datos.reservas.energia < ficha.energia or datos.reservas.agua < 1 or fase == "cierre"
-		elif is_zero_approx(espera):
-			var comer := _boton_fila(fila, "Comer", _comer.bind(cultivo))
-			comer.disabled = datos.reservas.alimento >= Recursos.LIMITES.alimento
-		else:
-			_texto_modal(fila, "%d s" % ceili(espera), 16, NARANJA)
+		bandejas_ui[cultivo] = _boton_fila(fila, "", _usar_bandeja.bind(cultivo))
+	_actualizar_bandejas(datos)
 	var pie := HBoxContainer.new()
 	pie.add_theme_constant_override("separation", 12)
 	columna.add_child(pie)
 	var volver_texto := "Continuar hacia el oxígeno" if fase == "ir_plantas" else "Volver al recorrido"
 	_boton_fila(pie, volver_texto, _cerrar_panel_plantas)
 
+func _usar_bandeja(cultivo: String) -> void:
+	if recursos.estado().bandejas.has(cultivo):
+		_comer(cultivo)
+	else:
+		_sembrar(cultivo)
+
+func _actualizar_bandejas(datos: Dictionary) -> void:
+	for cultivo: String in bandejas_ui:
+		var control: Button = bandejas_ui[cultivo]
+		var espera: float = datos.bandejas.get(cultivo, -1.0)
+		if espera < 0:
+			control.text = "Sembrar"
+			control.disabled = datos.reservas.energia < Recursos.CULTIVOS[cultivo].energia or datos.reservas.agua == 0
+		elif espera > 0:
+			control.text = "Faltan %d s" % ceili(espera)
+			control.disabled = true
+		else:
+			control.text = "Recoger y comer"
+			control.disabled = datos.reservas.alimento >= Recursos.LIMITES.alimento
 
 func _sembrar(cultivo: String) -> void:
 	if recursos.sembrar(cultivo):
-		mensaje_panel = "%s sembrado. El tiempo de crecimiento avanza durante el juego activo." % NOMBRES_CULTIVOS[cultivo]
+		mensaje_panel = "%s sembrado. Puedes esperar aquí o seguir explorando." % NOMBRES_CULTIVOS[cultivo]
 	else:
 		mensaje_panel = "No se pudo sembrar: revisa energía, agua y bandejas disponibles."
 	_cerrar_modal()
@@ -376,13 +415,15 @@ func _oxigeno_cercano() -> bool:
 func _elegir_oxigeno() -> void:
 	var costo_energia := 7 if sistemas_danados else 6
 	var costo_agua := 2 if sistemas_danados else 1
-	if not recursos.activar_oxigeno(costo_energia, costo_agua, 2):
+	if not recursos.activar_oxigeno(costo_energia, costo_agua, 2, true):
 		mensaje_panel = "No hay reservas suficientes para priorizar el oxígeno."
 		_cerrar_modal()
 		_mostrar_decision()
 		return
 	decision = "oxigeno"
-	_cerrar_decision("Oxígeno estabilizado. La cosecha recibió menos energía, pero el aire quedó asegurado por hoy.")
+	recursos.aplicar_decision("sol_3_oxigeno", {})
+	decision_guardada.emit()
+	_cerrar_decision("Oxígeno estabilizado. Se perdió la cosecha, pero el aire quedó asegurado por hoy.")
 
 
 func _elegir_invernadero() -> void:
@@ -393,6 +434,8 @@ func _elegir_invernadero() -> void:
 		_mostrar_decision()
 		return
 	decision = "invernadero"
+	recursos.aplicar_decision("sol_3_invernadero", {})
+	decision_guardada.emit()
 	_cerrar_decision("Invernadero priorizado. Los tanques de emergencia cubrirán el suministro nocturno de hoy.")
 
 
@@ -439,11 +482,10 @@ func _resultado() -> Dictionary:
 
 
 func _actualizar_hud() -> void:
-	if recursos == null or lecturas == null or comida_ui == null:
+	if recursos == null:
 		return
 	var datos: Dictionary = recursos.estado()
-	lecturas.actualizar(datos)
-	comida_ui.actualizar(datos)
+	_actualizar_bandejas(datos)
 	if datos.derrota != "":
 		_mostrar_derrota(datos.derrota)
 
@@ -458,9 +500,7 @@ func _decir_pluto(texto: String) -> void:
 func _ubicar_interfaz() -> void:
 	if puesto == null or dialogo == null:
 		return
-	# Pluto permanece dibujado en Control; la frase se acerca a su posición proyectada
-	# y se limita a la pantalla cuando la cámara recorre otra sala.
-	var pluto := puesto.proyectar_suelo(Vector2(340, 260))
+	var pluto := puesto.proyectar_suelo(puesto.posicion_pluto())
 	dialogo.position = Vector2(
 		clampf(pluto.x + 24, 24, 896),
 		clampf(pluto.y - 210, 82, 475))
@@ -512,7 +552,7 @@ func _crear_modal(encabezado: String) -> VBoxContainer:
 	modal = PanelContainer.new()
 	modal.position = Vector2(214, 112)
 	modal.size = Vector2(852, 438)
-	modal.add_theme_stylebox_override("panel", _estilo(TINTA_CLARA, CIAN, 0.98))
+	modal.add_theme_stylebox_override("panel", _estilo(TINTA_CLARA, NARANJA, 0.98))
 	add_child(modal)
 	var margen := MarginContainer.new()
 	margen.add_theme_constant_override("margin_left", 28)
@@ -529,6 +569,7 @@ func _crear_modal(encabezado: String) -> VBoxContainer:
 
 
 func _cerrar_modal() -> void:
+	bandejas_ui.clear()
 	if modal != null:
 		modal.queue_free()
 		modal = null

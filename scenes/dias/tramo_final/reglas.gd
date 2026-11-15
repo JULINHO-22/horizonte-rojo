@@ -51,6 +51,7 @@ static func desenlace(estado: Dictionary, refuerzo: bool) -> String:
 	var reserva: Dictionary = estado.reservas
 	if not estado.derrota.is_empty() or reserva.oxigeno == 0 or reserva.alimento == 0:
 		return "derrota"
-	if refuerzo and reserva.energia >= 2 and reserva.oxigeno >= 3 and reserva.agua >= 1 and reserva.alimento >= 2:
-		return "mision_cumplida"
-	return "evacuacion"
+	var seguras: bool = reserva.energia >= 2 and reserva.oxigeno >= 3 and reserva.agua >= 1 and reserva.alimento >= 2
+	if refuerzo:
+		return "mision_cumplida" if seguras else "evacuacion"
+	return "evacuacion" if seguras else "derrota"

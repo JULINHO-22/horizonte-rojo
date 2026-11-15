@@ -87,7 +87,7 @@ func _dibujar_refugio() -> void:
 		draw_circle(Vector2(x, 127), 2.5, led, true, -1.0, true)
 	_sprite(IRIS, Vector2(445, SUELO_PROTEGIDO), 52)
 	_sprite(TEO_NORMAL, Vector2(582, SUELO_PROTEGIDO), 51)
-	_sprite(DRON, Vector2(127, SUELO_PROTEGIDO), 30)
+	_sprite(DRON, Vector2(clampf(punto.x + 30, 40, ancho_visible - 24), SUELO_PROTEGIDO - 10), 30)
 	var cruzando := entrada_nucleo < 1.0
 	var andando := NORA_PASOS if caminando or cruzando else NORA
 	var pies := Vector2(punto.x, lerpf(283.0, SUELO_PROTEGIDO, entrada_nucleo))

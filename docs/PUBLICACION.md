@@ -15,6 +15,8 @@ El proyecto `horizonte-rojo-game` usa Firebase Hosting. La portada ofrece vistas
 
 `firebase.json` publica `build/web` y omite los metadatos de importación de Godot. Comprueba el enlace público con un perfil de navegador limpio. Inicia la expedición, revisa los paneles con Pluto y recarga. El guardado se conserva por dirección y por perfil del navegador.
 
+El repositorio no contiene un flujo de GitHub Actions para Firebase. Subir cambios a `main` actualiza el código. Hosting recibe la compilación cuando se ejecuta el despliegue con una cuenta autorizada. Para automatizar ese paso hace falta configurar la integración y sus credenciales. [Integración oficial de Firebase con GitHub](https://firebase.google.com/docs/hosting/github-integration)
+
 La cinemática inicial usa texturas PNG pixel art empacadas por Godot dentro de `index.pck`; Firebase no necesita servirlas como archivos independientes ni habilitar un códec de video. El preset incluye el conjunto `*PixelArt.png` activo de `assets/NarrativaInicio/` y excluye los fondos, naves y variantes realistas anteriores que ya no consume el código.
 
 La revisión del 14 de noviembre de 2026 exportó el preset Web con Godot 4.7.2 y cargó la portada y la cinemática desde un servidor HTTP local. Se verificaron el acople inicial y el módulo aterrizado. Esto comprueba el arte dentro del paquete que utiliza Firebase; no implica un despliegue nuevo al sitio público.

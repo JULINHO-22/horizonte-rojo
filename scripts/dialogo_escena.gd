@@ -9,12 +9,12 @@ func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	size = Vector2(ANCHO, 165)
 	var sombra := TextureRect.new()
-	sombra.position = Vector2(-52, -35)
-	sombra.size = Vector2(ANCHO + 104, 250)
+	sombra.position = Vector2(-67, -43)
+	sombra.size = Vector2(ANCHO + 134, 278)
 	sombra.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var degradado := Gradient.new()
-	degradado.offsets = PackedFloat32Array([0, 0.53, 1])
-	degradado.colors = PackedColorArray([Color("#0a121bec"), Color("#0a121bd9"), Color("#0a121b00")])
+	degradado.offsets = PackedFloat32Array([0, 0.58, 1])
+	degradado.colors = PackedColorArray([Color("#17100df5"), Color("#17100de0"), Color("#17100d00")])
 	var textura := GradientTexture2D.new()
 	textura.gradient = degradado
 	textura.width = 512
@@ -25,8 +25,8 @@ func _ready() -> void:
 	sombra.texture = textura
 	sombra.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	add_child(sombra)
-	nombre = _linea(0, 18, Color("#b5d9cf"))
-	frase = _linea(32, 22, Color("#e7eef0"))
+	nombre = _linea(0, 18, Color("#ffcc92"))
+	frase = _linea(32, 22, Color("#fff2df"))
 	hide()
 
 func decir(quien: String, texto: String) -> void:
@@ -44,7 +44,7 @@ func _linea(y: float, puntos: int, tinta: Color) -> Label:
 	linea.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	linea.add_theme_font_size_override("font_size", puntos)
 	linea.add_theme_color_override("font_color", tinta)
-	linea.add_theme_color_override("font_outline_color", Color("#0a121b"))
+	linea.add_theme_color_override("font_outline_color", Color("#160e0b"))
 	linea.add_theme_constant_override("outline_size", 4)
 	linea.add_theme_constant_override("line_spacing", 5)
 	add_child(linea)

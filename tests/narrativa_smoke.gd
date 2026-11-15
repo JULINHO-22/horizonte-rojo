@@ -148,6 +148,19 @@ func _probar() -> void:
 	await _captura("epilogo")
 	_probar_descanso_sol_uno(juego)
 	_probar_relevo(juego)
+	for sol in range(1, 6):
+		juego._abrir_menu_soles()
+		juego._probar_sol(sol)
+		assert(juego.sol_anunciado == sol)
+		var tecla := InputEventKey.new()
+		tecla.physical_keycode = KEY_T
+		tecla.pressed = true
+		root.push_input(tecla)
+		assert(juego.interfaz_tablet.estado.sol == sol)
+		if sol == 3:
+			await _captura("tablet-reservas")
+		root.push_input(tecla)
+		assert(juego.interfaz_tablet == null)
 	print("NARRATIVA_OK: rutas, ida, esclusa, cinco noches, guardado y regreso verificados.")
 	quit()
 
@@ -199,9 +212,11 @@ func _sol_uno(juego) -> void:
 	var cercano := Vector2(1040, PuestoUmbra.SUELO)
 	var profundo := Vector2(1290, PuestoUmbra.SUELO)
 	_tramo(juego.puesto, PuestoUmbra.ESCLUSA, profundo)
+	assert(juego.recursos.aplicar_decision("comida_de_prueba", {"alimento": -10}))
 	_ir_a(juego, profundo)
 	juego._accion()
-	assert(juego.recursos.estado().hielo == 0, "No puede perforar sin batería")
+	assert(juego.recursos.estado().hielo == 0, "El depósito profundo requiere comida")
+	assert(juego.recursos.aplicar_decision("reponer_comida_de_prueba", {"alimento": 10}))
 	var antes: Dictionary = juego.recursos.guardar_estado()
 	_ir_a(juego, cercano)
 	juego._accion()
@@ -211,10 +226,12 @@ func _sol_uno(juego) -> void:
 	juego._process(85)
 	_ir_a(juego, profundo)
 	var energia: int = juego.recursos.estado().reservas.energia
+	var comida: int = juego.recursos.estado().reservas.alimento
 	await _captura("deposito-profundo")
 	juego.boton.pressed.emit()
 	await _captura("taladro")
-	assert(juego.recursos.estado().hielo == 2 and juego.recursos.estado().reservas.energia == energia - 3)
+	assert(juego.recursos.estado().hielo == 2 and juego.recursos.estado().reservas.energia == energia - 1)
+	assert(juego.recursos.estado().reservas.alimento == comida - 1)
 	var guardado: Dictionary = juego.campana.cargar()
 	assert(guardado.fase == "expedicion_sol_1" and guardado.recursos.hielo == 2)
 	juego._process(1.6)
@@ -240,7 +257,6 @@ func _probar_descanso_sol_uno(juego: Control) -> void:
 	juego.integrar_soles = true
 	juego._abrir_menu_soles()
 	juego._probar_sol(1)
-	assert(is_instance_valid(juego.indicador_comida))
 	var estado: Dictionary = juego.recursos.guardar_estado()
 	estado.aire_asegurado = true
 	estado.reservas.energia = 5
@@ -250,13 +266,20 @@ func _probar_descanso_sol_uno(juego: Control) -> void:
 	assert(juego.recursos.restaurar_estado(estado))
 	_ir_a(juego, PuestoUmbra.TERMINALES.dormitorio)
 	juego._refrescar_recursos()
-	assert(juego.indicador_comida.text == "Comida 8 de 10")
+	juego._alternar_tablet()
+	assert(juego.interfaz_tablet.estado.reservas.alimento == 8)
+	var antes: Dictionary = juego.recursos.guardar_estado()
+	juego._process(30)
+	assert(juego.recursos.guardar_estado() == antes)
+	juego._cerrar_tablet()
 	juego._accion()
 	assert(juego.fase == "base" and juego.campana.sol == 1)
 	assert(juego.recursos.estado().derrota.is_empty())
 	juego.recursos.avanzar(20)
 	juego._refrescar_recursos()
-	assert(juego.indicador_comida.text == "Comida 7 de 10")
+	juego._alternar_tablet()
+	assert(juego.interfaz_tablet.estado.reservas.alimento == 7)
+	juego._cerrar_tablet()
 	juego._accion()
 	assert(juego.fase == "noche")
 	juego._process(3.1)
@@ -268,6 +291,11 @@ func _probar_descanso_sol_uno(juego: Control) -> void:
 	assert(relevo.polvo == "tormenta" and relevo.decisiones.is_empty())
 	juego.nivel_activo.interfaz.confirmar.pressed.emit()
 	assert(juego.nivel_activo.juego_activo())
+	juego._alternar_tablet()
+	assert(juego.nivel_activo.process_mode == Node.PROCESS_MODE_DISABLED)
+	assert(juego.interfaz_tablet.estado.sol == 2)
+	juego._cerrar_tablet()
+	assert(juego.nivel_activo.process_mode == Node.PROCESS_MODE_INHERIT)
 	assert(juego.recursos.activar_oxigeno())
 
 	# Simula un guardado anterior que ya llegó sin reservas suficientes.

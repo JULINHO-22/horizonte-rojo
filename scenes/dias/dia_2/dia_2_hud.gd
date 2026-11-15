@@ -1,12 +1,10 @@
 extends Control
 
-const Modelo := preload("res://scripts/mecanicas/recursos_mision.gd")
 const DialogoEscena := preload("res://scripts/dialogo_escena.gd")
 
 const ANCHO_GUIA := 460.0
-const TINTA := Color("#0c1822")
-const FONDO_PANEL := Color("#0f1c26f0")
-const BORDE_CIAN := Color("#3c7880")
+const TINTA := Color("#211716")
+const BORDE_CIAN := Color("#976d53")
 const PAPEL := Color("#fff2db")
 const CIAN := Color("#8ff1e7")
 const MUTED := Color("#a0b5be")
@@ -15,16 +13,8 @@ const AZUL := Color("#75baff")
 const ROJO := Color("#ff8274")
 const VERDE := Color("#8eedb0")
 
-const RECURSOS := {
-	"energia": ["ENERGÍA", ORO],
-	"agua": ["AGUA", AZUL],
-	"oxigeno": ["OXÍGENO", CIAN],
-	"alimento": ["COMIDA", ROJO],
-}
-
-var medidores := {}
 var aviso_pluto: Control
-var guia: Panel
+var guia: Control
 var titulo: Label
 var detalle: Label
 var marca: Label
@@ -45,32 +35,10 @@ var animacion_logro: Tween
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 
-	# Barra superior de telemetría (x=16 a x=866)
-	var barra_top := _panel(self, Rect2(16, 14, 850, 78), TINTA, BORDE_CIAN)
-	_texto(barra_top, Rect2(18, 10, 180, 28), "DÍA 2 · SOL 2", 21, PAPEL)
-
-	solar_alerta = _texto(barra_top, Rect2(18, 42, 210, 22), "TORMENTA · SOLAR: PAUSADO", 12, ROJO)
-
-	var x := 232
-	for id: String in RECURSOS:
-		var ficha: Array = RECURSOS[id]
-		_texto(barra_top, Rect2(x, 12, 140, 18), ficha[0], 12, MUTED)
-		var valor := _texto(barra_top, Rect2(x, 30, 140, 26), "", 18, ficha[1])
-		var barra := ProgressBar.new()
-		barra.show_percentage = false
-		barra.max_value = Modelo.LIMITES[id]
-		barra.position = Vector2(x, 58)
-		barra.size = Vector2(124, 5)
-		barra.add_theme_stylebox_override("background", _estilo(Color("#1d313d"), Color.TRANSPARENT, 0))
-		barra.add_theme_stylebox_override("fill", _estilo(ficha[1], Color.TRANSPARENT, 0))
-		barra.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		barra_top.add_child(barra)
-		medidores[id] = [valor, barra]
-		x += 152
-
-	var recorrido := _panel(self, Rect2(16, 100, 850, 38), FONDO_PANEL, BORDE_CIAN)
-	pasos = _texto(recorrido, Rect2(14, 8, 820, 24), "", 16, PAPEL)
-	recordatorio = _texto(self, Rect2(18, 146, 840, 28), "", 17, ORO)
+	_texto(self, Rect2(24, 18, 250, 28), "SOL 2 · TORMENTA DE POLVO", 19, PAPEL)
+	solar_alerta = _texto(self, Rect2(24, 45, 280, 22), "CARGA SOLAR DETENIDA", 14, ROJO)
+	pasos = _texto(self, Rect2(24, 76, 820, 24), "", 16, PAPEL)
+	recordatorio = _texto(self, Rect2(24, 106, 825, 28), "", 17, ORO)
 	recordatorio.add_theme_color_override("font_outline_color", TINTA)
 	recordatorio.add_theme_constant_override("outline_size", 6)
 
@@ -88,10 +56,17 @@ func _ready() -> void:
 	add_child(aviso_pluto)
 
 	# Panel guía de interacción contextual
-	guia = _panel(self, Rect2(24, 560, ANCHO_GUIA, 120), FONDO_PANEL, BORDE_CIAN)
+	guia = Control.new()
+	guia.position = Vector2(24, 560)
+	guia.size = Vector2(ANCHO_GUIA, 120)
+	guia.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(guia)
 	titulo = _texto(guia, Rect2(18, 10, ANCHO_GUIA - 36, 28), "", 20, CIAN)
 	detalle = _texto(guia, Rect2(18, 40, ANCHO_GUIA - 36, 68), "", 15, PAPEL)
 	detalle.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	for etiqueta: Label in [titulo, detalle, solar_alerta, pasos]:
+		etiqueta.add_theme_color_override("font_outline_color", TINTA)
+		etiqueta.add_theme_constant_override("outline_size", 7)
 
 	accion = _boton(guia, Rect2(18, 114, ANCHO_GUIA - 36, 40), "")
 	alternativa = _boton(guia, Rect2(18, 162, ANCHO_GUIA - 36, 40), "")
@@ -106,30 +81,19 @@ func _ready() -> void:
 
 	modal = ColorRect.new()
 	modal.size = Vector2(1280, 720)
-	modal.color = Color(0.03, 0.06, 0.09, 0.82)
+	modal.color = Color("#1b110fdf")
 	add_child(modal)
-	var caja_modal := _panel(modal, Rect2(260, 138, 760, 444), TINTA, CIAN)
+	var caja_modal := Control.new()
+	caja_modal.position = Vector2(260, 138)
+	modal.add_child(caja_modal)
 	modal_titulo = _texto(caja_modal, Rect2(36, 28, 688, 44), "", 30, PAPEL)
 	modal_detalle = _texto(caja_modal, Rect2(36, 90, 688, 252), "", 18, MUTED)
 	modal_detalle.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	confirmar = _boton(caja_modal, Rect2(36, 368, 688, 48), "")
 	confirmar.add_theme_font_size_override("font_size", 18)
 
-func actualizar(estado: Dictionary, lugar: String, mensaje: String, principal: String, otra: String,
+func actualizar(lugar: String, mensaje: String, principal: String, otra: String,
 		actuar: bool, elegir: bool, interior: bool, plano: bool, punto: Vector2, nora: Vector2) -> void:
-	for id: String in medidores:
-		var valor: int = estado.reservas[id]
-		var medidor: Array = medidores[id]
-		var maximo: int = Modelo.LIMITES[id]
-		medidor[0].text = "%d / %d" % [valor, maximo]
-		medidor[1].value = valor
-
-	if estado.aire_asegurado:
-		medidores.oxigeno[0].text = "%d / 8 · SEGURO" % estado.reservas.oxigeno
-		medidores.oxigeno[0].add_theme_color_override("font_color", VERDE)
-	else:
-		medidores.oxigeno[0].add_theme_color_override("font_color", CIAN)
-
 	titulo.text = lugar
 	detalle.text = mensaje
 	accion.text = "E · " + principal

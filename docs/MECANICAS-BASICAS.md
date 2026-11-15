@@ -53,8 +53,8 @@ En campaña, el coordinador crea una instancia por partida, la entrega a cada d�
 | --- | --- |
 | `iniciar_sol()` / `iniciar_sol("tormenta")` | Sin argumento sortea polvo normal. Con argumento fija `bajo`, `medio`, `alto` o `tormenta`. Rechaza iniciar un sol en curso. |
 | `estado()` y señal `cambiado` | Lee una copia del estado. Úsalo para dibujar indicadores, actualizar controles o mostrar la causa de derrota. |
-| `recoger_hielo(cantidad, energia, deposito)` y `purificar_hielo()` | La extracción admite un costo de batería y un identificador de depósito de un solo uso por sol. Cada uso del filtro procesa 1 hielo, cuesta 2 de energía y rinde hasta 3 de agua. El nivel comprueba cercanía y si ya se eligió otro depósito. |
-| `activar_oxigeno(energia, agua, alimento)` | Recarga el aire una vez por sol. Por defecto usa 6, 1 y 0. Los costos alternativos sirven para la decisión del día 3. Confirma el resultado antes de mostrar éxito. |
+| `recoger_hielo(cantidad, energia, deposito, alimento)` y `purificar_hielo()` | La extracción admite un costo de batería y comida y un identificador de depósito de un solo uso por sol. Cada uso del filtro procesa 1 hielo, cuesta 2 de energía y rinde hasta 3 de agua. El nivel comprueba cercanía y si ya se eligió otro depósito. |
+| `activar_oxigeno(energia, agua, alimento, perder_cultivos)` | Recarga el aire una vez por sol. Por defecto usa 6, 1 y 0 sin afectar los cultivos. El Sol 3 puede variar los costos y perder las bandejas cuando se prioriza el aire. |
 | `usar_tanques_emergencia(energia)` | Solo día 3, antes de asegurar el aire. Costo base de 3 energía, 1 agua y 2 oxígeno. Aporta 2 alimento y habilita el descanso si queda oxígeno. |
 | `sembrar(id)` / `comer(id)` | Usa `lechuga`, `rabano`, `tomate` o `papa`. La ficha de costos y tiempos está en `CULTIVOS`. |
 | `aplicar_decision(id, cambios)` | Cambios enteros con signo. Se aplican juntos si todos los costos caben. Se registra una vez por sol. La ganancia se limita al máximo. Ejemplo: `{"energia": -4, "alimento": -1}`. |
@@ -70,4 +70,4 @@ Las acciones devuelven si se aplicaron. La señal se emite después de actualiza
 - Cultivos y luz. «En un invernadero de prueba, el rábano recibió más luz que la lechuga». [NASA OSDR, EDEN ISS](https://osdr.nasa.gov/bio/repo/data/studies/OSD-895) y [NASA NTRS, cultivo de papa](https://ntrs.nasa.gov/citations/19950005536).
 - Los rayos, burbujas y segundos son unidades del juego. En el juego principal se podrán mostrar 12 rayos, un tanque con la palabra «Oxígeno» y una gota para el agua. El banco interno usa controles simples para probar el contrato. Las fuentes pueden consultarse como enlaces, sin depender de una API para jugar.
 
-El recorrido principal usa `scripts/mecanicas/indicadores_refugio.gd` para mostrar 12 rayos, 8 burbujas, una gota con seis niveles y 10 tomates. Los niveles pueden instanciar este Control y llamar a `actualizar(partida.estado())`. En la campaña, las tres lecturas siguen la pantalla de la supercomputadora. La comida queda arriba a la derecha. Pluto explica el agua, el aire y el efecto del polvo cerca de las estaciones.
+La campaña abre la tablet con **T** y le pasa una copia de las reservas del modelo. La tablet reutiliza el atlas de iconos de `scripts/mecanicas/indicadores_refugio.gd`. Control muestra objetivos y decisiones.

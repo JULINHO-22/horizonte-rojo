@@ -11,10 +11,10 @@ En Control, pulsa **E** o toca el equipo para avisar a Tierra. La respuesta tard
 Después del impacto, la emisora muestra las reservas antes y después. La respuesta de Tierra llega tras haberse refugiado la tripulación. El jugador envía los resultados o confirma la evacuación en función del diagnóstico.
 
 - `mision_cumplida` exige refuerzo y al menos 2 de energía, 3 de oxígeno, 1 de agua y 2 de comida.
-- `evacuacion` se usa si queda aire y comida pero falta otra condición de misión cumplida.
+- `evacuacion` requiere margen de seguridad sin refuerzo o, con refuerzo, oxígeno y comida pese a una reserva inferior al umbral de misión cumplida.
 - `derrota` se usa si llega a 0 el aire o la comida en el impacto, o el modelo ya registró derrota. Se muestra solo Game Over sobre negro.
 
-El umbral de evacuación y resolver la salida sin una quinta noche son decisiones de esta rama. El PDF describe supervivencia sin cifras exactas para evacuar y permite resolver tras el impacto. Si el equipo cambia ese criterio, edita `Reglas.desenlace()` y sus pruebas.
+Con reservas insuficientes y sin refuerzo, la estación deja de transmitir. La salida se resuelve tras el impacto, el informe y la vuelta a la cápsula.
 
 ## Integración
 
@@ -45,7 +45,7 @@ El catálogo y las lecturas se consultaron por API pública. La muestra archivad
 - [CSV de Curiosity en NASA OSDR/RadLab](https://visualization.osdr.nasa.gov/radlab/api/?spacecraft=Curiosity&timestamp%3E=2017-09-10&timestamp%3C2017-09-13&timestamp&absorbed_dose_rate)
 - [NASA sobre áreas protegidas contra la radiación](https://www.nasa.gov/science-research/heliophysics/real-martians-how-to-protect-astronauts-from-space-radiation-on-mars/)
 
-El día 5 presenta las acciones junto al control de la puerta y la emisora. La respuesta de Tierra y la comparación de reservas se leen sobre sombras difuminadas dentro de la sala. Vuelve a usar la emisora para enviar resultados o confirmar la evacuación. Tras la señal de fin de alerta, abre la compuerta para volver a la cápsula. No uses cuadros azules para ejecutar las tareas. El día 4 conserva su consulta de reservas en Control.
+El día 5 presenta las acciones junto a la computadora, el control de la puerta y la emisora. La respuesta de Tierra y el informe del impacto se leen sobre sombras difuminadas dentro de la sala. Vuelve a usar la emisora para enviar resultados o confirmar la evacuación. Tras la señal de fin de alerta, abre la compuerta para volver a la cápsula. En campaña, **T** consulta las reservas.
 
 El arte de la compuerta abierta se generó con ImageGen editando la ilustración del núcleo. El archivo `assets/dias/dia_5/nucleo_paso_abierto.png` aporta el pasillo. Godot desplaza las hojas de la compuerta original sobre el pasillo durante el cierre.
 

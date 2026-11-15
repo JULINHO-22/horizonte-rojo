@@ -37,11 +37,20 @@ var menu_soles: ColorRect
 var prueba_soles := false
 var integrar_soles := true
 const PanelControl := preload("res://scripts/panel_control.gd")
+const Tablet := preload("res://scripts/tablet_reservas.gd")
+const DORMITORIO_NOCHE := preload("res://assets/dormitorio_noche.png")
+const NOMBRES_SOLES := ["Llegada a Umbra", "Tormenta de polvo", "Aire o invernadero", "Preparar el refugio", "Tormenta solar"]
+const AVISOS_SOLES := ["Revisa las tareas en Control", "Alerta de polvo · Plan pendiente en Control",
+	"Revisión de sistemas · Consulta Control", "Alerta solar · Plan pendiente en Control",
+	"Alerta solar · Consulta Control y avisa a Tierra"]
 const MapaNucleo := preload("res://scenes/dias/tramo_final/mapa_tramo.gd")
 var visita_nucleo: MapaNucleo
 var marco_nucleo: Control
 var panel_control: PanelControl
-var indicador_comida: Label
+var interfaz_tablet: Tablet
+var boton_tablet: Button
+var sol_anunciado := 0
+var escena_descanso: TextureRect
 var extraccion_hasta := 0.0
 var estaciones: VBoxContainer
 var estacion := ""
@@ -85,7 +94,7 @@ func _ready() -> void:
 		_mostrar()
 
 func _process(delta: float) -> void:
-	if is_instance_valid(menu_soles):
+	if is_instance_valid(menu_soles) or is_instance_valid(interfaz_tablet):
 		return
 	if is_instance_valid(nivel_activo):
 		if campana.sol == 2 and nivel_activo.juego_activo():
@@ -133,7 +142,6 @@ func _process(delta: float) -> void:
 		"expedicion_sol_1":
 			if not _avanzar_recursos(delta):
 				return
-			_actualizar_indicador_comida(recursos.estado())
 			if reloj < extraccion_hasta:
 				puesto.avance_muestra = 1.0 - (extraccion_hasta - reloj) / 1.5
 				puesto.queue_redraw()
@@ -153,6 +161,8 @@ func _process(delta: float) -> void:
 				_cambiar("base")
 				_guardar()
 		"noche":
+			escena_descanso.modulate.a = smoothstep(0.15, 0.95, reloj)
+			escena_descanso.scale = Vector2.ONE * lerpf(1.0, 1.045, smoothstep(0.0, 3.0, reloj))
 			velo.color.a = smoothstep(0, 3.0, reloj)
 			voz.modulate.a = 1.0 - smoothstep(1.6, 2.9, reloj)
 			if reloj >= 3.0:
@@ -182,10 +192,16 @@ func _input(evento: InputEvent) -> void:
 		return
 	if evento.ctrl_pressed and evento.shift_pressed and evento.physical_keycode == KEY_M:
 		get_viewport().set_input_as_handled()
+		if is_instance_valid(interfaz_tablet):
+			_cerrar_tablet()
 		if is_instance_valid(menu_soles):
 			_cerrar_menu_soles()
 		else:
 			_abrir_menu_soles()
+	elif not is_instance_valid(menu_soles) and ((evento.physical_keycode == KEY_T and fase in ["base", "expedicion_sol_1"]) or
+			(evento.physical_keycode == KEY_ESCAPE and is_instance_valid(interfaz_tablet))):
+		get_viewport().set_input_as_handled()
+		_alternar_tablet()
 
 func _unhandled_key_input(event: InputEvent) -> void:
 	if is_instance_valid(nivel_activo) or is_instance_valid(menu_soles):
@@ -261,9 +277,9 @@ func _guia_expedicion() -> void:
 		var agua := mini(Recursos.LIMITES.agua - int(recursos.estado().reservas.agua), sitio.hielo * 3)
 		if aviso_tiempo <= 0:
 			voz.decir("Percy", "Aquí ahorras batería. Más a la derecha hay más hielo." if sitio.hielo == 1 else
-				"Aquí hay más hielo. El taladro y el filtro usarán más batería.")
-		boton.text = "E · %s · +%d agua tras filtrar" % [Tutorial.etiqueta_deposito(sitio), agua]
-		pista.text = "Batería total con filtro: cercano 3 · profundo 7"
+				"Aquí hay más hielo. La caminata cansa y procesar dos muestras usa más batería.")
+		boton.text = "E · %s · hasta +%d agua" % [Tutorial.etiqueta_deposito(sitio), agua]
+		pista.text = "El total incluye el filtrado en el laboratorio."
 	else:
 		return
 	boton.show()
@@ -283,8 +299,8 @@ func _accion_expedicion() -> void:
 	var sitio := _deposito_cercano()
 	if sitio.is_empty():
 		return
-	if not recursos.recoger_hielo(sitio.hielo, sitio.energia, sitio.id):
-		voz.decir("Iris", "Falta batería. Los paneles la recargan poco a poco. También puedes ir al depósito cercano.")
+	if not recursos.recoger_hielo(sitio.hielo, sitio.energia, sitio.id, sitio.alimento):
+		voz.decir("Iris", "Revisa la energía y la comida en la tablet. Los paneles recargan la batería poco a poco.")
 		aviso_tiempo = 6
 		return
 	puesto.taladro_sol_uno_x = sitio.x
@@ -351,7 +367,7 @@ func _guia_sol_uno(cerca: String) -> void:
 		voz.decir("Pluto", Tutorial.GUIA[objetivo])
 	if cerca not in ["radio", "oxigeno", "cultivos", "cierre", "agua", "dormitorio", "nucleo"]:
 		return
-	boton.text = {"radio": "Revisar reservas", "oxigeno": "Preparar oxígeno", "cultivos": "Revisar bandejas",
+	boton.text = {"radio": "Consultar tareas", "oxigeno": "Preparar oxígeno", "cultivos": "Revisar bandejas",
 		"cierre": "Salir con Iris", "agua": "Purificar hielo", "dormitorio": "Descansar", "nucleo": "Bajar al núcleo protegido"}[cerca]
 	boton.text = "E · " + boton.text
 	boton.show()
@@ -361,7 +377,7 @@ func _accion_sol_uno(cerca: String) -> void:
 	match cerca:
 		"radio":
 			recursos.aplicar_decision(Tutorial.CONTROL, {})
-			voz.decir("Pluto", "Los rayos son la energía de los equipos, las burbujas son el aire y la gota es el agua. Guarda 6 de energía y 1 de agua para asegurar el aire.")
+			voz.decir("Pluto", "Control te muestra las tareas. En la tablet puedes ver qué tienes y cuánto queda para asegurar el aire.")
 			aviso_tiempo = 8
 			_guardar()
 			_abrir_control()
@@ -474,6 +490,7 @@ func _montar_sol() -> void:
 		3:
 			nivel_activo.configurar(recursos, historial_soles.get("sistemas_danados", false))
 			nivel_activo.descanso_solicitado.connect(_cerrar_sol_3, CONNECT_DEFERRED)
+			nivel_activo.decision_guardada.connect(_guardar.bind("base"))
 		4, 5:
 			nivel_activo.configurar(recursos, historial_soles)
 			nivel_activo.terminado.connect(_cerrar_tramo, CONNECT_DEFERRED)
@@ -540,6 +557,7 @@ func _volver_a_campana() -> void:
 func _probar_sol(sol: int) -> void:
 	_cerrar_menu_soles()
 	prueba_soles = true
+	sol_anunciado = 0
 	campana = Campana.new()
 	campana.sol = sol
 	campana.noches = sol - 1
@@ -568,6 +586,7 @@ func _ubicar_accion() -> void:
 		clampf(suelo.y + 18, 240, 650))
 
 func _reiniciar() -> void:
+	sol_anunciado = 0
 	if not prueba_soles:
 		campana.borrar()
 	historial_soles.clear()
@@ -586,6 +605,8 @@ func _guardar(fase_guardada := "") -> void:
 
 func _cambiar(destino: String) -> void:
 	fase = destino
+	if fase == "noche":
+		posicion = PuestoUmbra.TERMINALES.dormitorio
 	estacion = ""
 	turnos_cosecha.clear()
 	extraccion_hasta = 0
@@ -604,7 +625,8 @@ func _cambiar(destino: String) -> void:
 
 func _mostrar() -> void:
 	nivel_activo = null
-	indicador_comida = null
+	interfaz_tablet = null
+	boton_tablet = null
 	panel_control = null
 	visita_nucleo = null
 	marco_nucleo = null
@@ -620,6 +642,7 @@ func _mostrar() -> void:
 		return
 	if integrar_soles and fase == "base" and SOLES_JUGABLES.has(campana.sol) and not campana.listo_para_regresar():
 		_montar_sol()
+		_mostrar_accesos_sol()
 		return
 	match fase:
 		"ida", "regreso", "llegada_tierra", "pilotaje":
@@ -649,6 +672,9 @@ func _mostrar() -> void:
 		"derrota":
 			_sombra(AREA, Color.BLACK)
 			_etiqueta("Game Over", Rect2(485, 290, 400, 100), 56)
+			if campana.sol == 5:
+				var silencio := _etiqueta("La estación Umbra dejó de transmitir.", Rect2(330, 380, 620, 42), 24)
+				silencio.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		"epilogo":
 			_imagen(PuestoUmbra.CENTRO_AGUA, AREA)
 			_sombra(Rect2(0, 0, 1280, 720), Color(0.03, 0.07, 0.12, 0.78))
@@ -671,10 +697,6 @@ func _mostrar() -> void:
 	pista = _etiqueta("", Rect2(34, 653, 445, 35), 17)
 	boton = _boton("", Rect2(986, 28, 256, 45), _accion)
 	boton.visible = false
-	if _sol_uno() and fase in ["base", "expedicion_sol_1"]:
-		indicador_comida = _etiqueta("", Rect2(1020, 26, 225, 36), 22)
-		indicador_comida.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-		_actualizar_indicador_comida(recursos.estado())
 	match fase:
 		"portada":
 			boton.position = Vector2(90, 402)
@@ -713,7 +735,7 @@ func _mostrar() -> void:
 			titulo.text = "Día 1 de 5 · Hielo bajo el suelo"
 			_actualizar_guia()
 		"derrota":
-			boton.position = Vector2(512, 410)
+			boton.position = Vector2(512, 450 if campana.sol == 5 else 410)
 			boton.text = "Volver a intentar"
 			boton.show()
 		"base":
@@ -722,7 +744,12 @@ func _mostrar() -> void:
 			_actualizar_guia()
 		"noche":
 			titulo.text = "Fin del sol %d" % campana.sol
+			voz.position = Vector2(80, 423)
 			voz.decir("Pluto", "Es hora de descansar. La base queda cerrada mientras dormimos.")
+			escena_descanso = _imagen(DORMITORIO_NOCHE, Rect2(-80, 0, 1440, 720))
+			capa.move_child(escena_descanso, titulo.get_index())
+			escena_descanso.pivot_offset = escena_descanso.size * 0.5
+			escena_descanso.modulate.a = 0.0
 		"amanecer":
 			voz.decir("Pluto", "Buenos días. Es hora de preparar el regreso." if campana.listo_para_regresar() else "Buenos días. Comienza el día %d." % campana.sol)
 		"despegue":
@@ -733,16 +760,61 @@ func _mostrar() -> void:
 			boton.text = "Volver al comienzo"
 	if fase in ["noche", "amanecer", "llegada_tierra", "aterrizaje"]:
 		velo = _sombra(AREA, Color(0, 0, 0, 1 if fase in ["amanecer", "aterrizaje"] else 0))
+	if fase in ["base", "expedicion_sol_1"]:
+		_mostrar_accesos_sol()
 
-func _actualizar_indicador_comida(datos: Dictionary) -> void:
-	if is_instance_valid(indicador_comida):
-		var texto := "Comida %d de %d" % [datos.reservas.alimento, Recursos.LIMITES.alimento]
-		if indicador_comida.text != texto:
-			indicador_comida.text = texto
+func _mostrar_accesos_sol() -> void:
+	boton_tablet = _boton("T · Tablet", Rect2(965, 18, 158, 42), _alternar_tablet)
+	boton_tablet.focus_mode = Control.FOCUS_NONE
+	boton_tablet.z_index = 10
+	if fase != "base" or sol_anunciado == campana.sol or campana.listo_para_regresar():
+		return
+	sol_anunciado = campana.sol
+	var anuncio := Control.new()
+	anuncio.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	capa.add_child(anuncio)
+	anuncio.z_index = 9
+	var anterior := capa
+	capa = anuncio
+	var rotulos := [
+		_etiqueta("SOL %02d" % campana.sol, Rect2(350, 115, 580, 78), 65),
+		_etiqueta(NOMBRES_SOLES[campana.sol - 1], Rect2(336, 206, 608, 45), 30),
+		_etiqueta(AVISOS_SOLES[campana.sol - 1], Rect2(268, 256, 744, 35), 21),
+	]
+	capa = anterior
+	for rotulo: Label in rotulos:
+		rotulo.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	rotulos[2].add_theme_color_override("font_color", Color("#ffcb91"))
+	anuncio.modulate.a = 0.0
+	anuncio.position.y = 12
+	var entrada := anuncio.create_tween().set_parallel()
+	entrada.tween_property(anuncio, "modulate:a", 1.0, 0.35)
+	entrada.tween_property(anuncio, "position:y", 0.0, 0.35)
+	entrada.chain().tween_interval(3.0)
+	entrada.chain().tween_property(anuncio, "modulate:a", 0.0, 0.5)
+	entrada.chain().tween_callback(anuncio.queue_free)
+
+func _alternar_tablet() -> void:
+	if is_instance_valid(interfaz_tablet):
+		_cerrar_tablet()
+		return
+	interfaz_tablet = Tablet.new()
+	interfaz_tablet.estado = recursos.estado()
+	interfaz_tablet.z_index = 25
+	interfaz_tablet.cerrar_solicitado.connect(_cerrar_tablet)
+	if is_instance_valid(nivel_activo):
+		nivel_activo.process_mode = Node.PROCESS_MODE_DISABLED
+	capa.add_child(interfaz_tablet)
+
+func _cerrar_tablet() -> void:
+	capa.remove_child(interfaz_tablet)
+	interfaz_tablet.queue_free()
+	interfaz_tablet = null
+	if is_instance_valid(nivel_activo):
+		nivel_activo.process_mode = Node.PROCESS_MODE_INHERIT
 
 func _refrescar_recursos() -> void:
 	var datos := recursos.estado()
-	_actualizar_indicador_comida(datos)
 	if _sol_uno():
 		var objetivo := Tutorial.objetivo(datos)
 		puesto.objetivo_mision = "cultivos" if objetivo in ["sembrar", "cosechar"] else objetivo
@@ -758,14 +830,15 @@ func _abrir_control() -> void:
 	panel_control = PanelControl.new()
 	var estado := recursos.estado()
 	var regreso := campana.listo_para_regresar()
-	panel_control.configurar(estado, regreso, 0.0 if regreso else 58.0)
+	panel_control.configurar(campana.sol, regreso)
 	panel_control.cerrar_solicitado.connect(_cerrar_control)
 	panel_control.ruta_confirmada.connect(_confirmar_ruta)
 	capa.add_child(panel_control)
+	capa.move_child(boton_tablet, -1)
 	if not regreso:
 		var tarea := "El aire está asegurado. Ve al dormitorio para descansar." if estado.aire_asegurado else "Prepara el aire en el laboratorio de Agua y Oxígeno antes de descansar."
-		if _sol_uno() and estado.aire_asegurado:
-			tarea = "La tormenta puede dejar los paneles sin luz. Deja %d de energía y %d de agua para preparar aire mañana." % [Recursos.COSTO_AIRE_ENERGIA, Recursos.COSTO_AIRE_AGUA]
+		if _sol_uno():
+			tarea = Tutorial.GUIA[Tutorial.objetivo(estado)]
 		panel_control.mostrar_tarea(tarea)
 
 func _cerrar_control() -> void:
@@ -954,6 +1027,7 @@ func _crear_mapa(interior: bool) -> void:
 	puesto = PuestoUmbra.new()
 	puesto.interior = interior
 	puesto.guia_sol_uno = _sol_uno() and fase == "base"
+	puesto.pluto_acompana = fase == "base"
 	puesto.laboratorio_activo = fase == "base"
 	puesto.chequeo = not interior
 	puesto.cielo_sereno = true

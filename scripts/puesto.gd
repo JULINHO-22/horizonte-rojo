@@ -116,6 +116,7 @@ const ABRIGOS := [Vector2(463, SUELO), Vector2(590, SUELO), Vector2(731, SUELO)]
 var interior := false
 var laboratorio_activo := false
 var guia_sol_uno := false
+var pluto_acompana := false
 var expedicion_sol_uno := false
 var hielo_sol_uno := false
 var depositos_sol_uno: Array = []
@@ -325,7 +326,7 @@ func posicion_percy() -> Vector2:
 	return Vector2(punto.x + 70 if expedicion_sol_uno else minf(punto.x + 85, ESCLUSA.x - 44), SUELO)
 
 func posicion_pluto() -> Vector2:
-	return punto + Vector2(20, -9) if guia_sol_uno else Vector2(340, 260)
+	return punto + Vector2(20, -9) if pluto_acompana else Vector2(340, 260)
 
 
 func _origen_mundo() -> Vector2:

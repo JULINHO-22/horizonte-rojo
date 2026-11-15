@@ -46,6 +46,8 @@ func _probar() -> void:
 	assert(dia.puesto.terminal_cercana() == "radio", "La decisión debe estar en la terminal de Control.")
 	await _captura(dia, "control")
 	_clic(dia.interfaz.accion)
+	assert(is_instance_valid(dia.panel_control))
+	dia._plan_reparar()
 	assert(dia.paso == Paso.AIRE)
 	await _caminar(dia)
 	await _captura(dia, "laboratorio")
@@ -277,6 +279,9 @@ func _accion(dia: Dia, etapa: int) -> void:
 	assert(dia.paso == etapa)
 	await _caminar(dia)
 	_tecla(dia, KEY_E)
+	if etapa == Paso.DECISION:
+		assert(is_instance_valid(dia.panel_control))
+		dia._plan_reparar()
 	if dia.taller.visible:
 		await _resolver(dia)
 

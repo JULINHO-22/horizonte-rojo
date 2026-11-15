@@ -3,8 +3,9 @@ extends Control
 signal finalizado(resultado: Dictionary)
 
 const Recursos := preload("res://scripts/mecanicas/recursos_mision.gd")
-const Indicadores := preload("res://scripts/mecanicas/indicadores_refugio.gd")
 const HUD := preload("res://scenes/dias/dia_2/dia_2_hud.gd")
+const PanelControl := preload("res://scripts/panel_control.gd")
+var panel_control: PanelControl
 const Taller := preload("res://scenes/dias/dia_2/taller_dia_2.gd")
 const AudioDia2 := preload("res://scenes/dias/dia_2/dia_2_audio.gd")
 
@@ -16,7 +17,6 @@ const COSTO_REPARAR := {"energia": -4, "alimento": -1}
 const CONTROL: Vector2 = PuestoUmbra.TERMINALES.radio
 const SALIDA := Vector2(402, 382)
 const PANELES := PuestoUmbra.REVISION_SOLAR
-const PLUTO := Vector2(340, 260)
 const AIRE := PuestoUmbra.ESTACION_OXIGENO
 const AGUA := Vector2(25, 27)
 const PLANTAS := Vector2(405, 99)
@@ -49,8 +49,6 @@ var recursos: Recursos
 var puesto: PuestoUmbra
 var interfaz: HUD
 var audio: AudioDia2
-var lecturas: Indicadores
-var comida_ui: Indicadores
 var paneles: Label
 var oscuridad: ColorRect
 var ruta: Array[Vector2] = []
@@ -76,21 +74,12 @@ func _ready() -> void:
 
 	puesto = PuestoUmbra.new()
 	puesto.laboratorio_activo = true
+	puesto.pluto_acompana = true
 	puesto.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	add_child(puesto)
 
 	audio = AudioDia2.new()
 	add_child(audio)
-
-	# Indicadores del refugio integrados con el nuevo arte de main
-	lecturas = Indicadores.new()
-	lecturas.en_consola = true
-	add_child(lecturas)
-
-	comida_ui = Indicadores.new()
-	comida_ui.solo_alimento = true
-	comida_ui.position = Vector2(875, 20)
-	add_child(comida_ui)
 
 	paneles = Label.new()
 	paneles.text = "PANELES SOLARES"
@@ -163,6 +152,10 @@ func _preparar() -> void:
 		"¡Vamos, equipo!")
 	if not abierto:
 		interfaz.presentar("Sol 2", "La escena necesita una partida con el Sol 2 activo y clima de tormenta.", "")
+	elif not local:
+		en_pausa = false
+		interfaz.modal.hide()
+		aviso = "Control tiene un plan para la tormenta. Acércate a la computadora."
 	_actualizar()
 
 func _mundo(dentro: bool, posicion: Vector2) -> void:
@@ -198,7 +191,7 @@ func _ir_al_cierre(estado: Dictionary, hacia_aire: Array, hacia_este: Array) -> 
 		_ir(Paso.AIRE, hacia_aire + [CRUCE_OESTE, GIRO_AGUA, ENTRADA_AGUA])
 
 func juego_activo() -> bool:
-	return abierto and not concluido and not en_pausa and not puesto.plano and (not taller.visible or taller.jugando)
+	return abierto and not concluido and not en_pausa and not is_instance_valid(panel_control) and not puesto.plano and (not taller.visible or taller.jugando)
 
 func _process(delta: float) -> void:
 	if abierto and not concluido:
@@ -223,6 +216,11 @@ func _unhandled_key_input(event: InputEvent) -> void:
 	if not event is InputEventKey or not event.pressed or event.echo:
 		return
 	var codigo: Key = event.keycode if event.keycode != KEY_NONE else event.physical_keycode
+	if is_instance_valid(panel_control):
+		if codigo == KEY_ESCAPE:
+			_cerrar_control()
+		get_viewport().set_input_as_handled()
+		return
 	if taller.visible:
 		taller.tecla(codigo)
 		get_viewport().set_input_as_handled()
@@ -278,18 +276,15 @@ func _actuar() -> void:
 		_abrir_taller("aire")
 		_actualizar()
 		return
+	if puesto.interior and paso != Paso.DECISION and _cerca(CONTROL):
+		_abrir_control(false)
+		return
 	var ficha: Array = OBJETIVOS[paso]
 	if not _cerca(ficha[0]):
 		return
 	match paso:
 		Paso.DECISION:
-			audio.sonar_clic()
-			salida_pendiente = true
-			if estado.aire_asegurado:
-				_ir(Paso.SALIR, [Vector2(402, 352)])
-			else:
-				_ir(Paso.AIRE, [CRUCE_SUR, CRUCE_OESTE, GIRO_AGUA, ENTRADA_AGUA])
-				aviso = "¡Plan listo! Primero prepara el aire. Luego salimos a reparar."
+			_abrir_control(true)
 		Paso.SALIR:
 			audio.sonar_esclusa()
 			_mundo(false, PuestoUmbra.ESCLUSA - Vector2(10, 0))
@@ -315,6 +310,39 @@ func _actuar() -> void:
 				derrota = "hambre_al_dormir"
 			_terminar(estado, derrota)
 	_actualizar()
+
+func _abrir_control(elegir: bool) -> void:
+	if is_instance_valid(panel_control):
+		return
+	panel_control = PanelControl.new()
+	panel_control.configurar(2, false, 78.0 if elegir else 0.0)
+	panel_control.cerrar_solicitado.connect(_cerrar_control)
+	add_child(panel_control)
+	if elegir:
+		panel_control.mostrar_tarea("La tormenta detuvo la recarga solar. Repara para proteger los equipos o permanece en el refugio.")
+		panel_control.accion("Reparar · 4 energía y 1 comida", Rect2(34, 237, 418, 44), _plan_reparar)
+		panel_control.accion("Quedarme · mañana pierdo agua y aire", Rect2(468, 237, 438, 44), _plan_resguardo)
+	else:
+		panel_control.mostrar_tarea(OBJETIVOS[paso][2])
+
+func _cerrar_control() -> void:
+	remove_child(panel_control)
+	panel_control.queue_free()
+	panel_control = null
+
+func _plan_reparar() -> void:
+	_cerrar_control()
+	audio.sonar_clic()
+	salida_pendiente = true
+	if recursos.estado().aire_asegurado:
+		_ir(Paso.SALIR, [Vector2(402, 352)])
+	else:
+		_ir(Paso.AIRE, [CRUCE_SUR, CRUCE_OESTE, GIRO_AGUA, ENTRADA_AGUA])
+		aviso = "Primero prepara el aire. Luego salimos a reparar."
+
+func _plan_resguardo() -> void:
+	_cerrar_control()
+	_alternativa()
 
 func _asegurar_aire(estado: Dictionary) -> void:
 	if not recursos.activar_oxigeno():
@@ -431,15 +459,6 @@ func _actualizar() -> void:
 		if is_queued_for_deletion():
 			return
 
-	# Actualizar lecturas en pantalla de la supercomputadora y HUD
-	lecturas.actualizar(estado)
-	comida_ui.actualizar(estado)
-	lecturas.visible = local and puesto.interior and not puesto.plano and not estado.sin_luz and PuestoUmbra.ROOMS.radio.has_point(puesto.punto)
-	var esquina := puesto.proyectar_suelo(Vector2(372.8, 203.5))
-	var borde := puesto.proyectar_suelo(Vector2(440.0, 203.5))
-	lecturas.position = esquina
-	lecturas.scale = Vector2.ONE * ((borde.x - esquina.x) / 386.0)
-
 	var ficha: Array = OBJETIVOS[paso]
 	var destino: Vector2 = ficha[0] if ruta.is_empty() else ruta.front()
 	var cerca := _cerca(ficha[0])
@@ -486,6 +505,9 @@ func _actualizar() -> void:
 		if estado.reservas.agua == 0 and estado.hielo > 0:
 			opcion = "Ir al filtro azul · purificar hielo"
 			puede_elegir = true
+	elif puesto.interior and paso != Paso.DECISION and _cerca(CONTROL):
+		accion = "Consultar tareas"
+		cerca = true
 
 	if puesto.interior and _cerca(AGUA) and estado.reservas.agua == 0 and estado.hielo > 0:
 		lugar = "Filtro azul · Prepara agua"
@@ -532,14 +554,14 @@ func _actualizar() -> void:
 	elif estado.aire_asegurado:
 		pluto_texto = "Oxígeno asegurado para la noche. Descansa en el dormitorio cuando estés lista."
 
-	var pluto_a_la_vista := not taller.visible and not cerca and puesto.interior and not puesto.plano and juego_activo() and puesto.punto.distance_to(PLUTO) < 110.0
-	interfaz.aviso_de_pluto(pluto_a_la_vista, puesto.proyectar_suelo(PLUTO), pluto_texto)
+	var pluto_a_la_vista := not taller.visible and not cerca and puesto.interior and not puesto.plano and juego_activo()
+	interfaz.aviso_de_pluto(pluto_a_la_vista, puesto.proyectar_suelo(puesto.posicion_pluto()), pluto_texto)
 
 	taller.mostrar_aire(estado)
 	interfaz.guia.visible = not taller.visible
 	interfaz.marca.visible = not taller.visible
 	interfaz.ruta_del_dia(estado, salida_pendiente, paso == Paso.DESCANSO)
-	interfaz.actualizar(estado, lugar, detalle, accion, opcion, cerca and juego_activo(),
+	interfaz.actualizar(lugar, detalle, accion, opcion, cerca and juego_activo(),
 		puede_elegir and juego_activo(), puesto.interior, puesto.plano,
 		puesto.proyectar_suelo(destino) - Vector2(0, 18), puesto.proyectar_suelo(puesto.punto))
 

@@ -1,5 +1,12 @@
 # Cambios
 
+## 2026-11-15 | Tablet, tareas y transiciones de campaña
+
+- Los cinco soles consultan las reservas con la tablet portátil (T). Control muestra el trabajo pendiente y las decisiones de la misión.
+- Pluto acompaña a Nora dentro de Umbra. Cada sol abre con título animado y aviso de Control. El descanso muestra a la tripulación en sus camas antes del amanecer.
+- La ruta profunda del Sol 1 cuesta 5 de energía contando el filtro y 1 de comida. Priorizar oxígeno en el Sol 3 pierde las bandejas. La tormenta del Sol 5 usa los umbrales del flujo del equipo para decidir si todavía es posible evacuar.
+- Diálogos con sombra cálida y texto crema. El Sol 3 muestra el crecimiento de los cultivos mientras está abierto el menú de Plantas.
+
 ## 2026-11-15 | Paso del Sol 1 al Sol 2
 
 - El Sol 1 muestra la comida durante la exploración y explica cómo completar el descanso si faltan reservas.

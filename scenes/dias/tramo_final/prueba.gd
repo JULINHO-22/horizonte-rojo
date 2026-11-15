@@ -13,7 +13,7 @@ const PERFILES := [
 	{"nombre": "Refugio reforzado", "descripcion": "El blindaje está instalado y hay\nreservas para afrontar la tormenta.",
 		"sol": 5, "reservas": {"energia": 9, "agua": 3, "oxigeno": 7, "alimento": 6}, "danio": false, "refuerzo": true},
 	{"nombre": "Suministros justos", "descripcion": "La base tiene daños y poco\nmargen. Comprueba si las\nreservas alcanzan para evacuar.",
-		"sol": 5, "reservas": {"energia": 9, "agua": 2, "oxigeno": 6, "alimento": 3}, "danio": true, "refuerzo": false},
+		"sol": 5, "reservas": {"energia": 10, "agua": 2, "oxigeno": 7, "alimento": 3}, "danio": true, "refuerzo": false},
 	{"nombre": "Poco oxígeno", "descripcion": "El tanque está a la mitad y falta\nreforzar el refugio. Observa qué\npasa con el aire.",
 		"sol": 5, "reservas": {"energia": 9, "agua": 2, "oxigeno": 4, "alimento": 3}, "danio": true, "refuerzo": false},
 ]

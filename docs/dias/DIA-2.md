@@ -41,7 +41,7 @@ Queda pendiente acordar con el coordinador la conexión en `scripts/guion_inicio
 
 ## Arte y ciencia
 
-La base integrada es `origin/main` en `ab51a9b` (Control con cristal de tres secciones y laboratorio conjunto de Agua y Oxígeno). La escena reutiliza `PuestoUmbra` para el refugio, las colisiones, los sprites de la tripulación y el polvo marciano. En [Control](../ARTE-CONTROL.md), la supercomputadora usa `Indicadores.en_consola` sobre los cristales originales y muestra en vivo el componente `Indicadores` con los 12 rayos de energía, 8 burbujas de oxígeno y gota de agua con animación de llenado, destacando en rojo la alerta `Solar: Pausado`. La comida se refleja con los iconos de tomate arriba a la derecha.
+La escena reutiliza `PuestoUmbra` para el refugio, las colisiones, los sprites y el polvo marciano. En campaña, el aviso del Sol 2 señala la computadora de Control para elegir el plan. La tablet de campaña muestra las reservas y el estado de la generación solar.
 
 Se reutilizan también el atlas `instrumentos_control.png` y la paleta del refugio en los esquemas de los tableros. No se generan imágenes nuevas ni se sustituyen fondos, personajes o maquinaria por dibujos provisionales.
 
