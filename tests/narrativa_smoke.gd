@@ -51,6 +51,18 @@ func _probar() -> void:
 	assert(juego.fase == "esclusa")
 	juego._process(3.6)
 	assert(juego.fase == "base")
+	assert(is_instance_valid(juego.anuncio_sol))
+	var antes_del_aviso: Dictionary = juego.recursos.guardar_estado()
+	juego._process(4.0)
+	assert(juego.recursos.guardar_estado() == antes_del_aviso)
+	if DisplayServer.get_name() != "headless":
+		await create_timer(0.6).timeout
+		await _captura("anuncio-sol-1")
+	var continuar := InputEventKey.new()
+	continuar.physical_keycode = KEY_E
+	continuar.pressed = true
+	root.push_input(continuar)
+	assert(juego.anuncio_sol == null and juego.fase == "base")
 	var mapa: PuestoUmbra = juego.puesto
 	assert(not mapa.transitable(Vector2(402, 225)), "La supercomputadora ocupa el centro")
 	assert(mapa.transitable(PuestoUmbra.TERMINALES.radio), "La terminal debe quedar delante del equipo")
@@ -98,6 +110,7 @@ func _probar() -> void:
 	await _sol_uno(juego)
 	for dia in range(1, 6):
 		assert(juego.campana.sol == dia)
+		juego._cerrar_anuncio_sol()
 		if dia > 1:
 			assert(juego.recursos.aplicar_decision("insumos_de_prueba", {"energia": 12, "agua": 6}))
 			assert(juego.recursos.activar_oxigeno())
@@ -158,6 +171,7 @@ func _probar() -> void:
 		root.push_input(tecla)
 		assert(juego.interfaz_tablet.estado.sol == sol)
 		if sol == 3:
+			await create_timer(0.2).timeout
 			await _captura("tablet-reservas")
 		root.push_input(tecla)
 		assert(juego.interfaz_tablet == null)
@@ -289,6 +303,8 @@ func _probar_descanso_sol_uno(juego: Control) -> void:
 	var relevo: Dictionary = juego.recursos.estado()
 	assert(relevo.reservas.energia == 6 and relevo.reservas.agua == 1 and relevo.reservas.alimento == 7)
 	assert(relevo.polvo == "tormenta" and relevo.decisiones.is_empty())
+	assert(juego.nivel_activo.process_mode == Node.PROCESS_MODE_DISABLED)
+	juego._cerrar_anuncio_sol()
 	juego.nivel_activo.interfaz.confirmar.pressed.emit()
 	assert(juego.nivel_activo.juego_activo())
 	juego._alternar_tablet()

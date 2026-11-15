@@ -39,6 +39,7 @@ var integrar_soles := true
 const PanelControl := preload("res://scripts/panel_control.gd")
 const Tablet := preload("res://scripts/tablet_reservas.gd")
 const DORMITORIO_NOCHE := preload("res://assets/dormitorio_noche.png")
+const AMANECER_MARTE := preload("res://assets/NarrativaInicio/MartePixelArt.png")
 const NOMBRES_SOLES := ["Llegada a Umbra", "Tormenta de polvo", "Aire o invernadero", "Preparar el refugio", "Tormenta solar"]
 const AVISOS_SOLES := ["Revisa las tareas en Control", "Alerta de polvo · Plan pendiente en Control",
 	"Revisión de sistemas · Consulta Control", "Alerta solar · Plan pendiente en Control",
@@ -50,6 +51,7 @@ var panel_control: PanelControl
 var interfaz_tablet: Tablet
 var boton_tablet: Button
 var sol_anunciado := 0
+var anuncio_sol: Control
 var escena_descanso: TextureRect
 var extraccion_hasta := 0.0
 var estaciones: VBoxContainer
@@ -94,7 +96,7 @@ func _ready() -> void:
 		_mostrar()
 
 func _process(delta: float) -> void:
-	if is_instance_valid(menu_soles) or is_instance_valid(interfaz_tablet):
+	if is_instance_valid(menu_soles) or is_instance_valid(interfaz_tablet) or is_instance_valid(anuncio_sol):
 		return
 	if is_instance_valid(nivel_activo):
 		if campana.sol == 2 and nivel_activo.juego_activo():
@@ -194,6 +196,7 @@ func _input(evento: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 		if is_instance_valid(interfaz_tablet):
 			_cerrar_tablet()
+		_cerrar_anuncio_sol()
 		if is_instance_valid(menu_soles):
 			_cerrar_menu_soles()
 		else:
@@ -202,9 +205,12 @@ func _input(evento: InputEvent) -> void:
 			(evento.physical_keycode == KEY_ESCAPE and is_instance_valid(interfaz_tablet))):
 		get_viewport().set_input_as_handled()
 		_alternar_tablet()
+	elif is_instance_valid(anuncio_sol) and evento.physical_keycode in [KEY_E, KEY_ENTER, KEY_SPACE, KEY_ESCAPE]:
+		_cerrar_anuncio_sol()
+		get_viewport().set_input_as_handled()
 
 func _unhandled_key_input(event: InputEvent) -> void:
-	if is_instance_valid(nivel_activo) or is_instance_valid(menu_soles):
+	if is_instance_valid(nivel_activo) or is_instance_valid(menu_soles) or is_instance_valid(anuncio_sol):
 		return
 	if not event is InputEventKey or not event.pressed or event.echo:
 		return
@@ -627,6 +633,7 @@ func _mostrar() -> void:
 	nivel_activo = null
 	interfaz_tablet = null
 	boton_tablet = null
+	anuncio_sol = null
 	panel_control = null
 	visita_nucleo = null
 	marco_nucleo = null
@@ -770,34 +777,57 @@ func _mostrar_accesos_sol() -> void:
 	if fase != "base" or sol_anunciado == campana.sol or campana.listo_para_regresar():
 		return
 	sol_anunciado = campana.sol
-	var anuncio := Control.new()
-	anuncio.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	capa.add_child(anuncio)
-	anuncio.z_index = 9
+	anuncio_sol = Control.new()
+	anuncio_sol.size = AREA.size
+	anuncio_sol.mouse_filter = Control.MOUSE_FILTER_STOP
+	anuncio_sol.z_index = 20
+	capa.add_child(anuncio_sol)
+	if is_instance_valid(nivel_activo):
+		nivel_activo.process_mode = Node.PROCESS_MODE_DISABLED
+
 	var anterior := capa
-	capa = anuncio
+	capa = anuncio_sol
+	_imagen(AMANECER_MARTE, AREA)
+	_sombra(AREA, Color("#130e17a9"))
+	var texto := Control.new()
+	texto.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	capa.add_child(texto)
+	capa = texto
 	var rotulos := [
-		_etiqueta("SOL %02d" % campana.sol, Rect2(350, 115, 580, 78), 65),
-		_etiqueta(NOMBRES_SOLES[campana.sol - 1], Rect2(336, 206, 608, 45), 30),
-		_etiqueta(AVISOS_SOLES[campana.sol - 1], Rect2(268, 256, 744, 35), 21),
+		_etiqueta("SOL %02d" % campana.sol, Rect2(240, 194, 800, 130), 96),
+		_etiqueta(NOMBRES_SOLES[campana.sol - 1], Rect2(240, 337, 800, 60), 35),
+		_etiqueta(AVISOS_SOLES[campana.sol - 1], Rect2(230, 414, 820, 55), 22),
 	]
+	capa = anuncio_sol
+	var continuar := _boton("E · Continuar", Rect2(540, 610, 200, 44), _cerrar_anuncio_sol)
+	continuar.focus_mode = Control.FOCUS_NONE
 	capa = anterior
 	for rotulo: Label in rotulos:
 		rotulo.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	rotulos[2].add_theme_color_override("font_color", Color("#ffcb91"))
-	anuncio.modulate.a = 0.0
-	anuncio.position.y = 12
-	var entrada := anuncio.create_tween().set_parallel()
-	entrada.tween_property(anuncio, "modulate:a", 1.0, 0.35)
-	entrada.tween_property(anuncio, "position:y", 0.0, 0.35)
-	entrada.chain().tween_interval(3.0)
-	entrada.chain().tween_property(anuncio, "modulate:a", 0.0, 0.5)
-	entrada.chain().tween_callback(anuncio.queue_free)
+	texto.modulate.a = 0.0
+	texto.position.y = 14
+	var entrada := anuncio_sol.create_tween().set_parallel().set_trans(Tween.TRANS_SINE)
+	entrada.tween_property(texto, "modulate:a", 1.0, 0.45)
+	entrada.tween_property(texto, "position:y", 0.0, 0.45)
+	entrada.chain().tween_interval(2.25)
+	entrada.chain().tween_property(anuncio_sol, "modulate:a", 0.0, 0.4)
+	entrada.chain().tween_callback(_cerrar_anuncio_sol)
+
+func _cerrar_anuncio_sol() -> void:
+	if not is_instance_valid(anuncio_sol):
+		return
+	anuncio_sol.hide()
+	anuncio_sol.queue_free()
+	anuncio_sol = null
+	if is_instance_valid(nivel_activo):
+		nivel_activo.process_mode = Node.PROCESS_MODE_INHERIT
 
 func _alternar_tablet() -> void:
 	if is_instance_valid(interfaz_tablet):
 		_cerrar_tablet()
 		return
+	_cerrar_anuncio_sol()
 	interfaz_tablet = Tablet.new()
 	interfaz_tablet.estado = recursos.estado()
 	interfaz_tablet.z_index = 25

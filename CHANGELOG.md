@@ -1,5 +1,10 @@
 # Cambios
 
+## 2026-11-15 | Instrumentos originales y apertura de cada sol
+
+- La tablet recupera los instrumentos, colores y proporciones del panel original de Control. La comida y el hielo quedan al pie del panel.
+- Cada sol se anuncia en una transición sobre el paisaje marciano. El aviso termina antes de que reaparezcan los diálogos y controles.
+
 ## 2026-11-15 | Tablet, tareas y transiciones de campaña
 
 - Los cinco soles consultan las reservas con la tablet portátil (T). Control muestra el trabajo pendiente y las decisiones de la misión.
