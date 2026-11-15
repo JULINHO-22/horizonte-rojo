@@ -12,7 +12,7 @@ La escena principal abre el viaje y la campaña completa. La nave sale con el m�
 4. En el Sol 1, Pluto sugiere empezar en Control y visitar Oxígeno y Plantas. Siembra, recoge y come en Plantas. Puedes salir con Iris a buscar hielo a la derecha del refugio y llevarlo al filtro. Cuando tengas aire asegurado y comida, pulsa **E** o **Descansar** en el dormitorio. El fundido de tres segundos inicia la siguiente mañana. Consulta [Sol 1](docs/dias/DIA-1.md).
 5. En el Sol 5, consulta Control y avisa a Tierra. Baja al núcleo protegido, sella la compuerta y comunica el resultado para continuar al desenlace.
 
-Pulsa **E** junto a la computadora de Control para consultar las tareas. Pulsa **Q** o selecciona **Reservas** para consultar oxígeno, agua, energía, comida e hielo. La consulta pausa el juego. En la esclusa sur, el acceso lateral baja al núcleo protegido que se usa en el Sol 5.
+Pulsa **E** junto a la computadora de Control para consultar las tareas. Selecciona **Ver reservas** arriba a la derecha o usa el atajo **Q** para consultar oxígeno, agua, energía, comida e hielo. La consulta pausa el juego. En la esclusa sur, el acceso lateral baja al núcleo protegido que se usa en el Sol 5.
 
 El laboratorio de Agua y Oxígeno está al noroeste, pasando por Energía. Purifica agua junto al filtro azul y prepara oxígeno junto a los depósitos verdes. El taller está inmediatamente al este de Control. Plantas se alcanza por el desvío norte del corredor este, girando a la izquierda. No hay Enfermería ni accidente de Teo.
 

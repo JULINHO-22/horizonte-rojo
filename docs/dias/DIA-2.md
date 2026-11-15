@@ -2,6 +2,8 @@
 
 ## Recorrido
 
+En la campaña, Nora empieza junto a la consola. Pulsa **E** o selecciona **Elegir plan en Control** para ver las opciones. Consulta la tablet desde **Ver reservas**, arriba a la derecha, o con el atajo **Q**.
+
 En este checkout también puedes abrir `jugar_dia_2.bat` (usa el Godot local de `build/tools`). Para otro equipo, abre `scenes/dias/dia_2/dia_2.tscn` en Godot 4.7.2 y pulsa **F6**. Usa **WASD** o las **flechas** para caminar, **E** para interactuar, **F** para la opción alternativa, **M** para el plano y **Esc** para pausar. Los botones ejecutan las mismas acciones. El plano y las pausas detienen el reloj local.
 
 1. En Control elige entre proteger los equipos o quedarte dentro. Los botones muestran el coste y la consecuencia antes de elegir. Resguardarse cuesta 0 inmediatamente; deja sistemas dañados y pérdidas de 1 agua y 1 oxígeno para el Día 3.

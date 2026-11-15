@@ -34,7 +34,7 @@ const GIRO_CAMA := Vector2(681, 131)
 enum Paso { DECISION, SALIR, REPARAR, ENTRAR, AIRE, PLANTAS, DESCANSO }
 
 const OBJETIVOS := {
-	Paso.DECISION: [CONTROL, "1 · Elige tu plan", "El polvo tapa la luz. Hoy los paneles no cargan.\n¿Protegemos los equipos o nos quedamos dentro?", "Reparar · 4 energía + 1 comida"],
+	Paso.DECISION: [CONTROL, "1 · Elige tu plan", "El polvo tapa la luz. Hoy los paneles no cargan.\nConsulta las opciones en la computadora.", "Elegir plan en Control"],
 	Paso.SALIR: [SALIDA, "3 · Sal por la esclusa", "Tu aire está listo. Ve a proteger los equipos.\nTodavía puedes volver y cambiar de plan.", "Salir al exterior"],
 	Paso.REPARAR: [PANELES, "3 · Sujeta los equipos", "Alinea y fija 3 cierres entre las ráfagas.\nSigue la marca hasta los paneles.", "Abrir caja de herramientas"],
 	Paso.ENTRAR: [PuestoUmbra.ESCLUSA, "4 · Vuelve a casa", "¡Los equipos están protegidos!\nLos paneles cargarán cuando pase la tormenta.", "Entrar al refugio"],
@@ -135,7 +135,7 @@ func _preparar() -> void:
 	taller.hide()
 	en_pausa = true
 	abierto = estado.sol == 2 and estado.en_curso and estado.polvo == "tormenta"
-	_mundo(true, Vector2(CONTROL.x, 282))
+	_mundo(true, Vector2(CONTROL.x, 282) if local else CONTROL + Vector2(0, 12))
 	if REPARAR in estado.decisiones or RESGUARDARSE in estado.decisiones:
 		_ir_al_cierre(estado, [CRUCE_SUR], [CRUCE_SUR])
 	else:
@@ -155,7 +155,8 @@ func _preparar() -> void:
 	elif not local:
 		en_pausa = false
 		interfaz.modal.hide()
-		aviso = "Control tiene un plan para la tormenta. Acércate a la computadora."
+		if paso == Paso.DECISION:
+			aviso = "Estás junto a la computadora. Pulsa E o elige «Elegir plan en Control»."
 	_actualizar()
 
 func _mundo(dentro: bool, posicion: Vector2) -> void:
@@ -219,6 +220,10 @@ func _unhandled_key_input(event: InputEvent) -> void:
 	if is_instance_valid(panel_control):
 		if codigo == KEY_ESCAPE:
 			_cerrar_control()
+		elif codigo == KEY_E:
+			var elegido := get_viewport().gui_get_focus_owner() as Button
+			if elegido != null and elegido.get_parent() == panel_control and not elegido.disabled:
+				elegido.pressed.emit()
 		get_viewport().set_input_as_handled()
 		return
 	if taller.visible:
@@ -320,8 +325,9 @@ func _abrir_control(elegir: bool) -> void:
 	add_child(panel_control)
 	if elegir:
 		panel_control.mostrar_tarea("La tormenta detuvo la recarga solar. Repara para proteger los equipos o permanece en el refugio.")
-		panel_control.accion("Reparar · 4 energía y 1 comida", Rect2(34, 237, 418, 44), _plan_reparar)
+		var reparar := panel_control.accion("Reparar · 4 energía y 1 comida", Rect2(34, 237, 418, 44), _plan_reparar)
 		panel_control.accion("Quedarme · mañana pierdo agua y aire", Rect2(468, 237, 438, 44), _plan_resguardo)
+		reparar.grab_focus()
 	else:
 		panel_control.mostrar_tarea(OBJETIVOS[paso][2])
 

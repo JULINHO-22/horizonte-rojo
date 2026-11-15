@@ -49,7 +49,7 @@ var visita_nucleo: MapaNucleo
 var marco_nucleo: Control
 var panel_control: PanelControl
 var interfaz_tablet: Tablet
-var boton_tablet: Button
+var boton_tablet: LinkButton
 var sol_anunciado := 0
 var anuncio_sol: Control
 var escena_descanso: TextureRect
@@ -202,7 +202,7 @@ func _input(evento: InputEvent) -> void:
 			_cerrar_menu_soles()
 		else:
 			_abrir_menu_soles()
-	elif not is_instance_valid(menu_soles) and ((evento.physical_keycode == KEY_Q and fase in ["base", "expedicion_sol_1"]) or
+	elif not is_instance_valid(menu_soles) and (((evento.keycode == KEY_Q or evento.physical_keycode == KEY_Q) and fase in ["base", "expedicion_sol_1"]) or
 			(evento.physical_keycode == KEY_ESCAPE and is_instance_valid(interfaz_tablet))):
 		get_viewport().set_input_as_handled()
 		_alternar_tablet()
@@ -648,6 +648,8 @@ func _mostrar() -> void:
 	puesto = null
 	viaje = null
 	capa = Control.new()
+	capa.size = AREA.size
+	capa.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(capa)
 	if fase in ["final_cumplida", "final_incompleta"]:
 		_ver_final("--" + fase.replace("_", "-"))
@@ -774,9 +776,20 @@ func _mostrar() -> void:
 		_mostrar_accesos_sol()
 
 func _mostrar_accesos_sol() -> void:
-	boton_tablet = _boton("Q · Reservas", Rect2(965, 18, 158, 42), _alternar_tablet)
-	boton_tablet.focus_mode = Control.FOCUS_NONE
+	boton_tablet = LinkButton.new()
+	boton_tablet.position = Vector2(957, 26)
+	boton_tablet.text = "Ver reservas · Q"
+	boton_tablet.tooltip_text = "Consultar energía, oxígeno, agua y comida"
+	boton_tablet.underline = LinkButton.UNDERLINE_MODE_ALWAYS
+	boton_tablet.add_theme_font_size_override("font_size", 20)
+	boton_tablet.add_theme_color_override("font_color", Color("#ffdbac"))
+	boton_tablet.add_theme_color_override("font_hover_color", Color("#fff5df"))
+	boton_tablet.add_theme_color_override("font_focus_color", Color("#fff5df"))
+	boton_tablet.add_theme_color_override("font_outline_color", Color("#18110d"))
+	boton_tablet.add_theme_constant_override("outline_size", 7)
+	boton_tablet.pressed.connect(_alternar_tablet)
 	boton_tablet.z_index = 10
+	capa.add_child(boton_tablet)
 	if fase != "base" or sol_anunciado == campana.sol or campana.listo_para_regresar():
 		return
 	sol_anunciado = campana.sol

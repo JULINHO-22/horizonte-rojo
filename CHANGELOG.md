@@ -1,5 +1,10 @@
 # Cambios
 
+## 2026-11-15 | Entrada al Sol 2 y acceso a reservas
+
+- Se fija el tamaño de las escenas de campaña. El Sol 2 ya muestra el refugio y sus controles al cargar en navegador.
+- Nora empieza junto a la consola en el Sol 2 y puede abrir el plan con E o clic. El acceso subrayado «Ver reservas» se puede seleccionar con el ratón. Q es el atajo.
+
 ## 2026-11-15 | Carga más rápida en navegador
 
 - La portada usa una imagen más ligera y muestra el progreso de descarga y el arranque desde el primer momento.

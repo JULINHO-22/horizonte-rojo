@@ -304,9 +304,16 @@ func _probar_descanso_sol_uno(juego: Control) -> void:
 	assert(relevo.reservas.energia == 6 and relevo.reservas.agua == 1 and relevo.reservas.alimento == 7)
 	assert(relevo.polvo == "tormenta" and relevo.decisiones.is_empty())
 	assert(juego.nivel_activo.process_mode == Node.PROCESS_MODE_DISABLED)
+	assert(juego.nivel_activo.size == Vector2(1280, 720), "El Sol 2 necesita un lienzo visible para su recorte.")
 	juego._cerrar_anuncio_sol()
-	juego.nivel_activo.interfaz.confirmar.pressed.emit()
 	assert(juego.nivel_activo.juego_activo())
+	assert(juego.nivel_activo.interfaz.accion.visible, "Al despertar ya se puede consultar Control.")
+	var control := InputEventKey.new()
+	control.physical_keycode = KEY_E
+	control.pressed = true
+	root.push_input(control)
+	assert(is_instance_valid(juego.nivel_activo.panel_control))
+	juego.nivel_activo._cerrar_control()
 	var taller: Control = juego.nivel_activo.taller
 	taller.abrir("aire")
 	taller.tecla(KEY_E)
@@ -321,6 +328,9 @@ func _probar_descanso_sol_uno(juego: Control) -> void:
 	root.push_input(reservas)
 	assert(juego.nivel_activo.process_mode == Node.PROCESS_MODE_INHERIT)
 	assert(taller.visible and taller.reglas.giros == piezas, "La tablet conserva las piezas del taller.")
+	juego.boton_tablet.pressed.emit()
+	assert(is_instance_valid(juego.interfaz_tablet))
+	root.push_input(reservas)
 	taller.tecla(KEY_F)
 	assert(not taller.visible)
 	assert(juego.recursos.activar_oxigeno())

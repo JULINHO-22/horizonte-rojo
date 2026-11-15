@@ -211,9 +211,12 @@ func ruta_del_dia(estado: Dictionary, salida_pendiente: bool, descansando: bool)
 	var decidido: bool = salida_pendiente or not estado.decisiones.is_empty()
 	var protegido: bool = "dia_2_reparar" in estado.decisiones
 	var dentro: bool = "dia_2_resguardarse" in estado.decisiones
-	pasos.text = "%s PLAN     →     %s AIRE     →     %s EQUIPOS     →     %s DESCANSO" % [
-		"✓" if decidido else "1", "✓" if estado.aire_asegurado else "2",
-		"✓" if protegido else ("–" if dentro else "3"), "4" if not descansando else "→"]
+	pasos.text = "%s   /   %s   /   %s   /   %s" % [
+		"Plan elegido" if decidido else "Elegir plan",
+		"Aire seguro" if estado.aire_asegurado else "Preparar aire",
+		"Equipos protegidos" if protegido else ("Dentro del refugio" if dentro else "Proteger equipos"),
+		"Ir al dormitorio" if descansando else "Descansar",
+	]
 	if estado.reservas.alimento <= 1 and estado.aire_asegurado:
 		recordatorio.text = "Hace falta comida · visita Plantas antes de dormir."
 		recordatorio.add_theme_color_override("font_color", ORO)
