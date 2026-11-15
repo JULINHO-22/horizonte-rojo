@@ -25,7 +25,8 @@ const FICHAS := {
 }
 const Recursos := preload("res://scripts/mecanicas/recursos_mision.gd")
 var recursos := Recursos.new()
-var lecturas: Label
+const Indicadores := preload("res://scripts/mecanicas/indicadores_refugio.gd")
+var lecturas: Control
 var estaciones: VBoxContainer
 var estacion := ""
 var campana = Campana.new()
@@ -359,7 +360,9 @@ func _mostrar() -> void:
 			boton.text = "Volver a intentar"
 			boton.show()
 		"base":
-			lecturas = _etiqueta("", Rect2(842, 24, 396, 122), 20)
+			lecturas = Indicadores.new()
+			lecturas.position = Vector2(842, 24)
+			capa.add_child(lecturas)
 			_refrescar_recursos()
 			titulo.text = "Día %d de 5 · Refugio Umbra" % campana.sol
 			_actualizar_guia()
@@ -379,17 +382,11 @@ func _mostrar() -> void:
 
 func _refrescar_recursos() -> void:
 	var datos := recursos.estado()
-	var r: Dictionary = datos.reservas
-	lecturas.text = "Energía  %s  %d/12\nOxígeno  %s  %d/8\nAgua       %s  %d/6\nAlimento %s  %d/10" % [
-		_barra(r.energia, 12), r.energia, _barra(r.oxigeno, 8), r.oxigeno,
-		_barra(r.agua, 6), r.agua, _barra(r.alimento, 10), r.alimento]
+	lecturas.actualizar(datos)
 	if datos.sin_luz:
 		puesto.modulate = Color("#59697d")
 	else:
 		puesto.modulate = Color.WHITE
-
-func _barra(llenado: int, maximo: int) -> String:
-	return "■".repeat(llenado) + "□".repeat(maximo - llenado)
 
 func _abrir_estacion(id: String) -> void:
 	estacion = id

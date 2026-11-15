@@ -2,7 +2,7 @@
 
 ## 2026-11-14 | Recursos activos en el refugio
 
-- El recorrido principal muestra las cuatro reservas en vivo y usa el modelo compartido en Agua y Plantas, al dormir y al guardar.
+- El recorrido principal muestra rayos, burbujas, una gota y tomates en vivo y usa el modelo compartido en Agua y Plantas, al dormir y al guardar.
 - La reserva provisional de hielo permite probar el circuito hasta que se conecten las expediciones.
 
 ## 2026-11-14 | Encuadre, diálogos y arranque web
