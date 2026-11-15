@@ -1,5 +1,11 @@
 # Cambios
 
+## 2026-11-15 | Días 4 y 5 jugables para revisión
+
+- El Día 4 conecta Control, el barranco, el laboratorio, el taller y el núcleo protegido. La elección entre hielo, refuerzo o las dos tareas cambia el día siguiente.
+- El Día 5 reproduce el impacto de una tormenta solar, explica las pérdidas según el daño previo y el blindaje, y emite uno de tres resultados.
+- Se añade un banco jugable para probar los días y sus cinemáticas mientras se integran los primeros niveles.
+
 ## 2026-11-15 | Laboratorio conjunto y pantalla integrada
 
 - Agua y Oxígeno comparten sala y tienen puestos diferenciados frente a sus equipos.

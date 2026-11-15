@@ -20,6 +20,10 @@ El código anterior de actividades sigue disponible para el equipo en `scenes/si
 
 Para ver los dos finales alternativos abre `scenes/final_incompleta.tscn` o `scenes/final_cumplida.tscn` y pulsa **F6**. Consulta [Finales en la Tierra](docs/FINALES.md).
 
+## Probar los días 4 y 5
+
+En la rama `codex/dias-4-y-5`, abre `scenes/dias/tramo_final/prueba.tscn` y pulsa **F6**. Puedes empezar en el día 4 con diferentes antecedentes o probar directamente los tres desenlaces del día 5. Los dos niveles comparten las reservas. El banco funciona al margen del guardado de campaña. Consulta [Día 4](docs/dias/DIA-4.md) y [Día 5](docs/dias/DIA-5.md) para el contrato de integración.
+
 ## Probar la base de mecánicas
 
 Abre `scenes/pruebas/banco_recursos.tscn` y pulsa **F6**. Consulta [reglas y API](docs/MECANICAS-BASICAS.md) y [prompt por día](docs/PROMPT-NIVELES.md).
