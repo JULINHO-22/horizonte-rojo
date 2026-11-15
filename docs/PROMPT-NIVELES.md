@@ -9,8 +9,7 @@ Flujo de los cinco días y finales. Lee solo las reglas aplicables del otro PDF.
 Si los documentos se contradicen, conserva el contrato que usa el código y anota
 la diferencia en docs/dias/DIA-[NÚMERO].md para que la resuelva el equipo.
 
-Parte de la rama compartida codex/mecanicas-basicas, o del commit integrado
-que te indique el coordinador. Crea tu propia rama codex/dia-[NÚMERO].
+Parte de main actualizado, o del commit que te indique el coordinador. Crea tu propia rama codex/dia-[NÚMERO].
 Antes de editar, revisa git status. Conserva los cambios que ya estén en la carpeta.
 
 Crea tu escena y scripts dentro de scenes/dias/dia_[NÚMERO]/. Coloca las
@@ -34,6 +33,7 @@ módulo de recursos, exportación web y Firebase. Si necesitas ampliar alguno,
 anota la necesidad, el archivo y el comportamiento esperado. Propón el cambio
 aparte. Resuelve mientras tanto el trabajo local que no dependa de ese cambio.
 
+Diseña a tu gusto el recorrido, el escenario y las interacciones de tu día.
 Haz que la actividad se entienda viendo y usando el escenario. Indica costo
 y consecuencia antes de elegir. Usa lenguaje cotidiano, el estilo pixel art
 y diálogos breves. Si utilizas un dato de la NASA, documenta fuente oficial,
