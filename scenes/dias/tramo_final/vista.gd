@@ -9,12 +9,13 @@ var _titulo: Label
 var _objetivo: Label
 var _reservas: Label
 var _dialogo: Control
-var _accion: Button
 var _ventana: Panel
+var _marco: Panel
+var _salida_plano: Label
 
 func _ready() -> void:
 	mouse_filter = MOUSE_FILTER_IGNORE
-	placa(self, Rect2(22, 18, 1236, 88))
+	_marco = placa(self, Rect2(22, 18, 1236, 88))
 	_titulo = rotulo(self, "", Rect2(46, 30, 750, 31), 25, PAPEL)
 	_objetivo = rotulo(self, "", Rect2(46, 66, 1168, 30), 18, MENTA)
 	_reservas = rotulo(self, "", Rect2(700, 34, 534, 28), 18, PAPEL)
@@ -22,21 +23,20 @@ func _ready() -> void:
 	_dialogo = preload("res://scripts/dialogo_escena.gd").new()
 	_dialogo.position = Vector2(48, 141)
 	add_child(_dialogo)
-	_accion = boton(self, "", Rect2(432, 646, 416, 49), Callable())
-	_accion.focus_mode = FOCUS_NONE
-	_accion.hide()
+	_salida_plano = rotulo(self, "M · Volver al recorrido", Rect2(25, 677, 230, 31), 18, PAPEL)
+	_salida_plano.hide()
 
-func conectar_accion(accion: Callable) -> void:
-	_accion.pressed.connect(accion)
-
+func mostrar_plano(activo: bool) -> void:
+	_marco.visible = not activo
+	_titulo.visible = not activo
+	_objetivo.visible = not activo
+	_reservas.visible = not activo
+	_dialogo.visible = not activo
+	_salida_plano.visible = activo
 func actualizar(titulo: String, objetivo: String, r: Dictionary) -> void:
 	_titulo.text = titulo
 	_objetivo.text = objetivo
 	_reservas.text = "Energía %d    Agua %d    Oxígeno %d    Comida %d" % [r.energia, r.agua, r.oxigeno, r.alimento]
-
-func instruccion(texto: String) -> void:
-	_accion.text = "E · " + texto
-	_accion.visible = not texto.is_empty() and not abierta()
 
 func decir(quien: String, frase: String) -> void:
 	_dialogo.decir(quien, frase)
@@ -54,7 +54,6 @@ func abrir(titulo: String, frase: String, alto := 478.0) -> Panel:
 	_ventana = placa(velo, Rect2(188, (720 - alto) * 0.5, 904, alto))
 	rotulo(_ventana, titulo, Rect2(32, 25, 827, 45), 31, PAPEL)
 	rotulo(_ventana, frase, Rect2(32, 79, 827, 65), 20, MENTA)
-	_accion.hide()
 	return _ventana
 
 func cerrar() -> void:

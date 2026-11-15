@@ -8,6 +8,7 @@ const Recursos := preload("res://scripts/mecanicas/recursos_mision.gd")
 const Reglas := preload("res://scenes/dias/tramo_final/reglas.gd")
 const Mapa := preload("res://scenes/dias/tramo_final/mapa_tramo.gd")
 const Vista := preload("res://scenes/dias/tramo_final/vista.gd")
+const ArchivoNASA := preload("res://scenes/dias/tramo_final/archivo_nasa.gd")
 const RADIO := Vector2(402, 251)
 const ESCLUSA := Vector2(400, 382)
 const TALLER := Vector2(660, 245)
@@ -18,7 +19,8 @@ const RETORNO_HIELO := Vector2(278, PuestoUmbra.SUELO)
 const AIRE := PuestoUmbra.ESTACION_OXIGENO
 const DORMITORIO := Vector2(685, 89)
 const HUERTO := Vector2(407, 96)
-const OBSERVACION_NASA := "https://science.nasa.gov/resource/curiosity-sees-streaks-and-specks-during-2024-solar-storm/"
+const SOPORTES := {"montaje_0": Vector2(256, PuestoUmbra.SUELO),
+	"montaje_1": Vector2(340, PuestoUmbra.SUELO), "montaje_2": Vector2(424, PuestoUmbra.SUELO)}
 
 var recursos: Recursos
 var historial: Dictionary
@@ -44,6 +46,7 @@ func _ready() -> void:
 	var marco := Control.new()
 	marco.size = Vector2(1280, 720)
 	marco.clip_contents = true
+	marco.mouse_filter = MOUSE_FILTER_IGNORE
 	add_child(marco)
 	mapa = Mapa.new()
 	marco.add_child(mapa)
@@ -51,7 +54,6 @@ func _ready() -> void:
 	mapa.lecturas = _lecturas
 	vista = Vista.new()
 	marco.add_sibling(vista)
-	vista.conectar_accion(_interactuar)
 	recursos.cambiado.connect(_actualizar)
 	if recursos.estado().sol == 4:
 		plan = historial.get("plan_dia4", "")
@@ -77,30 +79,83 @@ func _process(delta: float) -> void:
 		float(Input.is_physical_key_pressed(KEY_D) or Input.is_action_pressed("ui_right")) - float(Input.is_physical_key_pressed(KEY_A) or Input.is_action_pressed("ui_left")),
 		float(Input.is_physical_key_pressed(KEY_S) or Input.is_action_pressed("ui_down")) - float(Input.is_physical_key_pressed(KEY_W) or Input.is_action_pressed("ui_up"))
 	)
-	if not _ocupado and not vista.abierta():
+	if not _ocupado and not vista.abierta() and mapa.arrastre.is_empty():
 		mapa.avanzar(direccion.normalized(), minf(0.05, delta))
 		mapa.actualizar_camara(delta)
-	var accion := _cercana()
-	vista.instruccion(_texto_accion(accion) if not _ocupado and not mapa.plano else "")
+	mapa.permite_tocar = not _ocupado and not vista.abierta()
+	mapa.foco = _apuntado(mapa.cursor) if mapa.permite_tocar else ""
+	for id: String in _guias:
+		mapa.nombres[id] = _texto_accion(id)
 	mapa.tiempo += delta
 	mapa.queue_redraw()
 
 func _unhandled_key_input(evento: InputEvent) -> void:
 	if not evento is InputEventKey or not evento.pressed or evento.echo or _fin:
 		return
-	if evento.physical_keycode == KEY_E:
+	if evento.physical_keycode == KEY_SPACE:
 		_interactuar()
-	elif evento.physical_keycode == KEY_M and mapa.interior and not vista.abierta() and not _ocupado:
+	elif evento.physical_keycode == KEY_M and mapa.interior and not vista.abierta() and not _ocupado and mapa.arrastre.is_empty():
 		mapa.plano = not mapa.plano
+		vista.mostrar_plano(mapa.plano)
 	else:
 		return
 	get_viewport().set_input_as_handled()
+
+func _input(evento: InputEvent) -> void:
+	if not evento is InputEventMouse or mapa == null or _fin or _ocupado or vista.abierta() or mapa.plano:
+		return
+	mapa.cursor = evento.position
+	if not evento is InputEventMouseButton or evento.button_index != MOUSE_BUTTON_LEFT:
+		return
+	if evento.pressed:
+		_puntero_inicio(evento.position)
+	else:
+		_puntero_fin(evento.position)
+
+func _apuntado(posicion: Vector2) -> String:
+	var alcance := 18.0 if mapa.interior else 27.0
+	var mejor := 43.0
+	var id_cerca := ""
+	for id: String in _guias:
+		if mapa.punto.distance_to(_guias[id]) >= alcance:
+			continue
+		var distancia: float = mapa.ancla_interaccion(id, _guias[id]).distance_to(posicion)
+		if distancia < mejor:
+			mejor = distancia
+			id_cerca = id
+	return id_cerca
+
+func _puntero_inicio(posicion: Vector2) -> void:
+	var id := _apuntado(posicion)
+	if etapa in ["purificar", "blindaje"] and not mapa.carga.is_empty():
+		if mapa.ancla_carga().distance_to(posicion) < 55.0:
+			mapa.arrastre = "objeto"
+		elif not id.is_empty():
+			vista.decir("Pluto", "Toma lo que llevas en la mano y arrástralo hasta el equipo.")
+	elif id == "sello":
+		mapa.arrastre = "sello"
+	elif not id.is_empty():
+		_interactuar(id)
+
+func _puntero_fin(posicion: Vector2) -> void:
+	var gesto := mapa.arrastre
+	mapa.arrastre = ""
+	if gesto == "objeto":
+		var id := _apuntado(posicion)
+		if not id.is_empty():
+			_interactuar(id)
+	elif gesto == "sello":
+		var inicio := mapa.ancla_interaccion("sello", PUERTA_PROTEGIDA)
+		if posicion.distance_to(inicio + Vector2(100, 0)) <= 38:
+			_interactuar("sello")
 
 func _paso(id: String, objetivo: String, guias: Dictionary) -> void:
 	etapa = id
 	_objetivo = objetivo
 	_guias = guias
 	mapa.blancos = guias
+	mapa.nombres.clear()
+	mapa.arrastre = ""
 	_actualizar()
 
 func _actualizar() -> void:
@@ -109,7 +164,7 @@ func _actualizar() -> void:
 	vista.actualizar(titulo, _objetivo, estado.reservas)
 
 func _cercana() -> String:
-	var alcance := 16.0 if mapa.interior else 25.0
+	var alcance := 18.0 if mapa.interior else 27.0
 	var seleccion := ""
 	for id: String in _guias:
 		var distancia := mapa.punto.distance_to(_guias[id])
@@ -123,6 +178,8 @@ func _texto_accion(id: String) -> String:
 		if _lecturas.has(id):
 			return "Extraer la muestra" if id == "veta" and _lecturas.size() == 2 else "Revisar la lectura"
 		return "Medir bajo el suelo" if not id.is_empty() else ""
+	if id.begins_with("montaje_"):
+		return "Soporte del blindaje"
 	return {
 		"control": "Abrir Control", "afuera": "Salir al barranco", "retorno": "Volver a la base",
 		"filtro": "Limpiar la muestra", "taller": "Recoger protecciones",
@@ -132,10 +189,10 @@ func _texto_accion(id: String) -> String:
 		"sello": "Cerrar la compuerta interior", "emisora": "Revisar la señal de Tierra",
 	}.get(id, "")
 
-func _interactuar() -> void:
+func _interactuar(id := "") -> void:
 	if _ocupado or _fin or vista.abierta() or mapa.plano:
 		return
-	var accion := _cercana()
+	var accion := _cercana() if id.is_empty() else id
 	if accion.is_empty():
 		return
 	match etapa:
@@ -148,12 +205,12 @@ func _interactuar() -> void:
 			mapa.entrar("hielo", Vector2(300, PuestoUmbra.SUELO))
 			_paso("sondeos", "Compara los dos puntos marcados antes de taladrar.", {
 				"escarcha": Vector2(555, PuestoUmbra.SUELO), "veta": PuestoUmbra.MUESTRA})
-			vista.decir("Percy", "Estos puntos se parecen por fuera. Mira qué hay debajo de cada uno.")
+			vista.decir("Percy", "Los mapas desde el espacio orientan la búsqueda. Ahora compara aquí qué hay debajo del polvo.")
 		"sondeos":
 			_sondear(accion)
 		"vuelta_hielo":
 			mapa.entrar("base", ESCLUSA)
-			_paso("purificar", "Lleva la caja al filtro azul. Cruza Control hacia Energía y sigue al fondo.", {"filtro": PuestoUmbra.EQUIPO_AGUA[0]})
+			_paso("purificar", "Cruza Energía hasta el filtro azul. Arrastra tu caja al filtro cuando estés cerca.", {"filtro": PuestoUmbra.EQUIPO_AGUA[0]})
 		"purificar":
 			_purificar()
 		"recoger_blindaje":
@@ -162,11 +219,10 @@ func _interactuar() -> void:
 			vista.decir("Teo", "Cubriremos el muro junto a la compuerta. La rejilla tiene que quedar libre para que entre aire.")
 		"llevar_blindaje":
 			mapa.entrar("refugio", Vector2(75, PuestoUmbra.SUELO))
-			_paso("blindaje", "Coloca las protecciones sin tapar la ventilación.", {
-				"montaje": PUERTA_PROTEGIDA, "ventilacion": AIRE_PROTEGIDO})
+			_mostrar_soportes()
 		"blindaje":
-			if accion == "montaje":
-				_instalar_proteccion()
+			if SOPORTES.has(accion):
+				_instalar_proteccion(accion)
 			else:
 				vista.decir("Teo", "Aquí pasa el aire. Busca la marca junto a la compuerta para fijar los paneles.")
 		"probar_aire":
@@ -177,7 +233,7 @@ func _interactuar() -> void:
 			_avisar_tierra()
 		"ir_refugio":
 			mapa.entrar("refugio", Vector2(75, PuestoUmbra.SUELO))
-			_paso("sellar", "Reúne a la tripulación y cierra la compuerta interior.", {"sello": PUERTA_PROTEGIDA})
+			_paso("sellar", "Reúne a la tripulación y desliza el cierre de la compuerta.", {"sello": PUERTA_PROTEGIDA})
 			vista.decir("Teo", "Estamos todos aquí. Cierra para mantener el aire en esta parte de la base.")
 		"informar":
 			_informe_final()
@@ -189,7 +245,9 @@ func _preparar_aviso() -> void:
 		"carga": PuestoUmbra.TERMINALES.energia, "plantas": HUERTO})
 
 func _elegir_plan() -> void:
-	var panel := vista.abrir("Mañana nos quedamos dentro", "Una tormenta solar está en camino. Elige cómo usar las reservas de hoy.")
+	var panel := vista.abrir("Mañana nos quedamos dentro",
+		"Una tormenta solar está en camino. Elige cómo usar las reservas de hoy.")
+	Vista.boton(panel, "Mapa de hielo · NASA", Rect2(650, 27, 220, 40), _abrir_fuente.bind(ArchivoNASA.SWIM))
 	var fila := 148
 	var descripciones := {
 		"hielo": "5 de energía y 1 de comida. Hasta 3 de agua.",
@@ -257,13 +315,23 @@ func _purificar() -> void:
 	else:
 		_completar_preparacion()
 
-func _instalar_proteccion() -> void:
-	_ocupado = true
+func _mostrar_soportes() -> void:
+	var puntos := {"ventilacion": AIRE_PROTEGIDO}
+	for soporte: String in SOPORTES:
+		if not mapa.placas.has(soporte):
+			puntos[soporte] = SOPORTES[soporte]
+	_paso("blindaje", "Arrastra el blindaje a tres soportes. Deja libre la rejilla.", puntos)
+
+func _instalar_proteccion(id: String) -> void:
+	if mapa.placas.has(id):
+		return
+	mapa.placas.append(id)
+	mapa.paneles = mapa.placas.size()
+	if mapa.paneles < SOPORTES.size():
+		_mostrar_soportes()
+		vista.decir("Teo", "Panel fijado. Quedan %d soportes libres." % (SOPORTES.size() - mapa.paneles))
+		return
 	mapa.carga = ""
-	for i in range(1, 4):
-		await get_tree().create_timer(0.28).timeout
-		mapa.paneles = i
-	_ocupado = false
 	_paso("probar_aire", "Comprueba que la rejilla de ventilación quedó libre.", {"ventilacion": AIRE_PROTEGIDO})
 	vista.decir("Teo", "Protecciones fijadas. Probemos que sigue llegando aire antes de cerrar.")
 
@@ -276,6 +344,7 @@ func _completar_preparacion() -> void:
 	if not Reglas.completar_plan(recursos, plan):
 		vista.decir("Pluto", "Las reservas cambiaron y ya no cubren el plan. Vuelve a Control.")
 		mapa.paneles = 0
+		mapa.placas.clear()
 		_lecturas.clear()
 		_preparar_aviso()
 		return
@@ -380,10 +449,10 @@ func _tormenta() -> void:
 	vista.decir("Iris", "Los sensores detectan partículas del Sol. Quédense aquí hasta que baje la alerta.")
 	_ocupado = true
 	var pulso := create_tween().set_trans(Tween.TRANS_SINE)
-	pulso.tween_property(mapa, "compuerta", 1.0, 0.45)
-	pulso.tween_property(mapa, "impacto", 0.94, 0.65)
-	pulso.tween_interval(1.15)
-	pulso.tween_property(mapa, "impacto", 0.15, 0.8)
+	pulso.tween_property(mapa, "compuerta", 1.0, 0.36)
+	for i in ArchivoNASA.LECTURAS.size():
+		pulso.tween_callback(_mostrar_lectura.bind(i))
+		pulso.tween_property(mapa, "impacto", ArchivoNASA.nivel(i) * 0.88, 0.70)
 	await pulso.finished
 	_ocupado = false
 	var registro := Reglas.impacto(recursos, historial)
@@ -393,6 +462,11 @@ func _tormenta() -> void:
 	historial.impacto_solar = registro
 	impacto_registrado.emit(historial.duplicate(true))
 	_restaurar_impacto(registro)
+
+func _mostrar_lectura(indice: int) -> void:
+	var lectura: Dictionary = ArchivoNASA.LECTURAS[indice]
+	mapa.fase_radiacion = lectura.fase
+	mapa.nivel_radiacion = ArchivoNASA.nivel(indice)
 
 func _restaurar_impacto(registro: Dictionary) -> void:
 	mapa.paneles = 3 if historial.get("refugio_reforzado", false) else 0
@@ -412,7 +486,7 @@ func _informe_final() -> void:
 	var registro: Dictionary = historial.impacto_solar
 	var logrado: bool = registro.final == "mision_cumplida"
 	var orden := "Tierra recibió el informe. Los equipos aguantaron y pueden enviar los resultados." if logrado else "Tierra confirmó que hay reservas para la salida. La investigación queda interrumpida."
-	var panel := vista.abrir("Llegó la respuesta de Tierra", orden, 434)
+	var panel := vista.abrir("Llegó la respuesta de Tierra", orden, 470)
 	var nombres := {"energia": "Energía", "agua": "Agua", "oxigeno": "Oxígeno", "alimento": "Comida"}
 	var x := 32
 	for campo: String in nombres:
@@ -425,13 +499,16 @@ func _informe_final() -> void:
 		explicacion += " El daño previo costó 1 de energía y 1 de oxígeno más."
 	Vista.rotulo(panel, explicacion, Rect2(32, 275, 830, 49), 18, Vista.AMBAR)
 	var llamada := "Enviar resultados y regresar" if logrado else "Confirmar evacuación"
-	Vista.boton(panel, llamada, Rect2(32, 342, 335, 51), _emitir_final.bind(registro.final))
-	Vista.boton(panel, "Ver observación de NASA", Rect2(615, 342, 257, 51), _abrir_observacion)
+	Vista.rotulo(panel, "Alerta DONKI y lecturas de Curiosity de 2017. El ejercicio resume la espera.",
+		Rect2(32, 332, 836, 31), 16, Vista.MENTA)
+	Vista.boton(panel, llamada, Rect2(32, 390, 335, 51), _emitir_final.bind(registro.final))
+	var alerta := Vista.boton(panel, "Alerta DONKI", Rect2(474, 390, 181, 51), _abrir_fuente.bind(ArchivoNASA.DONKI))
+	alerta.tooltip_text = ArchivoNASA.DONKI_ID
+	Vista.boton(panel, "Lecturas de Curiosity", Rect2(668, 390, 203, 51), _abrir_fuente.bind(ArchivoNASA.GUIA_RAD))
 
-func _abrir_observacion() -> void:
-	OS.shell_open(OBSERVACION_NASA)
+func _abrir_fuente(url: String) -> void:
+	OS.shell_open(url)
 
 func _emitir_final(resultado: String) -> void:
 	_fin = true
-	vista.instruccion("")
 	terminado.emit(resultado, historial.duplicate(true))

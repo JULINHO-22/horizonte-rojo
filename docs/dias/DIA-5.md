@@ -1,6 +1,6 @@
 # Día 5 | Bajo protección
 
-Consulta Control, envía el informe a Tierra y ve al núcleo protegido por la esclusa. Cuando cierres la compuerta, llega el pico de la tormenta solar. El día 2 fue una tormenta de polvo. En el día 5 nos protegemos de las partículas del Sol. El núcleo enseña en qué zona se reúne la tripulación y muestra el estado del blindaje.
+Consulta Control, envía el informe a Tierra y ve al núcleo protegido por la esclusa sur de Control. El plano lo marca como anexo interior. Al deslizar el cierre de la compuerta, llega el pico de la tormenta solar. El día 2 fue una tormenta de polvo. En el día 5 nos protegemos de las partículas del Sol. El núcleo enseña en qué zona se reúne la tripulación y muestra el estado del blindaje.
 
 | Antecedente | Pérdidas del impacto |
 | --- | --- |
@@ -30,4 +30,17 @@ Prompt de ImageGen
 
 > Production playable background for Horizonte Rojo, detailed retro 2D pixel-art Mars game. Entire frame represents the underground radiation-safe core of a believable modular space outpost. Fixed orthographic side-on cutaway platformer viewpoint, wide landscape 16:9. Hefty cream ceramic and orange-trim metal ribs, matte charcoal machinery, a few turquoise diagnostics, warm amber emergency lights. The ground must be a single level, wide, clean empty horizontal gray floor walkway with the contact line exactly at 76% image height for character sprites to walk. All props behind that line. Across the back wall: on the left x=16% a communications console with three cyan screens, around x=50% a large interior pressure bulkhead framed by three unmistakable built-in silver and amber shielding panels and sealed wall cabinets, on the right x=78% bench seats and racks of silver emergency air tanks, no clinic or beds. Recognizable silhouettes, controlled contrast around the floor, visible crisp hand-placed pixel clusters, no blur. Edge-to-edge full scene, no sky, no open exit to Mars, no sprites, no people, no letters or signs, no UI. Floor at the bottom spans full width.
 
-Curiosity detectó un aumento de radiación en la superficie durante la tormenta solar de mayo de 2024. El caso documenta el fenómeno que inspira la alerta. Los costos, daños, tiempos y reservas de esta misión son reglas de juego y no lecturas de radiación. [Observación de Curiosity, NASA Science](https://science.nasa.gov/resource/curiosity-sees-streaks-and-specks-during-2024-solar-storm/)
+La alerta usa el episodio de septiembre de 2017 documentado en DONKI con el identificador `2017-09-10T16:25:00-SEP-001`. El detector GOES-13 reportó el evento cerca de la Tierra. Las lecturas de la animación provienen del instrumento `MSL-RAD-Surface` de Curiosity en Marte. El juego usa las medianas de cuatro ventanas de una hora UTC.
+
+| Hora UTC | Dosis absorbida en µGy/h | Fase del juego |
+| --- | ---: | --- |
+| 11 sep 00:00 | 8.030 | Antes de la subida |
+| 11 sep 06:00 | 12.234 | Subida |
+| 11 sep 14:00 | 21.816 | Pico |
+| 12 sep 12:00 | 11.145 | Bajada |
+
+El catálogo y las lecturas se consultaron por API pública. La muestra archivada está integrada en `archivo_nasa.gd`. El indicador normaliza los puntos respecto al primero y al pico, y comprime el tiempo. Las lecturas corresponden al exterior de Marte. Las pérdidas de reservas son reglas de diseño, y el evento no simula una dosis personal real.
+
+- [Registro DONKI](https://ccmc.gsfc.nasa.gov/DONKI/view/SEP/13101/-1)
+- [CSV de Curiosity en NASA OSDR/RadLab](https://visualization.osdr.nasa.gov/radlab/api/?spacecraft=Curiosity&timestamp%3E=2017-09-10&timestamp%3C2017-09-13&timestamp&absorbed_dose_rate)
+- [NASA sobre áreas protegidas contra la radiación](https://www.nasa.gov/science-research/heliophysics/real-martians-how-to-protect-astronauts-from-space-radiation-on-mars/)

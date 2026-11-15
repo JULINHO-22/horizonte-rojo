@@ -1,5 +1,11 @@
 # Cambios
 
+## 2026-11-15 | Interacción directa y datos solares
+
+- Se actúa sobre los equipos del escenario. La caja y el blindaje se arrastran hasta sus destinos y la compuerta usa un cierre deslizante. Espacio ofrece un control alternativo.
+- El plano identifica el acceso al núcleo protegido desde la esclusa sur.
+- El aviso incluye el evento de DONKI. El indicador del núcleo reproduce cuatro puntos archivados de Curiosity en NASA OSDR/RadLab. El mapa SWIM se puede abrir desde Control en el día 4.
+
 ## 2026-11-15 | Días 4 y 5 jugables para revisión
 
 - El Día 4 conecta Control, el barranco, el laboratorio, el taller y el núcleo protegido. La elección entre hielo, refuerzo o las dos tareas cambia el día siguiente.

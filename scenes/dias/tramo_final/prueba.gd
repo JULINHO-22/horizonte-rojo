@@ -40,7 +40,7 @@ func _menu() -> void:
 		var y := 143 + i * 82
 		Vista.boton(panel, perfil.nombre, Rect2(40, y, 355, 54), iniciar.bind(i))
 		Vista.rotulo(panel, perfil.descripcion, Rect2(421, y + 4, 591, 64), 19, Vista.PAPEL)
-	Vista.rotulo(panel, "WASD o flechas para caminar   ·   E o el botón visible para interactuar   ·   M para el plano interior",
+	Vista.rotulo(panel, "WASD o flechas para caminar   ·   Toca o arrastra sobre el escenario   ·   Espacio como alternativa   ·   M para el plano",
 		Rect2(40, 557, 965, 35), 17, Vista.MENTA)
 
 func iniciar(indice: int) -> void:

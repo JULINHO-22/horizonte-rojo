@@ -25,6 +25,24 @@ func _camino(nivel: Tramo, ruta: Array) -> void:
 		nivel.mapa.punto = destino
 	nivel.mapa.actualizar_camara(2.0)
 
+func _pulsar(punto: Vector2, presionado: bool) -> void:
+	var evento := InputEventMouseButton.new()
+	evento.position = punto
+	evento.button_index = MOUSE_BUTTON_LEFT
+	evento.pressed = presionado
+	root.push_input(evento, true)
+
+func _clic(nivel: Tramo, id: String, mundo: Vector2) -> void:
+	var sitio := nivel.mapa.ancla_interaccion(id, mundo)
+	_pulsar(sitio, true)
+	_pulsar(sitio, false)
+
+func _arrastrar(nivel: Tramo, id: String, mundo: Vector2) -> void:
+	var destino := nivel.mapa.ancla_interaccion(id, mundo)
+	_pulsar(nivel.mapa.ancla_carga(), true)
+	assert(nivel.mapa.arrastre == "objeto")
+	_pulsar(destino, false)
+
 func _probar() -> void:
 	_probar_planes_y_proteccion()
 	var banco := Banco.instantiate()
@@ -39,7 +57,14 @@ func _probar() -> void:
 	nivel = banco._pantalla
 	nivel.set_process(false)
 	_camino(nivel, [Tramo.RADIO])
-	nivel._interactuar()
+	nivel.mapa.plano = true
+	nivel.vista.mostrar_plano(true)
+	nivel.mapa.actualizar_camara(2.0)
+	await _captura("dias-45-plano")
+	nivel.mapa.plano = false
+	nivel.vista.mostrar_plano(false)
+	nivel.mapa.actualizar_camara(2.0)
+	_clic(nivel, "control", Tramo.RADIO)
 	assert(nivel.vista.abierta())
 	await _captura("dia4-control")
 	nivel._elegir("ambas")
@@ -60,7 +85,10 @@ func _probar() -> void:
 	nivel._interactuar()
 	_camino(nivel, [Vector2(402, 360), Vector2(402, 245), Vector2(191, 245),
 		Vector2(191, 42), Vector2(25, 42), PuestoUmbra.EQUIPO_AGUA[0]])
-	nivel._interactuar()
+	_pulsar(nivel.mapa.ancla_carga(), true)
+	_pulsar(Vector2(34, 645), false)
+	assert(nivel.etapa == "purificar" and nivel.mapa.carga == "hielo")
+	_arrastrar(nivel, "filtro", PuestoUmbra.EQUIPO_AGUA[0])
 	await create_timer(1.25).timeout
 	assert(nivel.etapa == "recoger_blindaje")
 	_camino(nivel, [Vector2(25, 42), Vector2(191, 42), Vector2(191, 245), Tramo.TALLER])
@@ -71,9 +99,12 @@ func _probar() -> void:
 	_camino(nivel, [Tramo.AIRE_PROTEGIDO])
 	nivel._interactuar()
 	assert(nivel.mapa.paneles == 0 and nivel.etapa == "blindaje")
-	_camino(nivel, [Tramo.PUERTA_PROTEGIDA])
-	nivel._interactuar()
-	await create_timer(1.1).timeout
+	_arrastrar(nivel, "ventilacion", Tramo.AIRE_PROTEGIDO)
+	assert(nivel.mapa.paneles == 0)
+	for id: String in Tramo.SOPORTES:
+		var soporte: Vector2 = Tramo.SOPORTES[id]
+		_camino(nivel, [soporte])
+		_arrastrar(nivel, id, soporte)
 	assert(nivel.mapa.paneles == 3 and nivel.etapa == "probar_aire")
 	await _captura("dia4-blindaje")
 	_camino(nivel, [Tramo.AIRE_PROTEGIDO])
@@ -105,12 +136,26 @@ func _probar() -> void:
 		_camino(nivel, [Vector2(402, 318), Vector2(402, 360), Tramo.ESCLUSA])
 		nivel._interactuar()
 		_camino(nivel, [Tramo.PUERTA_PROTEGIDA])
-		nivel._interactuar()
-		await create_timer(3.22).timeout
-		var registro: Dictionary = nivel.historial.impacto_solar
+		var historia_impacto := {}
+		nivel.impacto_registrado.connect(func(historia: Dictionary): historia_impacto.merge(historia))
+		var palanca := nivel.mapa.ancla_interaccion("sello", Tramo.PUERTA_PROTEGIDA)
+		if i == 0:
+			await _captura("dia5-cierre")
+		_pulsar(palanca, true)
+		_pulsar(palanca + Vector2(20, 0), false)
+		assert(nivel.etapa == "sellar")
+		_pulsar(palanca, true)
+		_pulsar(palanca + Vector2(100, 0), false)
+		assert(nivel.etapa == "impacto")
+		await create_timer(1.95).timeout
+		assert(nivel.mapa.fase_radiacion == "Pico de radiación")
+		if i == 0:
+			await _captura("dia5-radlab")
+		await create_timer(1.8).timeout
+		var registro: Dictionary = historia_impacto.impacto_solar
 		assert(registro.final == resultados[i])
-		assert(Reglas.impacto(nivel.recursos, nivel.historial) == registro)
-		assert(nivel.recursos.estado().reservas == registro.despues)
+		assert(Reglas.impacto(banco._recursos, historia_impacto) == registro)
+		assert(banco._recursos.estado().reservas == registro.despues)
 		if i == 2:
 			await create_timer(0.70).timeout
 			assert(banco._pantalla is ColorRect)
