@@ -1,5 +1,11 @@
 # Cambios
 
+## 2026-11-14 | Día 2 jugable en escena independiente
+
+- Durante la tormenta de polvo, Nora puede salir a proteger los paneles y el laboratorio o resguardarse y dejar daños para el Día 3. El oxígeno puede asegurarse antes o después de decidir.
+- La decisión se toma en la nueva supercomputadora de Control. Las acciones aparecen junto a sus puntos de interacción y Pluto usa el diálogo de escena compartido.
+- El nivel usa el contrato común de recursos, se puede abrir con F6 y emite el resultado para la futura integración. La prueba gráfica comprueba las dos rutas, incluyendo la salida a la esclusa. [Recorrido, balance y pruebas](docs/dias/DIA-2.md).
+
 ## 2026-11-14 | Encuadre, diálogos y arranque web
 
 - Se aleja la cámara interior alrededor de un 10 % respecto de la revisión anterior y se aumenta la altura de los personajes humanos dentro de la base.
