@@ -45,3 +45,11 @@ Esta secuencia representa meses de viaje de forma ilustrativa; no es una simulac
 ## Regreso a la Tierra
 
 Solo viaja el módulo de descenso. La etapa de transferencia y su estela se ocultan durante todo el regreso.
+
+## Acabado de la nave
+
+ImageGen integrado revisó la etapa de transferencia, la cápsula orbital, la cápsula con patas desplegadas y la cápsula que se ve en el hangar y en el noticiero. Las placas usan azul pizarra, las bandas violeta apagado y las luces verde petróleo. Se conservan los aros de acople, la escalera y las patas. La portada usa pizarra, verde suave y lavanda sobre el panorama de Marte.
+
+Prompt de paleta
+
+> Use a dark desaturated slate-blue hull (midtones #526575, highlights #82929e), charcoal shadow structure, muted dusty violet stripe (#736783), restrained sea-glass teal lenses and fittings (#538b87). Replace all orange/yellow hardware accents with dark petrol teal and all cream/white plating with painted slate-blue titanium. Preserve the readable contrast and each pixel-art edge. No orange paint or white hull. Preserve exact object bounding box, camera, silhouette, crop, transparent canvas, each connector, leg, and proportion.

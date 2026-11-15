@@ -9,7 +9,7 @@ const BORDE := Color("#486168")
 const PISTA := Color("#294149")
 const TITULO := Color("#f8eddb")
 const TEXTO := Color("#b9ccd1")
-const AMBAR := Color("#ffd17b")
+const AMBAR := Color("#d6c48e")
 const MENTA := Color("#8de3d7")
 const AZUL := Color("#81c4f2")
 const CRISTAL := Color("#0d161e")
@@ -18,8 +18,8 @@ const ALTO := 486.0
 const SOLAR := {
 	"bajo": ["Carga solar alta", "Está llegando bastante luz a los paneles.", MENTA],
 	"medio": ["Carga solar media", "El polvo deja pasar parte de la luz.", AMBAR],
-	"alto": ["Carga solar baja", "El polvo bloquea buena parte de la luz.", Color("#ffab86")],
-	"tormenta": ["Carga solar detenida", "La tormenta impide recargar la batería.", Color("#ffab86")],
+	"alto": ["Carga solar baja", "El polvo bloquea buena parte de la luz.", Color("#e2a3a8")],
+	"tormenta": ["Carga solar detenida", "La tormenta impide recargar la batería.", Color("#e2a3a8")],
 }
 
 var _estado: Dictionary

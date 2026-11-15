@@ -1,5 +1,10 @@
 # Cambios
 
+## 2026-11-15 | Paleta de la nave y la interfaz
+
+- La etapa de transferencia y la cápsula usan azul pizarra, verde petróleo y violeta apagado desde el acople hasta el hangar terrestre.
+- La portada y el selector de soles usan acentos fríos para equilibrar el paisaje de Marte.
+
 ## 2026-11-15 | Campaña de cinco soles
 
 - Los soles 1–5 usan la misma partida. El daño del Sol 2 afecta los soles 3 y 5, y el blindaje del Sol 4 modifica el desenlace.

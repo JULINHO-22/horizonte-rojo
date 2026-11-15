@@ -482,7 +482,7 @@ func _cerrar_sol(completado: bool) -> void:
 func _abrir_menu_soles() -> void:
 	capa.process_mode = Node.PROCESS_MODE_DISABLED
 	menu_soles = ColorRect.new()
-	menu_soles.color = Color("#231921")
+	menu_soles.color = Color("#1d2a36")
 	menu_soles.size = AREA.size
 	add_child(menu_soles)
 	var anterior := capa

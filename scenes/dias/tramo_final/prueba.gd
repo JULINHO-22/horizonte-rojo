@@ -17,9 +17,9 @@ const PERFILES := [
 	{"nombre": "Poco oxígeno", "descripcion": "El tanque está a la mitad y falta\nreforzar el refugio. Observa qué\npasa con el aire.",
 		"sol": 5, "reservas": {"energia": 9, "agua": 2, "oxigeno": 4, "alimento": 3}, "danio": true, "refuerzo": false},
 ]
-const MARFIL := Color("#fff1dd")
-const ARENA := Color("#f5bb8d")
-const CIRUELA := Color("#302027")
+const TEXTO := Color("#e4ecef")
+const ACENTO := Color("#9cbfba")
+const PIZARRA := Color("#243440")
 
 var _pantalla: Control
 var _recursos: Recursos
@@ -59,15 +59,15 @@ func _elegir_dia(dia: int) -> void:
 	fondo.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	_selector.add_child(fondo)
 	var sombra := ColorRect.new()
-	sombra.color = Color(0.12, 0.06, 0.10, 0.62)
+	sombra.color = Color(0.07, 0.12, 0.17, 0.66)
 	sombra.size = _selector.size
 	_selector.add_child(sombra)
-	Vista.rotulo(_selector, "Horizonte Rojo", Rect2(64, 42, 730, 78), 55, MARFIL)
-	Vista.rotulo(_selector, "Elige dónde empezar la prueba", Rect2(68, 128, 850, 42), 26, MARFIL)
+	Vista.rotulo(_selector, "Horizonte Rojo", Rect2(64, 42, 730, 78), 55, TEXTO)
+	Vista.rotulo(_selector, "Elige dónde empezar la prueba", Rect2(68, 128, 850, 42), 26, TEXTO)
 	_boton_brief(_selector, "Sol 4 · Preparar la base", Rect2(68, 198, 310, 53), _elegir_dia.bind(4), dia == 4)
 	_boton_brief(_selector, "Sol 5 · Afrontar la tormenta", Rect2(392, 198, 310, 53), _elegir_dia.bind(5), dia == 5)
 	var resumen := "Trae hielo, instala el blindaje y asegura el aire antes de dormir." if dia == 4 else "Reúne a la tripulación, cierra la compuerta y consulta el resultado."
-	Vista.rotulo(_selector, resumen, Rect2(70, 278, 1140, 52), 24, MARFIL)
+	Vista.rotulo(_selector, resumen, Rect2(70, 278, 1140, 52), 24, TEXTO)
 	var columna := 0
 	for i in range(PERFILES.size()):
 		var perfil: Dictionary = PERFILES[i]
@@ -75,24 +75,24 @@ func _elegir_dia(dia: int) -> void:
 			continue
 		var x := 68 + columna * 386
 		var tarjeta := Vista.placa(_selector, Rect2(x, 348, 372, 250))
-		tarjeta.add_theme_stylebox_override("panel", Vista._estilo(CIRUELA, Color("#a57467")))
-		Vista.rotulo(tarjeta, perfil.nombre, Rect2(22, 20, 328, 39), 26, ARENA)
-		Vista.rotulo(tarjeta, perfil.descripcion, Rect2(22, 75, 328, 92), 20, MARFIL)
+		tarjeta.add_theme_stylebox_override("panel", Vista._estilo(PIZARRA, Color("#607986")))
+		Vista.rotulo(tarjeta, perfil.nombre, Rect2(22, 20, 328, 39), 26, ACENTO)
+		Vista.rotulo(tarjeta, perfil.descripcion, Rect2(22, 75, 328, 92), 20, TEXTO)
 		_boton_brief(tarjeta, "Jugar este escenario", Rect2(22, 181, 328, 46), iniciar.bind(i))
 		columna += 1
-	Vista.rotulo(_selector, "Ctrl + Shift + M · Abrir o cerrar este menú", Rect2(68, 652, 630, 36), 19, MARFIL)
+	Vista.rotulo(_selector, "Ctrl + Shift + M · Abrir o cerrar este menú", Rect2(68, 652, 630, 36), 19, TEXTO)
 	if is_instance_valid(_pantalla):
 		_boton_brief(_selector, "Continuar partida", Rect2(947, 637, 265, 50), _cerrar_menu).grab_focus()
 
 func _boton_brief(padre: Control, texto: String, zona: Rect2, accion: Callable, activo := false) -> Button:
 	var boton := Vista.boton(padre, texto, zona, accion)
-	boton.add_theme_color_override("font_color", CIRUELA if activo else MARFIL)
-	boton.add_theme_color_override("font_hover_color", CIRUELA)
-	boton.add_theme_color_override("font_pressed_color", CIRUELA)
-	boton.add_theme_stylebox_override("normal", Vista._estilo(ARENA if activo else CIRUELA, ARENA))
-	boton.add_theme_stylebox_override("hover", Vista._estilo(Color("#ffdbbd"), ARENA))
-	boton.add_theme_stylebox_override("pressed", Vista._estilo(ARENA, MARFIL))
-	boton.add_theme_stylebox_override("focus", Vista._estilo(Color.TRANSPARENT, MARFIL))
+	boton.add_theme_color_override("font_color", PIZARRA if activo else TEXTO)
+	boton.add_theme_color_override("font_hover_color", PIZARRA)
+	boton.add_theme_color_override("font_pressed_color", PIZARRA)
+	boton.add_theme_stylebox_override("normal", Vista._estilo(ACENTO if activo else PIZARRA, ACENTO))
+	boton.add_theme_stylebox_override("hover", Vista._estilo(Color("#c0d8d4"), ACENTO))
+	boton.add_theme_stylebox_override("pressed", Vista._estilo(ACENTO, TEXTO))
+	boton.add_theme_stylebox_override("focus", Vista._estilo(Color.TRANSPARENT, TEXTO))
 	return boton
 
 func _cerrar_menu() -> void:

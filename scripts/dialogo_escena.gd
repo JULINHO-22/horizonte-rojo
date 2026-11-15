@@ -25,8 +25,8 @@ func _ready() -> void:
 	sombra.texture = textura
 	sombra.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	add_child(sombra)
-	nombre = _linea(0, 18, Color("#ffda91"))
-	frase = _linea(32, 22, Color("#fff7ed"))
+	nombre = _linea(0, 18, Color("#b5d9cf"))
+	frase = _linea(32, 22, Color("#e7eef0"))
 	hide()
 
 func decir(quien: String, texto: String) -> void:
