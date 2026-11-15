@@ -166,7 +166,7 @@ func _probar() -> void:
 		juego._probar_sol(sol)
 		assert(juego.sol_anunciado == sol)
 		var tecla := InputEventKey.new()
-		tecla.physical_keycode = KEY_T
+		tecla.physical_keycode = KEY_Q
 		tecla.pressed = true
 		root.push_input(tecla)
 		assert(juego.interfaz_tablet.estado.sol == sol)
@@ -307,11 +307,22 @@ func _probar_descanso_sol_uno(juego: Control) -> void:
 	juego._cerrar_anuncio_sol()
 	juego.nivel_activo.interfaz.confirmar.pressed.emit()
 	assert(juego.nivel_activo.juego_activo())
-	juego._alternar_tablet()
+	var taller: Control = juego.nivel_activo.taller
+	taller.abrir("aire")
+	taller.tecla(KEY_E)
+	taller.tecla(KEY_1)
+	var piezas: Array = taller.reglas.giros.duplicate()
+	var reservas := InputEventKey.new()
+	reservas.physical_keycode = KEY_Q
+	reservas.pressed = true
+	root.push_input(reservas)
 	assert(juego.nivel_activo.process_mode == Node.PROCESS_MODE_DISABLED)
 	assert(juego.interfaz_tablet.estado.sol == 2)
-	juego._cerrar_tablet()
+	root.push_input(reservas)
 	assert(juego.nivel_activo.process_mode == Node.PROCESS_MODE_INHERIT)
+	assert(taller.visible and taller.reglas.giros == piezas, "La tablet conserva las piezas del taller.")
+	taller.tecla(KEY_F)
+	assert(not taller.visible)
 	assert(juego.recursos.activar_oxigeno())
 
 	# Simula un guardado anterior que ya llegó sin reservas suficientes.

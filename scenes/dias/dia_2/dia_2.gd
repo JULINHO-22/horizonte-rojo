@@ -39,7 +39,7 @@ const OBJETIVOS := {
 	Paso.REPARAR: [PANELES, "3 · Sujeta los equipos", "Alinea y fija 3 cierres entre las ráfagas.\nSigue la marca hasta los paneles.", "Abrir caja de herramientas"],
 	Paso.ENTRAR: [PuestoUmbra.ESCLUSA, "4 · Vuelve a casa", "¡Los equipos están protegidos!\nLos paneles cargarán cuando pase la tormenta.", "Entrar al refugio"],
 	Paso.AIRE: [AIRE, "2 · Prepara el aire", "Ve a los tanques verdes del laboratorio.\nAgua + energía nos ayudan a tener aire.", "Conectar aire · 6 energía + 1 agua"],
-	Paso.PLANTAS: [PLANTAS, "Una pausa para comer", "Siembra una lechuga. En 15 segundos estará lista.\nDespués pulsa Q para comerla.", "Sembrar · 1 energía + 1 agua"],
+	Paso.PLANTAS: [PLANTAS, "Una pausa para comer", "Siembra una lechuga. En 15 segundos estará lista.\nDespués pulsa F para comerla.", "Sembrar · 1 energía + 1 agua"],
 	Paso.DESCANSO: [CAMA, "4 · A descansar", "Aire listo, comida lista. ¡Buen trabajo!\nAcércate a la cama para terminar el día.", "Terminar el Sol 2"],
 }
 
@@ -231,7 +231,7 @@ func _unhandled_key_input(event: InputEvent) -> void:
 				_confirmar()
 			else:
 				_actuar()
-		KEY_Q: _alternativa()
+		KEY_F: _alternativa()
 		KEY_M: _mapa()
 		KEY_ESCAPE: _pausar()
 
@@ -248,7 +248,7 @@ func _pausar() -> void:
 		_confirmar()
 	else:
 		en_pausa = true
-		interfaz.presentar("En pausa", "WASD o flechas para caminar.\nE para interactuar, Q para la alternativa y M para el plano de Umbra.", "Continuar")
+		interfaz.presentar("En pausa", "WASD o flechas para caminar.\nE para interactuar, F para la alternativa y M para el plano de Umbra.", "Continuar")
 
 func _confirmar() -> void:
 	if not interfaz.modal.visible or not interfaz.confirmar.visible:
@@ -298,7 +298,7 @@ func _actuar() -> void:
 		Paso.PLANTAS:
 			if recursos.sembrar("lechuga"):
 				audio.sonar_clic()
-				aviso = "Lechuga sembrada en bandeja. Espera 15 s y pulsa Q para comerla."
+				aviso = "Lechuga sembrada en bandeja. Espera 15 s y pulsa F para comerla."
 			else:
 				audio.sonar_error()
 				aviso = "Necesitas una bandeja libre, 1 de energía y 1 de agua."
@@ -378,7 +378,7 @@ func _alternativa() -> void:
 			aviso = "Hacen falta 2 de energía para purificar el hielo."
 	elif _cerca_del_aire(estado) and estado.reservas.agua == 0 and estado.hielo > 0:
 		ruta.assign([AGUA])
-		aviso = "Sigue la marca hasta el filtro azul. Pulsa Q para purificar el hielo."
+		aviso = "Sigue la marca hasta el filtro azul. Pulsa F para purificar el hielo."
 	elif paso == Paso.REPARAR and _cerca(PuestoUmbra.ESCLUSA):
 		audio.sonar_esclusa()
 		_mundo(true, SALIDA)
@@ -482,11 +482,11 @@ func _actualizar() -> void:
 		Paso.DESCANSO:
 			if not estado.aire_asegurado:
 				accion = "Dormir sin aire · termina la misión"
-				detalle = "Falta preparar el aire. No es seguro dormir.\nPulsa Q para volver a los tanques verdes."
+				detalle = "Falta preparar el aire. No es seguro dormir.\nPulsa F para volver a los tanques verdes."
 				opcion = "Volver a activar el oxígeno"
 			elif estado.reservas.alimento == 0:
 				accion = "Dormir sin comida · termina la misión"
-				detalle = "Tienes hambre. Pulsa Q para ir a Plantas.\nCome una cosecha antes de dormir."
+				detalle = "Tienes hambre. Pulsa F para ir a Plantas.\nCome una cosecha antes de dormir."
 				opcion = "Volver a Plantas"
 
 	if paso == Paso.SALIR and not estado.aire_asegurado and aviso.is_empty():
@@ -520,7 +520,7 @@ func _actualizar() -> void:
 	if paso == Paso.PLANTAS and estado.bandejas.has("lechuga"):
 		var segundos := ceili(float(estado.bandejas.lechuga))
 		cerca = false
-		detalle = "Tu lechuga está creciendo: faltan %d s.\nCuando esté lista, pulsa Q para comer." % segundos if segundos > 0 else "¡Lechuga lista! Pulsa Q para comer.\nDespués puedes volver a la cama."
+		detalle = "Tu lechuga está creciendo: faltan %d s.\nCuando esté lista, pulsa F para comer." % segundos if segundos > 0 else "¡Lechuga lista! Pulsa F para comer.\nDespués puedes volver a la cama."
 
 	if puesto.plano:
 		detalle = "M · Cerrar el plano y volver al recorrido."
@@ -558,8 +558,7 @@ func _actualizar() -> void:
 	interfaz.aviso_de_pluto(pluto_a_la_vista, puesto.proyectar_suelo(puesto.posicion_pluto()), pluto_texto)
 
 	taller.mostrar_aire(estado)
-	interfaz.guia.visible = not taller.visible
-	interfaz.marca.visible = not taller.visible
+	interfaz.visible = not taller.visible
 	interfaz.ruta_del_dia(estado, salida_pendiente, paso == Paso.DESCANSO)
 	interfaz.actualizar(lugar, detalle, accion, opcion, cerca and juego_activo(),
 		puede_elegir and juego_activo(), puesto.interior, puesto.plano,

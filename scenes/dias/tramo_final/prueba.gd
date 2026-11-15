@@ -62,7 +62,7 @@ func _elegir_dia(dia: int) -> void:
 	sombra.color = Color(0.07, 0.12, 0.17, 0.66)
 	sombra.size = _selector.size
 	_selector.add_child(sombra)
-	Vista.rotulo(_selector, "Horizonte Rojo", Rect2(64, 42, 730, 78), 55, TEXTO)
+	Vista.rotulo(_selector, "Red Horizon", Rect2(64, 42, 730, 78), 55, TEXTO)
 	Vista.rotulo(_selector, "Elige dónde empezar la prueba", Rect2(68, 128, 850, 42), 26, TEXTO)
 	_boton_brief(_selector, "Sol 4 · Preparar la base", Rect2(68, 198, 310, 53), _elegir_dia.bind(4), dia == 4)
 	_boton_brief(_selector, "Sol 5 · Afrontar la tormenta", Rect2(392, 198, 310, 53), _elegir_dia.bind(5), dia == 5)
@@ -150,12 +150,12 @@ func _mostrar_noche(historial: Dictionary) -> void:
 
 func _derrota() -> void:
 	_limpiar()
-	_pantalla = ColorRect.new()
-	_pantalla.color = Color.BLACK
-	_pantalla.size = Vector2(1280, 720)
-	add_child(_pantalla)
-	Vista.rotulo(_pantalla, "Game Over", Rect2(440, 280, 400, 90), 52, Vista.PAPEL).horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	Vista.boton(_pantalla, "Volver a probar", Rect2(523, 394, 234, 49), _menu).grab_focus()
+	var cierre := preload("res://scripts/derrota_umbra.gd").new()
+	cierre.sol = _recursos.estado().sol
+	cierre.motivo = _recursos.estado().derrota
+	cierre.reinicio_solicitado.connect(_menu)
+	_pantalla = cierre
+	add_child(cierre)
 
 func _limpiar() -> void:
 	if is_instance_valid(_pantalla):

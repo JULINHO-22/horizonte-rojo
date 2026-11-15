@@ -9,8 +9,8 @@ signal decision_guardada
 const Recursos := preload("res://scripts/mecanicas/recursos_mision.gd")
 const PanelControl := preload("res://scripts/panel_control.gd")
 const DialogoEscena := preload("res://scripts/dialogo_escena.gd")
+const AccionEscena := preload("res://scripts/accion_escena.gd")
 const AREA := Rect2(0, 0, 1280, 720)
-const TINTA := Color("#101c28")
 const TINTA_CLARA := Color("#2a1c17")
 const PAPEL := Color("#fff1db")
 const CIAN := Color("#83eadc")
@@ -552,7 +552,7 @@ func _crear_modal(encabezado: String) -> VBoxContainer:
 	modal = PanelContainer.new()
 	modal.position = Vector2(214, 112)
 	modal.size = Vector2(852, 438)
-	modal.add_theme_stylebox_override("panel", _estilo(TINTA_CLARA, NARANJA, 0.98))
+	modal.add_theme_stylebox_override("panel", _estilo_modal())
 	add_child(modal)
 	var margen := MarginContainer.new()
 	margen.add_theme_constant_override("margin_left", 28)
@@ -592,8 +592,7 @@ func _boton_fila(padre: Control, texto: String, accion: Callable) -> Button:
 	boton.custom_minimum_size.y = 42
 	boton.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	boton.add_theme_font_size_override("font_size", 16)
-	boton.add_theme_stylebox_override("normal", _estilo(TINTA, CIAN, 1.0))
-	boton.add_theme_stylebox_override("hover", _estilo(Color("#23495a"), CIAN, 1.0))
+	AccionEscena.aplicar(boton)
 	boton.pressed.connect(accion)
 	padre.add_child(boton)
 	return boton
@@ -621,19 +620,16 @@ func _boton(texto: String, rect: Rect2, accion: Callable) -> Button:
 	boton.position = rect.position
 	boton.size = rect.size
 	boton.add_theme_font_size_override("font_size", 18)
-	boton.add_theme_stylebox_override("normal", _estilo(TINTA, CIAN, 0.96))
-	boton.add_theme_stylebox_override("hover", _estilo(Color("#23495a"), CIAN, 1.0))
+	AccionEscena.aplicar(boton)
 	boton.pressed.connect(accion)
 	return boton
 
 
-func _estilo(fondo: Color, borde: Color, opacidad: float) -> StyleBoxFlat:
+func _estilo_modal() -> StyleBoxFlat:
 	var estilo := StyleBoxFlat.new()
-	var color_fondo := fondo
-	color_fondo.a = opacidad
-	estilo.bg_color = color_fondo
-	estilo.border_color = borde
-	estilo.set_border_width_all(2)
+	estilo.bg_color = TINTA_CLARA
+	estilo.shadow_color = Color("#120b08b8")
+	estilo.shadow_size = 24
 	estilo.set_corner_radius_all(7)
 	estilo.content_margin_left = 12
 	estilo.content_margin_right = 12

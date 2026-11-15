@@ -37,7 +37,7 @@ Se instancia `PuestoUmbra`, que conserva `plantas_horizonte.png`, `energia_inter
 - Probar entrada con sistemas protegidos y dañados.
 - Ejecutar `tests/dia_3_smoke.gd`; el resultado esperado termina con `DIA3_OK` y comprueba las reservas y el estado de los cultivos después de cada decisión.
 
-En campaña, Control muestra la revisión pendiente y **T** abre la tablet. El reloj de cada bandeja avanza durante el menú de Plantas. Si priorizas el oxígeno se pierden los cultivos que estaban en las bandejas y se guarda la decisión.
+En campaña, Control muestra la revisión pendiente y **Q** abre la tablet. El reloj de cada bandeja avanza durante el menú de Plantas. Si priorizas el oxígeno se pierden los cultivos que estaban en las bandejas y se guarda la decisión.
 - Ejecutar también `tests/recursos_smoke.gd`; el resultado esperado termina con `RECURSOS_OK`.
 
 No se incorporan fuentes científicas nuevas en esta entrega. Se reutilizan las explicaciones y fuentes del contrato de mecánicas comunes.

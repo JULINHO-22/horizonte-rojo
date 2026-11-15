@@ -3,15 +3,15 @@ extends Control
 const Campana := preload("res://scripts/campana_narrativa.gd")
 const Viaje := preload("res://scripts/viaje_espacial.gd")
 const DialogoEscena := preload("res://scripts/dialogo_escena.gd")
+const AccionEscena := preload("res://scripts/accion_escena.gd")
+const DerrotaUmbra := preload("res://scripts/derrota_umbra.gd")
 const VISTAS_FINALES := {
 	"--final-recursos": "res://scenes/pruebas/banco_recursos.tscn",
 	"--final-incompleta": "res://scenes/final_incompleta.tscn",
 	"--final-cumplida": "res://scenes/final_cumplida.tscn",
 }
 const AREA := Rect2(0, 0, 1280, 720)
-const TINTA := Color("#101c28")
 const PAPEL := Color("#fff1db")
-const CIAN := Color("#83eadc")
 const DURACION_IDA := 5.4
 const DURACION_ATERRIZAJE := 2.6
 const DURACION_REGRESO := 9.0
@@ -55,6 +55,7 @@ var anuncio_sol: Control
 var escena_descanso: TextureRect
 var extraccion_hasta := 0.0
 var estaciones: VBoxContainer
+var sombra_estacion: TextureRect
 var estacion := ""
 var turnos_cosecha: Dictionary = {}
 var campana = Campana.new()
@@ -201,7 +202,7 @@ func _input(evento: InputEvent) -> void:
 			_cerrar_menu_soles()
 		else:
 			_abrir_menu_soles()
-	elif not is_instance_valid(menu_soles) and ((evento.physical_keycode == KEY_T and fase in ["base", "expedicion_sol_1"]) or
+	elif not is_instance_valid(menu_soles) and ((evento.physical_keycode == KEY_Q and fase in ["base", "expedicion_sol_1"]) or
 			(evento.physical_keycode == KEY_ESCAPE and is_instance_valid(interfaz_tablet))):
 		get_viewport().set_input_as_handled()
 		_alternar_tablet()
@@ -511,6 +512,8 @@ func _registrar_historial(datos: Dictionary) -> void:
 func _cerrar_sol_2(datos: Dictionary) -> void:
 	historial_soles.sistemas_danados = datos.sistemas_danados
 	historial_soles.paneles_protegidos = datos.paneles_protegidos
+	if not datos.completado:
+		historial_soles.motivo_derrota = datos.get("derrota", "")
 	_cerrar_sol(datos.completado)
 
 func _cerrar_sol_3(datos: Dictionary) -> void:
@@ -541,7 +544,7 @@ func _abrir_menu_soles() -> void:
 	add_child(menu_soles)
 	var anterior := capa
 	capa = menu_soles
-	_etiqueta("Soles de Horizonte Rojo", Rect2(124, 88, 1032, 64), 43)
+	_etiqueta("Soles de Red Horizon", Rect2(124, 88, 1032, 64), 43)
 	_etiqueta("Un sol es un día en Marte. Dura un poquito más que un día en la Tierra.", Rect2(128, 166, 990, 64), 23)
 	var nombres := ["Llegada y búsqueda de hielo", "Tormenta de polvo", "Aire o invernadero", "Preparar el refugio", "Tormenta solar"]
 	for i in range(nombres.size()):
@@ -634,6 +637,7 @@ func _mostrar() -> void:
 	interfaz_tablet = null
 	boton_tablet = null
 	anuncio_sol = null
+	sombra_estacion = null
 	panel_control = null
 	visita_nucleo = null
 	marco_nucleo = null
@@ -646,6 +650,14 @@ func _mostrar() -> void:
 	add_child(capa)
 	if fase in ["final_cumplida", "final_incompleta"]:
 		_ver_final("--" + fase.replace("_", "-"))
+		return
+	if fase == "derrota":
+		var cierre := DerrotaUmbra.new()
+		cierre.sol = campana.sol
+		var motivo: String = recursos.estado().derrota
+		cierre.motivo = historial_soles.get("motivo_derrota", motivo) if motivo.is_empty() else motivo
+		cierre.reinicio_solicitado.connect(_reiniciar)
+		capa.add_child(cierre)
 		return
 	if integrar_soles and fase == "base" and SOLES_JUGABLES.has(campana.sol) and not campana.listo_para_regresar():
 		_montar_sol()
@@ -676,12 +688,6 @@ func _mostrar() -> void:
 		"despegue":
 			_imagen(PuestoUmbra.SENDERO, AREA)
 			nave_salida = _imagen(PuestoUmbra.NAVE, Rect2(280, 275, 170, 260), true)
-		"derrota":
-			_sombra(AREA, Color.BLACK)
-			_etiqueta("Game Over", Rect2(485, 290, 400, 100), 56)
-			if campana.sol == 5:
-				var silencio := _etiqueta("La estación Umbra dejó de transmitir.", Rect2(330, 380, 620, 42), 24)
-				silencio.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		"epilogo":
 			_imagen(PuestoUmbra.CENTRO_AGUA, AREA)
 			_sombra(Rect2(0, 0, 1280, 720), Color(0.03, 0.07, 0.12, 0.78))
@@ -694,7 +700,7 @@ func _mostrar() -> void:
 		_:
 			_imagen(PuestoUmbra.SENDERO, AREA)
 			_sombra(AREA, Color(0.03, 0.07, 0.12, 0.30))
-			_etiqueta("Horizonte Rojo", Rect2(85, 145, 1100, 100), 64)
+			_etiqueta("Red Horizon", Rect2(85, 145, 1100, 100), 64)
 			_etiqueta("Cinco días en Marte", Rect2(90, 255, 900, 60), 32)
 			_etiqueta("Acompaña a Nora, Iris y Teo hasta el refugio.", Rect2(90, 322, 480, 72), 24)
 	titulo = _etiqueta("", Rect2(34, 26, 590, 36), 23)
@@ -741,10 +747,6 @@ func _mostrar() -> void:
 		"expedicion_sol_1":
 			titulo.text = "Día 1 de 5 · Hielo bajo el suelo"
 			_actualizar_guia()
-		"derrota":
-			boton.position = Vector2(512, 450 if campana.sol == 5 else 410)
-			boton.text = "Volver a intentar"
-			boton.show()
 		"base":
 			_refrescar_recursos()
 			titulo.text = "Sol %d de 5 · Refugio Umbra" % campana.sol
@@ -771,7 +773,7 @@ func _mostrar() -> void:
 		_mostrar_accesos_sol()
 
 func _mostrar_accesos_sol() -> void:
-	boton_tablet = _boton("T · Tablet", Rect2(965, 18, 158, 42), _alternar_tablet)
+	boton_tablet = _boton("Q · Reservas", Rect2(965, 18, 158, 42), _alternar_tablet)
 	boton_tablet.focus_mode = Control.FOCUS_NONE
 	boton_tablet.z_index = 10
 	if fase != "base" or sol_anunciado == campana.sol or campana.listo_para_regresar():
@@ -925,8 +927,7 @@ func _abrir_estacion(id: String) -> void:
 	estaciones = VBoxContainer.new()
 	estaciones.position = Vector2(818, 78 if _sol_uno() else 180)
 	estaciones.custom_minimum_size.x = 384
-	if _sol_uno() and id == "cultivos":
-		estaciones.theme = _tema_plantas()
+	estaciones.add_theme_constant_override("separation", 4)
 	capa.add_child(estaciones)
 	if _sol_uno():
 		_opciones_sol_uno(id)
@@ -947,30 +948,28 @@ func _abrir_estacion(id: String) -> void:
 	cerrar.text = "Cerrar · Esc"
 	cerrar.pressed.connect(_cerrar_estacion)
 	estaciones.add_child(cerrar)
+	for control: Button in estaciones.get_children():
+		control.alignment = HORIZONTAL_ALIGNMENT_LEFT
+		control.custom_minimum_size.y = 33
+		control.add_theme_font_size_override("font_size", 17)
+		AccionEscena.aplicar(control)
+	_sombrear_estacion()
 	if _sol_uno():
 		estaciones.get_child(0).grab_focus()
 
-func _tema_plantas() -> Theme:
-	var tema := Theme.new()
-	tema.set_constant("separation", "VBoxContainer", 5)
-	tema.set_font_size("font_size", "Button", 17)
-	tema.set_color("font_disabled_color", "Button", Color("#c2d4df"))
-	var colores := {
-		"normal": TINTA, "hover": Color("#274858"), "pressed": Color("#315866"),
-		"disabled": Color("#233340"),
-	}
-	for estado: String in colores:
-		var estilo := StyleBoxFlat.new()
-		estilo.bg_color = colores[estado]
-		estilo.border_color = Color("#476473")
-		estilo.set_border_width_all(1)
-		estilo.set_corner_radius_all(6)
-		estilo.content_margin_top = 6
-		estilo.content_margin_bottom = 6
-		estilo.content_margin_left = 10
-		estilo.content_margin_right = 10
-		tema.set_stylebox(estado, "Button", estilo)
-	return tema
+func _sombrear_estacion() -> void:
+	var degradado := Gradient.new()
+	degradado.offsets = PackedFloat32Array([0.0, 0.7, 1.0])
+	degradado.colors = PackedColorArray([Color("#17100df5"), Color("#17100dde"), Color("#17100d00")])
+	var textura := GradientTexture2D.new()
+	textura.gradient = degradado
+	textura.fill = GradientTexture2D.FILL_RADIAL
+	textura.fill_from = Vector2(0.51, 0.5)
+	textura.fill_to = Vector2(1.0, 0.5)
+	var rect := Rect2(estaciones.position - Vector2(96, 72),
+		estaciones.get_combined_minimum_size() + Vector2(192, 144))
+	sombra_estacion = _imagen(textura, rect)
+	capa.move_child(sombra_estacion, estaciones.get_index())
 
 func _opciones_sol_uno(id: String) -> void:
 	var datos := recursos.estado()
@@ -1047,6 +1046,10 @@ func _cerrar_estacion() -> void:
 	turnos_cosecha.clear()
 	estaciones.hide()
 	estaciones.queue_free()
+	if is_instance_valid(sombra_estacion):
+		sombra_estacion.hide()
+		sombra_estacion.queue_free()
+		sombra_estacion = null
 
 func _crear_mapa(interior: bool) -> void:
 	var marco := Control.new()
@@ -1122,12 +1125,7 @@ func _boton(texto: String, rect: Rect2, accion: Callable) -> Button:
 	control.size = rect.size
 	control.text = texto
 	control.add_theme_font_size_override("font_size", 19)
-	var normal := StyleBoxFlat.new()
-	normal.bg_color = TINTA
-	normal.border_color = CIAN
-	normal.set_border_width_all(1)
-	normal.set_corner_radius_all(7)
-	control.add_theme_stylebox_override("normal", normal)
+	AccionEscena.aplicar(control)
 	control.pressed.connect(accion)
 	capa.add_child(control)
 	return control

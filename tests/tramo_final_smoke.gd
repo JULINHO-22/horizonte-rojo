@@ -199,7 +199,9 @@ func _probar() -> void:
 		assert(banco._recursos.estado().reservas == registro.despues)
 		if i == 2:
 			await create_timer(0.70).timeout
-			assert(banco._pantalla is ColorRect)
+			assert(banco._pantalla.get_script() == preload("res://scripts/derrota_umbra.gd"))
+			assert(banco._pantalla.sol == 5)
+			await create_timer(0.6).timeout
 			await _captura("dia5-game-over")
 		else:
 			_camino(nivel, [Tramo.RADIO_PROTEGIDA])

@@ -1,5 +1,12 @@
 # Cambios
 
+## 2026-11-15 | Red Horizon, mantenimiento y cierre de misión
+
+- Red Horizon es el nombre de la portada web y de la ventana. Las partidas existentes conservan su ubicación.
+- Q abre y cierra la tablet. F ejecuta la opción alternativa o cancela el tablero del Sol 2. Las acciones sobre el escenario se presentan como texto con sombra.
+- El circuito de aire y los tres cierres del Sol 2 usan sprites pixel art de codos y conectores, un riel y un pestillo. Se conservan los controles, los tiempos y los costos.
+- La derrota muestra a Umbra al anochecer, identifica el sol y explica el motivo de la interrupción cuando se conoce.
+
 ## 2026-11-15 | Instrumentos originales y apertura de cada sol
 
 - La tablet recupera los instrumentos, colores y proporciones del panel original de Control. La comida y el hielo quedan al pie del panel.

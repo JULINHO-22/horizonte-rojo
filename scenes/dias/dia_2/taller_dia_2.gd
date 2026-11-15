@@ -7,6 +7,11 @@ signal sonido(correcto: bool)
 const Reglas := preload("res://scenes/dias/dia_2/retos_dia_2.gd")
 const UI := preload("res://scenes/dias/dia_2/dia_2_hud.gd")
 const Iconos := preload("res://scripts/mecanicas/indicadores_refugio.gd")
+const ARTE := preload("res://assets/dias/dia_2/piezas_mantenimiento.png")
+const CODO := Rect2(68, 62, 444, 456)
+const TUBO := Rect2(668, 235, 534, 218)
+const PESTILLO := Rect2(51, 770, 336, 367)
+const RIEL := Rect2(463, 878, 768, 207)
 var reglas := Reglas.new()
 var tipo := "aire"
 var jugando := false
@@ -29,9 +34,12 @@ func _ready() -> void:
 	size = Vector2(1280, 720)
 	var velo := ColorRect.new()
 	velo.size = size
-	velo.color = Color(0.025, 0.05, 0.08, 0.78)
+	velo.color = Color("#160f0eef")
 	add_child(velo)
-	var panel := ui._panel(self, Rect2(220, 108, 840, 560), UI.TINTA, UI.BORDE_CIAN)
+	var panel := Control.new()
+	panel.position = Vector2(220, 108)
+	panel.size = Vector2(840, 560)
+	add_child(panel)
 	titulo = ui._texto(panel, Rect2(30, 20, 780, 38), "", 28, UI.PAPEL)
 	pista = ui._texto(panel, Rect2(30, 66, 780, 54), "", 19, UI.CIAN)
 	pista.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -39,6 +47,7 @@ func _ready() -> void:
 	tablero.position = Vector2(260, 240)
 	tablero.size = Vector2(760, 270)
 	tablero.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	tablero.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	tablero.draw.connect(_dibujar)
 	add_child(tablero)
 	for i in 4:
@@ -65,7 +74,7 @@ func _ready() -> void:
 	pausa.pressed.connect(_pausar)
 	principal = ui._boton(panel, Rect2(30, 488, 510, 48), "")
 	principal.pressed.connect(_confirmar)
-	volver = ui._boton(panel, Rect2(560, 488, 250, 48), "Q · Volver sin gastar")
+	volver = ui._boton(panel, Rect2(560, 488, 250, 48), "F · Volver sin gastar")
 	volver.pressed.connect(func(): cancelado.emit())
 	hide()
 
@@ -77,7 +86,7 @@ func abrir(actividad: String) -> void:
 	seleccionado = 0
 	respuesta.text = "Puedes probar otra vez. Equivocarte no gasta recursos."
 	titulo.text = "Laboratorio · Un camino para el aire" if tipo == "aire" else "Exterior · Que nada salga volando"
-	pista.text = "Gira las 4 piezas hasta unir la entrada con el tanque." if tipo == "aire" else "Alinea cada cierre con su marca. Fíjalo cuando diga CALMA."
+	pista.text = "Gira los cuatro codos hasta unir la entrada con el tanque." if tipo == "aire" else "Mueve el cierre por el riel hasta la marca. Fíjalo durante la calma."
 	progreso.text = "Al activar: 6 energía + 1 agua → aire seguro hasta dormir." if tipo == "aire" else "Al terminar: 4 energía + 1 comida → equipos protegidos."
 	principal.text = "E · Entendido, empezar"
 	izquierda.visible = tipo == "reparar"
@@ -95,7 +104,7 @@ func avanzar(delta: float) -> void:
 
 func tecla(codigo: Key) -> void:
 	match codigo:
-		KEY_Q: cancelado.emit()
+		KEY_F: cancelado.emit()
 		KEY_ESCAPE: _pausar()
 		KEY_E: _confirmar()
 		KEY_ENTER, KEY_SPACE:
@@ -145,7 +154,7 @@ func _confirmar() -> void:
 		jugando = true
 		pausa.text = "Esc · Pausa"
 		principal.text = "E · Activar el aire" if tipo == "aire" else "E · Fijar este cierre"
-		respuesta.text = "Clic para girar · o teclas 1, 2, 3, 4." if tipo == "aire" else "Mueve con A / D o los botones. Busca la marca dorada."
+		respuesta.text = "Clic para girar · o teclas 1, 2, 3, 4." if tipo == "aire" else "Mueve con A / D. Busca la marca dorada."
 		tablero.queue_redraw()
 		return
 	if tipo == "aire":
@@ -181,31 +190,33 @@ func _dibujar() -> void:
 
 func _dibujar_aire() -> void:
 	var ruta := reglas.recorrido()
+	var brillo := 0.94 + 0.06 * sin(reglas.tiempo * 5.0)
+	var conectado := Color(0.71, 1.0, 1.0, brillo)
 	_rotulo("ENTRADA", Vector2(32, 70), UI.CIAN)
 	_rotulo("Agua + energía", Vector2(32, 98), UI.MUTED, 16)
 	var atlas := Iconos.ICONOS.get_size()
 	tablero.draw_texture_rect_region(Iconos.ICONOS, Rect2(32, 18, 30, 38), Rect2(Iconos.GOTA.position * atlas, Iconos.GOTA.size * atlas))
 	tablero.draw_texture_rect_region(Iconos.ICONOS, Rect2(83, 18, 30, 38), Rect2(Iconos.RAYO.position * atlas, Iconos.RAYO.size * atlas))
-	tablero.draw_line(Vector2(164, 41), Vector2(280, 41), UI.CIAN, 8)
+	tablero.draw_texture_rect_region(ARTE, Rect2(161, 25, 116, 32), TUBO, conectado)
 	_rotulo("TANQUE", Vector2(582, 168), UI.CIAN)
 	_rotulo("Oxígeno", Vector2(582, 195), UI.MUTED, 16)
 	for i in 3:
 		var y := 84.0 - fposmod(reglas.tiempo * 12.0 + i * 23.0, 60.0)
 		tablero.draw_texture_rect_region(Iconos.ICONOS, Rect2(594 + (i % 2) * 24, y, 22, 22), Rect2(Iconos.BURBUJA.position * atlas, Iconos.BURBUJA.size * atlas), Color.WHITE if 9 in ruta else Iconos.APAGADO)
-	tablero.draw_line(Vector2(518, 205), Vector2(570, 205), UI.VERDE if 9 in ruta else UI.BORDE_CIAN, 8)
+	tablero.draw_texture_rect_region(ARTE, Rect2(520, 189, 61, 32), TUBO, conectado if 9 in ruta else Color("#928885"))
 	for celda in [0, 1, 4, 5, 8]:
 		var origen := Vector2(280 + (celda % 3) * 82, 4 + floori(celda / 3.0) * 82)
 		var centro := origen + Vector2(37, 37)
-		tablero.draw_rect(Rect2(origen, Vector2(74, 74)), Color("#19333e"))
 		var indice := Reglas.PIEZAS.find(celda)
-		var color := UI.CIAN if celda in ruta else UI.MUTED
-		for direccion: int in reglas.conexiones(celda):
-			var vector: Vector2 = [Vector2.UP, Vector2.RIGHT, Vector2.DOWN, Vector2.LEFT][direccion]
-			tablero.draw_line(centro, centro + vector * 41, color, 10)
-		tablero.draw_circle(centro, 8, color)
-		if indice >= 0:
-			tablero.draw_rect(Rect2(origen, Vector2(74, 74)), UI.ORO if indice == seleccionado else UI.BORDE_CIAN, false, 2)
-			_rotulo(str(indice + 1), origen + Vector2(5, 17), UI.ORO, 15)
+		var tinta := conectado if celda in ruta else Color("#a99d95")
+		if indice < 0:
+			tablero.draw_texture_rect_region(ARTE, Rect2(centro - Vector2(42, 16), Vector2(84, 32)), TUBO, tinta)
+			continue
+		# El pivote del codo coincide con el cruce de sus dos puertos.
+		tablero.draw_set_transform(centro, reglas.giros[indice] * PI / 2.0)
+		tablero.draw_texture_rect_region(ARTE, Rect2(-15, -42, 57, 57), CODO, tinta)
+		tablero.draw_set_transform(Vector2.ZERO)
+		_rotulo(str(indice + 1), origen + Vector2(7, 19), UI.ORO if indice == seleccionado else UI.PAPEL, 17)
 	_rotulo("GIRAR", Vector2(32, 172), UI.ORO, 16)
 	_rotulo("Clic en las piezas", Vector2(32, 198), UI.PAPEL, 16)
 	_rotulo("o teclas 1 · 2 · 3 · 4", Vector2(32, 222), UI.MUTED, 16)
@@ -218,16 +229,12 @@ func _dibujar_cierres() -> void:
 		_rotulo(("LISTO  " if i < reglas.cierre else str(i + 1) + "  ") + nombres[i], Vector2(i * 250 + 4, 20), color, 15)
 	var calma := reglas.calma()
 	_rotulo("CALMA · puedes fijar" if calma else "RÁFAGA · espera un momento", Vector2(200, 64), UI.VERDE if calma else UI.ORO, 23)
-	tablero.draw_rect(Rect2(180, 78, 400, 5), UI.BORDE_CIAN)
-	tablero.draw_rect(Rect2(180, 78, 400 * fposmod(reglas.tiempo, 4.0) / 4.0, 5), UI.VERDE if calma else UI.ORO)
-	for i in 9:
-		var x := 112.0 + i * 66
-		tablero.draw_rect(Rect2(x, 111, 20, 42), Color("#29434c"))
-		if i == Reglas.METAS[cierre]:
-			tablero.draw_rect(Rect2(x - 10, 102, 40, 60), UI.ORO, false, 3)
-		if i == reglas.ajuste:
-			tablero.draw_rect(Rect2(x - 4, 117, 28, 30), UI.CIAN)
-	_rotulo("Pieza azul → marca dorada", Vector2(240, 216), UI.PAPEL, 19)
+	tablero.draw_texture_rect_region(ARTE, Rect2(85, 104, 592, 64), RIEL)
+	var objetivo: float = 116.0 + Reglas.METAS[cierre] * 66.0
+	_rotulo("↓", Vector2(objetivo - 12, 103), UI.ORO, 29)
+	var ajuste := 116.0 + reglas.ajuste * 66.0
+	tablero.draw_texture_rect_region(ARTE, Rect2(ajuste - 26, 104, 52, 59), PESTILLO)
+	_rotulo("Cierre azul hacia la flecha dorada", Vector2(219, 216), UI.PAPEL, 18)
 
 func _exit_tree() -> void:
 	ui.free()

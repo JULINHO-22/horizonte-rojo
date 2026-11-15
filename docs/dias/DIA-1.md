@@ -19,4 +19,4 @@ Para probarlo, inicia una partida nueva con **F5**. La prueba `tests/narrativa_s
 
 ## Relevo al Sol 2
 
-Consulta la comida y las demás reservas en la tablet con **T**. Para descansar, prepara el aire, conserva comida y guarda 6 de energía y 1 de agua para el siguiente sol. La tormenta del Sol 2 detiene la recarga solar. Si falta algo, Pluto indica cómo conseguirlo. Los guardados anteriores que ya llegaron al Sol 2 sin batería o agua suficientes reciben solo lo que falta para activar el aire, una vez por sol.
+Consulta la comida y las demás reservas en la tablet con **Q**. Para descansar, prepara el aire, conserva comida y guarda 6 de energía y 1 de agua para el siguiente sol. La tormenta del Sol 2 detiene la recarga solar. Si falta algo, Pluto indica cómo conseguirlo. Los guardados anteriores que ya llegaron al Sol 2 sin batería o agua suficientes reciben solo lo que falta para activar el aire, una vez por sol.

@@ -42,7 +42,7 @@ func _ready() -> void:
 	_etiqueta("Estado del refugio", Rect2(32, 22, 600, 45), 33, TITULO)
 	_etiqueta("Tablet  /  Sol %d de %d" % [estado.sol, Recursos.ULTIMO_SOL],
 		Rect2(34, 68, 600, 26), 17, TEXTO)
-	var cerrar := _boton("Cerrar · T / Esc", Rect2(755, 28, 157, 42), cerrar_solicitado.emit)
+	var cerrar := _boton("Cerrar · Q / Esc", Rect2(755, 28, 157, 42), cerrar_solicitado.emit)
 	cerrar.grab_focus()
 
 	_etiqueta("Energía", Rect2(34, 113, 340, 32), 23, AMBAR)

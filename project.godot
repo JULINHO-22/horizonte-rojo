@@ -10,7 +10,9 @@ config_version=5
 
 [application]
 
-config/name="Horizonte Rojo"
+config/name="Red Horizon"
+config/use_custom_user_dir=true
+config/custom_user_dir_name="Godot/app_userdata/Horizonte Rojo"
 run/main_scene="res://scenes/umbra.tscn"
 config/features=PackedStringArray("4.7", "GL Compatibility")
 

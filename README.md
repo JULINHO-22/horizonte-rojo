@@ -1,6 +1,6 @@
-# Horizonte Rojo
+# Red Horizon
 
-**Horizonte Rojo** es un juego narrativo 2D de cinco días en Marte. La campaña enlaza las decisiones de los cinco soles y calcula el desenlace tras la tormenta solar.
+**Red Horizon** es un juego narrativo 2D de cinco días en Marte. La campaña enlaza las decisiones de los cinco soles y calcula el desenlace tras la tormenta solar.
 
 ## Estado y ejecución actual
 
@@ -12,7 +12,7 @@ La escena principal abre el viaje y la campaña completa. La nave sale con el m�
 4. En el Sol 1, Pluto sugiere empezar en Control y visitar Oxígeno y Plantas. Siembra, recoge y come en Plantas. Puedes salir con Iris a buscar hielo a la derecha del refugio y llevarlo al filtro. Cuando tengas aire asegurado y comida, pulsa **E** o **Descansar** en el dormitorio. El fundido de tres segundos inicia la siguiente mañana. Consulta [Sol 1](docs/dias/DIA-1.md).
 5. En el Sol 5, consulta Control y avisa a Tierra. Baja al núcleo protegido, sella la compuerta y comunica el resultado para continuar al desenlace.
 
-Pulsa **E** junto a la computadora de Control para consultar las tareas. Pulsa **T** o selecciona **Tablet** para consultar oxígeno, agua, energía, comida e hielo. La consulta pausa el juego. En la esclusa sur, el acceso lateral baja al núcleo protegido que se usa en el Sol 5.
+Pulsa **E** junto a la computadora de Control para consultar las tareas. Pulsa **Q** o selecciona **Reservas** para consultar oxígeno, agua, energía, comida e hielo. La consulta pausa el juego. En la esclusa sur, el acceso lateral baja al núcleo protegido que se usa en el Sol 5.
 
 El laboratorio de Agua y Oxígeno está al noroeste, pasando por Energía. Purifica agua junto al filtro azul y prepara oxígeno junto a los depósitos verdes. El taller está inmediatamente al este de Control. Plantas se alcanza por el desvío norte del corredor este, girando a la izquierda. No hay Enfermería ni accidente de Teo.
 
@@ -32,7 +32,7 @@ Abre `scenes/pruebas/banco_recursos.tscn` y pulsa **F6**. Consulta [reglas y API
 
 ## Jugar en navegador
 
-Instala las plantillas de exportación de **Godot 4.7.2** y ejecuta `./web/exportar.ps1 -Godot "<ruta al ejecutable de consola de Godot>"` en PowerShell. El script exporta el juego, copia la portada y arma `build/Horizonte-Rojo-Web.zip`. Sirve el directorio completo por HTTP. Para probarlo desde PowerShell, ejecuta `python -m http.server 8065 --bind 127.0.0.1 --directory build/web` y abre [Horizonte Rojo en el navegador](http://127.0.0.1:8065/). Pulsa **Entrar al recorrido**. La primera partida inicia el viaje automáticamente después de cargar. Si ya hay una partida, puedes continuarla o comenzar de nuevo. Si el mismo navegador conserva una partida para esa dirección, retoma el último punto guardado.
+Instala las plantillas de exportación de **Godot 4.7.2** y ejecuta `./web/exportar.ps1 -Godot "<ruta al ejecutable de consola de Godot>"` en PowerShell. El script exporta el juego, copia la portada y arma `build/Red-Horizon-Web.zip`. Sirve el directorio completo por HTTP. Para probarlo desde PowerShell, ejecuta `python -m http.server 8065 --bind 127.0.0.1 --directory build/web` y abre [Red Horizon en el navegador](http://127.0.0.1:8065/). Pulsa **Entrar al recorrido**. La primera partida inicia el viaje automáticamente después de cargar. Si ya hay una partida, puedes continuarla o comenzar de nuevo. Si el mismo navegador conserva una partida para esa dirección, retoma el último punto guardado.
 
 El preset usa WebGL 2 sin hilos. La página de lanzamiento está en [web/umbra.html](web/umbra.html) y el juego completo corre dentro de ella. Publica juntos el HTML, el motor y el paquete de datos en el alojamiento del equipo.
 

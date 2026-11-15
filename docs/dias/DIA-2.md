@@ -2,17 +2,17 @@
 
 ## Recorrido
 
-En este checkout también puedes abrir `jugar_dia_2.bat` (usa el Godot local de `build/tools`). Para otro equipo, abre `scenes/dias/dia_2/dia_2.tscn` en Godot 4.7.2 y pulsa **F6**. Usa **WASD** o las **flechas** para caminar, **E** para interactuar, **Q** para la opción alternativa, **M** para el plano y **Esc** para pausar. Los botones ejecutan las mismas acciones. El plano y las pausas detienen el reloj local.
+En este checkout también puedes abrir `jugar_dia_2.bat` (usa el Godot local de `build/tools`). Para otro equipo, abre `scenes/dias/dia_2/dia_2.tscn` en Godot 4.7.2 y pulsa **F6**. Usa **WASD** o las **flechas** para caminar, **E** para interactuar, **F** para la opción alternativa, **M** para el plano y **Esc** para pausar. Los botones ejecutan las mismas acciones. El plano y las pausas detienen el reloj local.
 
 1. En Control elige entre proteger los equipos o quedarte dentro. Los botones muestran el coste y la consecuencia antes de elegir. Resguardarse cuesta 0 inmediatamente; deja sistemas dañados y pérdidas de 1 agua y 1 oxígeno para el Día 3.
 2. La guía lleva primero a los **tanques verdes de Agua y Oxígeno**, usando el laboratorio nuevo de `main`. Abre el tablero con E. Lee la instrucción con el reloj detenido y pulsa «Entendido, empezar».
 3. **Conecta el aire**: gira cuatro codos hasta unir la entrada con el tanque. La luz azul muestra el tramo conectado. Clic o teclas **1–4** giran cada pieza; también puedes elegir con A/D y girar con Enter o Espacio. E prueba el circuito y, si está completo, activa el aire por **6 energía + 1 agua**, una sola vez. Un intento incorrecto no cobra. El oxígeno se llena y queda estable hasta dormir.
 4. Si elegiste reparar, sal por la esclusa y sigue la marca hasta los paneles. **Asegura tres cierres**: panel izquierdo, panel derecho y toma del laboratorio. A/D o botones desplazan la pieza azul hasta la marca dorada. Pulsa E o «Fijar» durante **CALMA**; durante **RÁFAGA**, espera. Los errores conservan los cierres anteriores y no añaden costes. Completar los tres cobra **4 energía + 1 alimento** una sola vez. No reactiva la generación solar durante la tormenta.
-5. Vuelve al refugio y termina en el Dormitorio. Si falta comida, Q lleva a Plantas. Siembra lechuga (1 energía + 1 agua), observa la cuenta de 15 segundos y pulsa Q para comer cuando esté lista. Puedes recuperarte del hambre antes de dormir.
+5. Vuelve al refugio y termina en el Dormitorio. Si falta comida, F lleva a Plantas. Siembra lechuga (1 energía + 1 agua), observa la cuenta de 15 segundos y pulsa F para comer cuando esté lista. Puedes recuperarte del hambre antes de dormir.
 
-En los tableros, **Esc pausa y conserva las piezas**; E o Esc continúa. **Q cancela sin cobrar** y permite reiniciar el reto al abrirlo de nuevo. El reloj compartido corre durante el trabajo activo; se detiene al leer la explicación o pausar. Nora no se mueve mientras opera un tablero. Las reservas se validan de nuevo al confirmar, pues la comida puede bajar mientras se trabaja.
+En los tableros, **Esc pausa y conserva las piezas**; E o Esc continúa. **F cancela sin cobrar** y permite reiniciar el reto al abrirlo de nuevo. El reloj compartido corre durante el trabajo activo; se detiene al leer la explicación o pausar. Nora no se mueve mientras opera un tablero. Las reservas se validan de nuevo al confirmar, pues la comida puede bajar mientras se trabaja.
 
-Se conserva la libertad del contrato: puedes preparar aire antes de decidir, o posponerlo desde los tanques y hacerlo después de reparar. Antes de completar la reparación puedes volver por la esclusa y resguardarte. Si falta agua y traes hielo, Q en los tanques guía al **filtro azul**; Q junto al filtro purifica con la API común (2 energía por hasta 3 agua). Dormir sin aire o sin comida, o agotar el oxígeno, devuelve derrota con un consejo para el siguiente intento.
+Se conserva la libertad del contrato: puedes preparar aire antes de decidir, o posponerlo desde los tanques y hacerlo después de reparar. Antes de completar la reparación puedes volver por la esclusa y resguardarte. Si falta agua y traes hielo, F en los tanques guía al **filtro azul**; F junto al filtro purifica con la API común (2 energía por hasta 3 agua). Dormir sin aire o sin comida, o agotar el oxígeno, devuelve derrota con un consejo para el siguiente intento.
 
 ## Criterios de diseño para 7–12 años
 
@@ -43,7 +43,7 @@ Queda pendiente acordar con el coordinador la conexión en `scripts/guion_inicio
 
 La escena reutiliza `PuestoUmbra` para el refugio, las colisiones, los sprites y el polvo marciano. En campaña, el aviso del Sol 2 señala la computadora de Control para elegir el plan. La tablet de campaña muestra las reservas y el estado de la generación solar.
 
-Se reutilizan también el atlas `instrumentos_control.png` y la paleta del refugio en los esquemas de los tableros. No se generan imágenes nuevas ni se sustituyen fondos, personajes o maquinaria por dibujos provisionales.
+Los retos originales conservan el recorrido del aire y los tres cierres durante la calma. El atlas [piezas_mantenimiento.png](../../assets/dias/dia_2/piezas_mantenimiento.png), generado con ImageGen, aporta las piezas del tablero. Se reutiliza `instrumentos_control.png` en las lecturas del circuito. Prompt del atlas. «True transparent alpha, square canvas, four separate items with empty gutters. Orthographic upper-right pipe elbow, horizontal straight pipe, blue steel mechanical rail clamp and empty copper equipment rail. Hand-placed 16-bit pixel clusters, readable at 80 game pixels, no words, no UI or background.»
 
 Pluto ofrece diálogos contextuales reactivos mediante `dialogo_escena.gd`, advirtiendo al jugador si reparar dejaría la batería por debajo de las 6 unidades necesarias para el aire. En el exterior, se dibuja una baliza sobre los paneles (`EXPUESTOS` / `ASEGURADOS`) y el panel de interacción se ancla dinámicamente en el suelo sin tapar a Nora, Iris ni la esclusa.
 

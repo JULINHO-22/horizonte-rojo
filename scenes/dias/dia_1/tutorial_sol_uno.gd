@@ -8,7 +8,7 @@ const DEPOSITOS := [
 	{"id": "sol_1_hielo_profundo", "nombre": "Profundo", "x": 1290.0, "energia": 1, "hielo": 2, "alimento": 1},
 ]
 const GUIA := {
-	"radio": "Consulta las tareas en la computadora de Control. Pulsa T para consultar las reservas en tu tablet.",
+	"radio": "Consulta las tareas en la computadora de Control. Pulsa Q para consultar las reservas en tu tablet.",
 	"oxigeno": "Ve a la izquierda por Energía y sube al laboratorio de Agua y Oxígeno. Busca los depósitos verdes.",
 	"sembrar": "Ve a Plantas por el pasillo derecho. Siembra una bandeja. Cada semilla cuesta agua y energía y tarda un tiempo distinto.",
 	"cosechar": "Mira el reloj de tu cultivo. Cuando esté listo, recógelo y come aquí mismo. En la tablet puedes revisar cuánta comida queda.",

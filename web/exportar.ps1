@@ -6,9 +6,9 @@ Push-Location -LiteralPath $proyecto
 try {
     New-Item -ItemType Directory -Force 'build/web' | Out-Null
     & $motor --headless --export-release Web build/web/index.html
-    if ($LASTEXITCODE -ne 0) { throw "Godot no pudo exportar Horizonte Rojo." }
+    if ($LASTEXITCODE -ne 0) { throw "Godot no pudo exportar Red Horizon." }
     Copy-Item -LiteralPath 'assets/refugio_horizonte.png' -Destination 'build/web/portada.png'
-    Compress-Archive -Path 'build/web/*' -DestinationPath 'build/Horizonte-Rojo-Web.zip' -Force
+    Compress-Archive -Path 'build/web/*' -DestinationPath 'build/Red-Horizon-Web.zip' -Force
 } finally {
     Pop-Location
 }

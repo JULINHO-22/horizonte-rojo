@@ -1,10 +1,10 @@
 extends Control
 
 const DialogoEscena := preload("res://scripts/dialogo_escena.gd")
+const AccionEscena := preload("res://scripts/accion_escena.gd")
 
 const ANCHO_GUIA := 460.0
 const TINTA := Color("#211716")
-const BORDE_CIAN := Color("#976d53")
 const PAPEL := Color("#fff2db")
 const CIAN := Color("#8ff1e7")
 const MUTED := Color("#a0b5be")
@@ -101,7 +101,7 @@ func actualizar(lugar: String, mensaje: String, principal: String, otra: String,
 	accion.visible = actuar
 	alternativa.disabled = not elegir
 	alternativa.visible = not otra.is_empty() and elegir
-	alternativa.text = "Q · " + otra
+	alternativa.text = "F · " + otra
 
 	mapa.visible = interior
 	mapa.text = "M · Cerrar plano" if plano else "M · Plano"
@@ -185,26 +185,6 @@ func celebrar(mensaje: String) -> void:
 	animacion_logro.tween_property(logro, "modulate:a", 0.0, 0.6)
 	animacion_logro.tween_callback(logro.hide)
 
-func _estilo(color: Color, borde: Color, grosor: int) -> StyleBoxFlat:
-	var estilo := StyleBoxFlat.new()
-	estilo.bg_color = color
-	estilo.border_color = borde
-	estilo.set_border_width_all(grosor)
-	estilo.corner_radius_top_left = 3
-	estilo.corner_radius_top_right = 3
-	estilo.corner_radius_bottom_left = 3
-	estilo.corner_radius_bottom_right = 3
-	return estilo
-
-func _panel(padre: Control, rect: Rect2, color: Color, borde: Color) -> Panel:
-	var panel := Panel.new()
-	panel.position = rect.position
-	panel.size = rect.size
-	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	panel.add_theme_stylebox_override("panel", _estilo(color, borde, 2))
-	padre.add_child(panel)
-	return panel
-
 func _texto(padre: Control, rect: Rect2, texto: String, tamano: int, color: Color) -> Label:
 	var etiqueta := Label.new()
 	etiqueta.position = rect.position
@@ -223,12 +203,7 @@ func _boton(padre: Control, rect: Rect2, texto: String) -> Button:
 	boton.focus_mode = Control.FOCUS_NONE
 	boton.text = texto
 	boton.add_theme_font_size_override("font_size", 15)
-	boton.add_theme_color_override("font_color", PAPEL)
-	boton.add_theme_color_override("font_disabled_color", MUTED)
-	boton.add_theme_stylebox_override("normal", _estilo(Color("#16323c"), CIAN, 1))
-	boton.add_theme_stylebox_override("hover", _estilo(Color("#245361"), CIAN, 2))
-	boton.add_theme_stylebox_override("pressed", _estilo(Color("#10222a"), PAPEL, 2))
-	boton.add_theme_stylebox_override("disabled", _estilo(Color("#14222a"), Color("#3b4f57"), 1))
+	AccionEscena.aplicar(boton)
 	padre.add_child(boton)
 	return boton
 

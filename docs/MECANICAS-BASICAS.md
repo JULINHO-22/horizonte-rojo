@@ -70,4 +70,4 @@ Las acciones devuelven si se aplicaron. La señal se emite después de actualiza
 - Cultivos y luz. «En un invernadero de prueba, el rábano recibió más luz que la lechuga». [NASA OSDR, EDEN ISS](https://osdr.nasa.gov/bio/repo/data/studies/OSD-895) y [NASA NTRS, cultivo de papa](https://ntrs.nasa.gov/citations/19950005536).
 - Los rayos, burbujas y segundos son unidades del juego. En el juego principal se podrán mostrar 12 rayos, un tanque con la palabra «Oxígeno» y una gota para el agua. El banco interno usa controles simples para probar el contrato. Las fuentes pueden consultarse como enlaces, sin depender de una API para jugar.
 
-La campaña abre la tablet con **T** y le pasa una copia de las reservas del modelo. La tablet reutiliza el atlas de iconos de `scripts/mecanicas/indicadores_refugio.gd`. Control muestra objetivos y decisiones.
+La campaña abre la tablet con **Q** y le pasa una copia de las reservas del modelo. La tablet reutiliza los instrumentos del panel original. Control muestra objetivos y decisiones.

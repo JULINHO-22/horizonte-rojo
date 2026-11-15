@@ -2,10 +2,10 @@ extends Control
 ## Bitácora de tareas de la computadora del refugio.
 signal cerrar_solicitado
 signal ruta_confirmada
+const AccionEscena := preload("res://scripts/accion_escena.gd")
 
 const TITULO := Color("#fff0d9")
 const TEXTO := Color("#e6cfb5")
-const BORDE := Color("#87654f")
 const MENTA := Color("#f0b879")
 const ANCHO := 944.0
 var _sol: int
@@ -57,21 +57,7 @@ func _boton(texto: String, rect: Rect2, accion: Callable) -> Button:
 	var boton := Button.new()
 	boton.text = texto
 	boton.add_theme_font_size_override("font_size", 17)
-	boton.add_theme_color_override("font_color", TITULO)
-	var normal := StyleBoxFlat.new()
-	normal.bg_color = Color("#33261f")
-	normal.border_color = BORDE
-	normal.set_border_width_all(1)
-	normal.set_corner_radius_all(6)
-	var resalte := normal.duplicate() as StyleBoxFlat
-	resalte.bg_color = Color("#513a2b")
-	resalte.border_color = MENTA
-	var foco := resalte.duplicate() as StyleBoxFlat
-	foco.draw_center = false
-	boton.add_theme_stylebox_override("normal", normal)
-	boton.add_theme_stylebox_override("hover", resalte)
-	boton.add_theme_stylebox_override("pressed", resalte)
-	boton.add_theme_stylebox_override("focus", foco)
+	AccionEscena.aplicar(boton)
 	boton.position = rect.position
 	boton.size = rect.size
 	boton.pressed.connect(accion)
