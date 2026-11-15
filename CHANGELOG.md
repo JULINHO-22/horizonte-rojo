@@ -8,6 +8,12 @@
 - Diálogos reactivos de Pluto con prevención de soft-lock si la batería restante es insuficiente para activar el oxígeno tras reparar.
 - Integración completa con `origin/main` en `4030c9d`. Pruebas gráficas y de recursos verificadas sin errores de script.
 
+## 2026-11-15 | Laboratorio conjunto y pantalla integrada
+
+- Agua y Oxígeno comparten sala y tienen puestos diferenciados frente a sus equipos.
+- Se generan los depósitos verdes y el cristal de Control. Las lecturas se dibujan sobre el cristal de tres secciones.
+- La guía lleva primero a Oxígeno y después al dormitorio.
+
 ## 2026-11-15 | Iconos de Control
 
 - Se sustituyen las máscaras de píxeles por iconos generados con bordes suaves. El nivel del agua se anima dentro de la gota.

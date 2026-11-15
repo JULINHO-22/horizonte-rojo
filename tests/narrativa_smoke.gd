@@ -58,6 +58,15 @@ func _probar() -> void:
 	_tramo(mapa, Vector2(191, 245), Vector2(191, 42))
 	_tramo(mapa, Vector2(191, 42), Vector2(25, 42))
 	_tramo(mapa, Vector2(25, 42), PuestoUmbra.EQUIPO_AGUA[0])
+	_tramo(mapa, PuestoUmbra.EQUIPO_AGUA[0], PuestoUmbra.ESTACION_OXIGENO)
+	for prueba in [[PuestoUmbra.EQUIPO_AGUA[0], "agua"], [PuestoUmbra.ESTACION_OXIGENO, "oxigeno"]]:
+		juego.posicion = prueba[0]
+		juego._mostrar()
+		juego._accion()
+		assert(juego.estacion == prueba[1])
+		juego._cerrar_estacion()
+	await _captura("laboratorio-agua-oxigeno")
+	mapa = juego.puesto
 	_tramo(mapa, Vector2(402, 245), Vector2(716, 245))
 	_tramo(mapa, Vector2(538, 245), Vector2(538, 133))
 	_tramo(mapa, Vector2(538, 133), Vector2(681, 133))

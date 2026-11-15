@@ -4,7 +4,7 @@ extends Node2D
 const SENDERO := preload("res://assets/refugio_horizonte.png")
 const CAMPO := preload("res://assets/barranco_horizonte.png")
 const TALLER := preload("res://assets/taller_umbra.png")
-const CONTROL := preload("res://assets/control_supercomputadora.png")
+const CONTROL := preload("res://assets/control_pantallas.png")
 const PLANTAS := preload("res://assets/plantas_horizonte.png")
 const DORMITORIO := preload("res://assets/dormitorio_umbra.png")
 const NAVE := preload("res://assets/NarrativaInicio/ModuloDescensoAterrizajePixelArt.png")
@@ -12,11 +12,12 @@ const PERCY := preload("res://assets/NarrativaInicio/Percy(robotQueExuisteEnLaLu
 const MAPA := preload("res://assets/base.jpg")
 const TORMENTA := preload("res://assets/tormenta.png")
 const CENTRO_AGUA := preload("res://assets/laboratorio_agua.png")
+const LABORATORIO := preload("res://assets/laboratorio_agua_oxigeno.png")
 const ENERGIA := preload("res://assets/energia_interior.png")
 const REFUGIO := preload("res://assets/esclusa_interior.png")
 const NORA := preload("res://assets/nora_reposo.png")
 const NORA_PASOS := preload("res://assets/nora_caminar.png")
-const NOMBRES := {"energia": "ENERGÍA", "cultivos": "SALA DE PLANTAS", "agua": "CENTRO DE AGUA", "radio": "CONTROL", "dormitorio": "DORMITORIO"}
+const NOMBRES := {"energia": "ENERGÍA", "cultivos": "SALA DE PLANTAS", "agua": "AGUA Y OXÍGENO", "radio": "CONTROL", "dormitorio": "DORMITORIO"}
 const IRIS := preload("res://assets/iris.png")
 const IRIS_PASOS := preload("res://assets/iris_caminar.png")
 const TEO_NORMAL := preload("res://assets/teo_normal.png")
@@ -95,6 +96,7 @@ const EQUIPOS := [
 ]
 const ALTURA_INTERIOR := 30.0
 const EQUIPO_AGUA := [Vector2(25, 19), Vector2(-1, 19), Vector2(51, 19)]
+const ESTACION_OXIGENO := Vector2(103, 20)
 const ALCANCE_AGUA := 10.0
 const FIN_LLEGADA := 13.5
 const SUELO := 351.0
@@ -110,6 +112,7 @@ const RELES := [Vector2(633, SUELO), Vector2(490, SUELO), Vector2(312, SUELO)]
 const ABRIGOS := [Vector2(463, SUELO), Vector2(590, SUELO), Vector2(731, SUELO)]
 
 var interior := false
+var laboratorio_activo := false
 var cielo_sereno := false
 var bienvenida_percy := false
 var chequeo := false
@@ -737,7 +740,7 @@ func _dibujar_interior() -> void:
 	if vista_esclusa:
 		_dibujar_piso_esclusa()
 	var fondos := {
-		"energia": ENERGIA, "cultivos": PLANTAS, "agua": CENTRO_AGUA, "radio": CONTROL,
+		"energia": ENERGIA, "cultivos": PLANTAS, "agua": LABORATORIO if laboratorio_activo else CENTRO_AGUA, "radio": CONTROL,
 		"dormitorio": DORMITORIO, "taller": TALLER,
 	}
 	for id: String in fondos:
@@ -750,6 +753,8 @@ func _dibujar_interior() -> void:
 		return
 	_dibujar_desvio()
 	_dibujar_equipo_agua()
+	if laboratorio_activo and (plano or ROOMS.agua.has_point(punto)):
+		draw_circle(ESTACION_OXIGENO, 4.0, LUZ, false, 1.2, true)
 	if reserva_en_prueba:
 		var color := LUZ if desvio_energia else OCRE
 		draw_polyline(PackedVector2Array([Vector2(129, 273), Vector2(164, 266),
@@ -767,6 +772,8 @@ func _dibujar_interior() -> void:
 		patrulla >= 4.1, int(fposmod(iris_x / 20.0, 1.0) * 8) if iris_camina else -1)
 	_sprite(DRON, Vector2(340, 260), 17, sin(tiempo * 4.5))
 	var terminal := terminal_cercana()
+	if laboratorio_activo and punto.distance_to(ESTACION_OXIGENO) <= 13.0:
+		terminal = "agua"
 	var radio_marca := 3.2 * minf(1.0, 2.4 / escala_camara)
 	for id: String in TERMINALES:
 		var color := LUZ if id == objetivo_mision or terminal == id else OCRE
@@ -780,8 +787,8 @@ func _dibujar_interior() -> void:
 	draw_set_transform(Vector2.ZERO)
 	var carteles := {
 		Vector2(302, 227): "← ENERGÍA",
-		Vector2(187, 155): "↑ CENTRO DE AGUA",
-		Vector2(188, 29): "← CENTRO DE AGUA",
+		Vector2(187, 155): "↑ AGUA Y OXÍGENO",
+		Vector2(188, 29): "← AGUA Y OXÍGENO",
 		Vector2(529, 211): "↑ PLANTAS Y DORMITORIO",
 		Vector2(549, 255): "TALLER →",
 		Vector2(538, 110): "← PLANTAS   ·   DORMITORIO →",
@@ -793,7 +800,7 @@ func _dibujar_interior() -> void:
 		var nombres_plano := {
 			"taller": "TALLER",
 			"energia": "ENERGÍA", "radio": "CONTROL", "dormitorio": "DORMITORIO",
-			"cultivos": "PLANTAS", "agua": "CENTRO DE AGUA", "cierre": "PUERTA",
+			"cultivos": "PLANTAS", "agua": "AGUA Y OXÍGENO", "cierre": "PUERTA",
 		}
 		for id: String in nombres_plano:
 			var encuadre: Rect2 = ENCUADRES[id]
@@ -805,7 +812,9 @@ func _dibujar_interior() -> void:
 		entrada_control.y = maxf(entrada_control.y, 70.0)
 		_baliza(entrada_control, "↑ CONTROL", LUZ)
 	elif not plano and not agua_en_curso and terminal != objetivo_mision and (TERMINALES.has(objetivo_mision) or objetivo_mision == "agua"):
-		var destino: Vector2 = EQUIPO_AGUA[0] if objetivo_mision == "agua" else TERMINALES[objetivo_mision]
+		var destino: Vector2 = TERMINALES.get(objetivo_mision, EQUIPO_AGUA[0])
+		if objetivo_mision == "agua" and laboratorio_activo:
+			destino = ESTACION_OXIGENO
 		if objetivo_mision == "agua" and punto.x > 222.0:
 			destino = Vector2(202, 245)
 		elif objetivo_mision == "agua" and punto.x > 172.0:

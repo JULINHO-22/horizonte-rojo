@@ -176,7 +176,7 @@ func _actualizar_guia() -> void:
 		return
 	elif fase == "base":
 		pista.text = "WASD o flechas  /  M: plano" if reloj < 6.0 else ""
-		var cerca := puesto.terminal_cercana()
+		var cerca := _estacion_cercana()
 		if cerca == "dormitorio" and not campana.listo_para_regresar():
 			boton.text = "E · Descansar"
 			boton.visible = true
@@ -186,13 +186,16 @@ func _actualizar_guia() -> void:
 		elif cerca == "cierre" and campana.listo_para_regresar():
 			boton.text = "E · Salir hacia la nave"
 			boton.visible = true
+		elif cerca in ["agua", "oxigeno"] and not campana.listo_para_regresar():
+			boton.text = "E · Purificar agua" if cerca == "agua" else "E · Preparar oxígeno"
+			boton.visible = true
 		elif not cerca.is_empty() and FICHAS.has(cerca):
 			boton.text = "E · " + PuestoUmbra.NOMBRES.get(cerca, "Entrada").capitalize()
 			boton.visible = true
 		if boton.visible:
 			_ubicar_accion()
 		if aviso_tiempo <= 0:
-			voz.decir("Pluto", "Asegura el aire en el Centro de agua antes de dormir." if not campana.listo_para_regresar() else "Revisa la ruta en Control antes de salir.")
+			voz.decir("Pluto", "Asegura el aire en el laboratorio de Agua y Oxígeno antes de dormir." if not campana.listo_para_regresar() else "Revisa la ruta en Control antes de salir.")
 			voz.visible = reloj < 6.0
 		else:
 			voz.visible = true
@@ -211,14 +214,14 @@ func _accion() -> void:
 			if not estacion.is_empty():
 				_cerrar_estacion()
 				return
-			var cerca := puesto.terminal_cercana()
+			var cerca := _estacion_cercana()
 			if cerca == "dormitorio" and not campana.listo_para_regresar():
 				if recursos.dormir():
 					_cambiar("noche")
 				else:
 					_cambiar("derrota")
 					_guardar()
-			elif cerca in ["agua", "cultivos"] and not campana.listo_para_regresar():
+			elif cerca in ["agua", "oxigeno", "cultivos"] and not campana.listo_para_regresar():
 				_abrir_estacion(cerca)
 			elif cerca == "radio" and campana.listo_para_regresar():
 				voz.decir("Iris", "La ruta está preparada. Salgamos juntos: la nave nos espera a la izquierda del refugio.")
@@ -365,6 +368,7 @@ func _mostrar() -> void:
 			boton.show()
 		"base":
 			lecturas = Indicadores.new()
+			lecturas.en_consola = true
 			capa.add_child(lecturas)
 			comida_ui = Indicadores.new()
 			comida_ui.solo_alimento = true
@@ -391,16 +395,23 @@ func _refrescar_recursos() -> void:
 	var datos := recursos.estado()
 	lecturas.actualizar(datos)
 	comida_ui.actualizar(datos)
-	lecturas.visible = not plano and PuestoUmbra.ROOMS.radio.has_point(puesto.punto)
+	lecturas.visible = not plano and not datos.sin_luz and PuestoUmbra.ROOMS.radio.has_point(puesto.punto)
+	if not campana.listo_para_regresar():
+		puesto.objetivo_mision = "dormitorio" if datos.aire_asegurado else "agua"
 	# Anclaje sobre el display cian de la computadora en la ilustración de Control.
-	var esquina := puesto.proyectar_suelo(Vector2(370, 198))
-	var borde := puesto.proyectar_suelo(Vector2(436, 198))
+	var esquina := puesto.proyectar_suelo(Vector2(372.8, 203.5))
+	var borde := puesto.proyectar_suelo(Vector2(440.0, 203.5))
 	lecturas.position = esquina
 	lecturas.scale = Vector2.ONE * ((borde.x - esquina.x) / 386.0)
 	if datos.sin_luz:
 		puesto.modulate = Color("#59697d")
 	else:
 		puesto.modulate = Color.WHITE
+
+func _estacion_cercana() -> String:
+	if puesto.punto.distance_to(PuestoUmbra.ESTACION_OXIGENO) <= 13.0:
+		return "oxigeno"
+	return puesto.terminal_cercana()
 
 func _abrir_estacion(id: String) -> void:
 	estacion = id
@@ -410,9 +421,11 @@ func _abrir_estacion(id: String) -> void:
 	estaciones.custom_minimum_size.x = 384
 	capa.add_child(estaciones)
 	if id == "agua":
-		voz.decir("Pluto", "Primero limpia el hielo para obtener agua. Para preparar aire, el equipo necesita agua y batería.")
+		voz.decir("Pluto", "Aquí limpiamos el hielo. Los depósitos de oxígeno están al lado, en esta misma sala.")
 		_opcion("Recoger hielo de la reserva de prueba", _hielo_prueba)
 		_opcion("Purificar hielo · 2 energía", recursos.purificar_hielo)
+	elif id == "oxigeno":
+		voz.decir("Pluto", "Este equipo usa agua y batería para asegurar el aire de hoy.")
 		_opcion("Asegurar aire · 6 energía y 1 agua", recursos.activar_oxigeno)
 	else:
 		for cultivo: String in Recursos.CULTIVOS:
@@ -454,6 +467,7 @@ func _crear_mapa(interior: bool) -> void:
 	capa.add_child(marco)
 	puesto = PuestoUmbra.new()
 	puesto.interior = interior
+	puesto.laboratorio_activo = fase == "base"
 	puesto.chequeo = not interior
 	puesto.cielo_sereno = true
 	puesto.punto = posicion
