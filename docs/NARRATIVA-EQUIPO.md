@@ -80,7 +80,7 @@ SPEECH
 | Base frente a nave | La bienvenida lleva al refugio, no de nuevo a la nave. La nave se usa para el regreso. |
 | Percy y Pluto | Personajes separados: Percy es guía exterior; Pluto explica las salas y acompaña el descanso. |
 | Nombre del rover | «Perseverance» es el nombre real. Percy representa al Perseverance real en la ficción. Usa un sprite generado detallado; el SVG provisional ya no se utiliza. Pluto es otro robot, ficticio. |
-| Viaje espacial | Montaje de ida y vuelta con fondos orbitales generados, nave independiente, curvas de movimiento y corte a negro. Ver [Arte del viaje](ARTE-VIAJE.md). Dura 9 s en pantalla y representa meses. La salida de la Tierra y las órbitas bajas/altas aún no tienen una cinemática detallada. |
+| Viaje espacial | Montaje de ida y vuelta con seis capas 2D pixel art de `assets/NarrativaInicio/`: Tierra, espacio profundo, Marte, estela, etapa de transferencia y módulo. La nave sale acoplada y el módulo se desprende al llegar; `puesto.gd` muestra la variante aterrizada del mismo diseño. Usa fundidos, paralaje, zoom y trayectorias separadas sin dibujar planetas o estrellas mediante primitivas. Ver [Arte del viaje](ARTE-VIAJE.md). Dura 9 s en pantalla y representa meses. La mecánica orbital sigue siendo ilustrativa, no una simulación. |
 | Aterrizaje | Reutiliza la animación de descenso existente, comprimida a 10 s. |
 | Diálogo de Percy | Avanza con E, Enter o el mismo botón; se deja leer sin un límite rígido de 11 s. |
 | Noches | Oscurecimiento progresivo de 3 s, entrada bloqueada, avance automático y despertar en el dormitorio. La quinta noche conserva «día 5» y abre el regreso; no existe día 6. |

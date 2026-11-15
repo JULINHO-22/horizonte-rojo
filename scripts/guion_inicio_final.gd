@@ -24,7 +24,7 @@ var fase := "portada"
 var reloj := 0.0
 var posicion := Vector2(220, PuestoUmbra.SUELO)
 var puesto: PuestoUmbra
-var viaje: Node2D
+var viaje: Control
 var capa: Control
 var titulo: Label
 var voz: Label
@@ -49,7 +49,6 @@ func _process(delta: float) -> void:
 	match fase:
 		"ida", "regreso":
 			viaje.progreso = clampf(reloj / 9.0, 0, 1)
-			viaje.queue_redraw()
 			titulo.text = viaje.etapa()
 			if reloj >= 9.0:
 				_cambiar("aterrizaje" if fase == "ida" else "llegada_tierra")

@@ -4,10 +4,10 @@
 
 - `scenes/umbra.tscn` ejecuta `guion_inicio_final.gd`: entrada, movimiento, presentación y transiciones del guion.
 - `campana_narrativa.gd` conserva el día y las noches en `user://narrativa.cfg`, valida al cargar y escribe por archivo temporal. No aplica costes ni completa tareas.
-- `viaje_espacial.gd` compone los fondos generados `viaje_tierra.png` / `viaje_marte.png` y la capa `nave_transferencia.png`, con curvas, paneo y corte a negro. `etapa()` aporta el título según el progreso.
+- `viaje_espacial.gd` compone seis capas pixel art de `assets/NarrativaInicio/`: tres fondos (`TierraPixelArt.png`, `EspacioProfundoPixelArt.png`, `MartePixelArt.png`), estela, etapa de transferencia y módulo orbital. Usa nodos `TextureRect`, fundidos, paralaje, zoom, curva de movimiento, impulso y desacople; no dibuja planetas, estrellas o la nave con `_draw()`. `etapa()` aporta el título según el progreso. `puesto.gd` muestra `ModuloDescensoAterrizajePixelArt.png` después de la llegada y mantiene la identidad visual del módulo separado.
 - `puesto.gd` sigue siendo la única geometría del mapa. Centro de agua al noroeste de Energía, Taller al este de Control. `PASO_AGUA` y `PASO_TALLER` conectan las puertas. La esclusa recorta el casco y extiende el piso interior sin terreno rojo; su puerta interior queda visualmente abierta tras la entrada.
-- `assets/percy_perseverance.png` representa artísticamente al rover real. Reemplaza al SVG provisional; Pluto conserva `dron.png`. Prompts y recursos: [Arte del viaje](ARTE-VIAJE.md).
-- `tests/narrativa_smoke.gd` verifica tramos de paso, ida, entrada, noches, guardado, embarque y regreso; genera capturas en `build/qa/`. Ejecutar en perfil temporal: no usar la partida del jugador.
+- `assets/NarrativaInicio/Percy(robotQueExuisteEnLaLuna).png` representa artísticamente al rover real. El nombre del archivo se conserva por compatibilidad, aunque Percy está en Marte. Reemplaza al SVG provisional; Pluto conserva `dron.png`. Prompts y recursos: [Arte del viaje](ARTE-VIAJE.md).
+- `tests/narrativa_smoke.gd` verifica que el viaje cargue las seis capas `TextureRect` y las rutas exactas de los recursos pixel art, además de tramos de paso, ida, entrada, noches, guardado, embarque y regreso. Genera capturas en `build/qa/` cuando hay un servidor gráfico y omite solo las capturas al ejecutarse en modo `headless`. Ejecutar en perfil temporal: no usar la partida del jugador.
 
 Flujo: `portada → ida → aterrizaje → percy → camino_base → esclusa → base → noche (3 s) → amanecer → base`. Tras la quinta noche: `base → camino_nave → pilotaje → despegue → regreso → llegada_tierra (1 s) → epilogo (10 s)`. Cada noche se confirma una vez. No se crea un sexto día. La posición al amanecer es el dormitorio.
 
@@ -84,6 +84,9 @@ Acuerda con el equipo cualquier cambio a nombres, tipos o significado de estos c
 
 ## Resultado de verificación del recorrido narrativo (2026-11-14)
 
+- Cinemática de `NarrativaInicio`: importación sin errores de script en Godot 4.7.2. La prueba comprueba las seis capas `TextureRect`, sus rutas pixel art y finaliza con `NARRATIVA_OK`; en modo `headless` se omiten las capturas, pero no las aserciones ni el recorrido.
+- Exportación Web `release` completada con las plantillas oficiales 4.7.2. El paquete contiene `index.html`, `index.js`, `index.wasm`, `index.pck`, los dos worklets de audio, `index.png` y `portada.png`; se generó `build/Horizonte-Rojo-Web.zip`.
+- Revisión visual de la exportación Web: portada, carga del motor, nave y módulo acoplados al salir de la Tierra, y el mismo módulo ya aterrizado en Marte. Toda la escena conserva 2D pixel art y el controlador no dibuja planetas ni estrellas con primitivas.
 - Godot 4.7.2: importación y ejecución sin errores de script.
 - `tests/narrativa_smoke.gd`: `NARRATIVA_OK`. Comprueba tramos de acceso al Centro de agua, Energía, Taller, Plantas y Dormitorio, obstáculos representativos, cinco fundidos, guardado al despertar, ausencia de sexto día y regreso desde la nave.
 - Las capturas de `build/qa/` se revisaron visualmente: umbral sin terreno rojo lateral, mapa compacto, bienvenida, noche y epílogo. Se corrigió el desbordamiento del texto final. La calidad del arte final sigue pendiente según el documento del equipo.

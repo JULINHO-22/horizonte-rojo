@@ -4,7 +4,7 @@
 
 ## Estado y ejecución actual
 
-La escena principal es un **recorrido narrativo en revisión**: viaje de ida, llegada, Percy, exploración del refugio, cinco noches y regreso. Las actividades de los días están pendientes de definición. Consulta [Narrativa del equipo](docs/NARRATIVA-EQUIPO.md) para el documento fuente, las adaptaciones y lo que falta.
+La escena principal es un **recorrido narrativo en revisión**: cinemática 2D pixel art de ida, llegada, Percy, exploración del refugio, cinco noches y regreso. La nave sale con el módulo acoplado, lo separa al aproximarse a Marte y conserva ese diseño en el aterrizaje. La secuencia usa imágenes locales de `assets/NarrativaInicio/`; no reproduce video externo ni depende de recursos remotos. Las actividades de los días están pendientes de definición. Consulta [Narrativa del equipo](docs/NARRATIVA-EQUIPO.md) para el documento fuente, las adaptaciones y lo que falta.
 
 1. Importa `project.godot` en Godot 4.7.2 y pulsa **F5**.
 2. Inicia el viaje. Lee la bienvenida de Percy y avanza con **E**, **Enter** o el botón.

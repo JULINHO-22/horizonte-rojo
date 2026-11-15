@@ -4,6 +4,8 @@ func _initialize() -> void:
 	call_deferred("_probar")
 
 func _captura(nombre: String) -> void:
+	if DisplayServer.get_name() == "headless":
+		return
 	await process_frame
 	await RenderingServer.frame_post_draw
 	DirAccess.make_dir_recursive_absolute("res://build/qa")
@@ -20,6 +22,13 @@ func _probar() -> void:
 	juego.set_process(false)
 	juego._reiniciar()
 	assert(juego.fase == "ida")
+	assert(juego.viaje.get_child_count() == 6, "El viaje debe usar tres fondos, estela, transferencia y módulo")
+	assert(juego.viaje.fondo_salida is TextureRect and juego.viaje.fondo_salida.texture.resource_path == "res://assets/NarrativaInicio/TierraPixelArt.png")
+	assert(juego.viaje.fondo_espacio is TextureRect and juego.viaje.fondo_espacio.texture.resource_path == "res://assets/NarrativaInicio/EspacioProfundoPixelArt.png")
+	assert(juego.viaje.fondo_llegada is TextureRect and juego.viaje.fondo_llegada.texture.resource_path == "res://assets/NarrativaInicio/MartePixelArt.png")
+	assert(juego.viaje.estela.texture.resource_path == "res://assets/NarrativaInicio/EstelaPropulsionPixelArt.png")
+	assert(juego.viaje.transferencia.texture.resource_path == "res://assets/NarrativaInicio/NaveTransferenciaPixelArt.png")
+	assert(juego.viaje.modulo.texture.resource_path == "res://assets/NarrativaInicio/ModuloDescensoOrbitalPixelArt.png")
 	juego._process(2.5)
 	await _captura("trayectoria")
 	juego._process(4.0)

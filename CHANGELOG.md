@@ -1,11 +1,14 @@
 # Cambios
 
-## 2026-11-14 | Arte cinematográfico del viaje
+## 2026-11-14 | Cinemática inicial 2D pixel art por etapas
 
-- Se generan fondos orbitales de Tierra y Marte y una nave de transferencia transparente; sustituyen los planetas geométricos y la miniatura de nave del montaje anterior.
-- Dos tomas animadas con paneo, trayectoria suave, escala y corte a negro para representar los meses de viaje. El regreso invierte los escenarios.
-- Percy representa a Perseverance, rover real llegado a Marte en 2021; recibe un sprite generado mecánico, distinto de Pluto.
-- Recursos y prompts íntegros en `docs/ARTE-VIAJE.md`. Se mantiene pendiente el diseño de actividades.
+- La dirección visual definitiva del proyecto es 2D pixel art. Se reemplaza la iteración que mezclaba fondos realistas con una nave pixelada.
+- `viaje_espacial.gd` usa seis `TextureRect`: `TierraPixelArt.png`, `EspacioProfundoPixelArt.png`, `MartePixelArt.png`, `EstelaPropulsionPixelArt.png`, `NaveTransferenciaPixelArt.png` y `ModuloDescensoOrbitalPixelArt.png`.
+- La etapa grande y el módulo aparecen acoplados al salir de la Tierra; al aproximarse a Marte toman rutas, escalas y giros distintos. La estela pulsa durante los impulsos y se apaga en el desacople.
+- `puesto.gd` usa `ModuloDescensoAterrizajePixelArt.png`, variante terrestre del mismo diseño, para mantener continuidad entre separación y llegada.
+- El regreso invierte los fondos y comienza con el módulo separado antes de acoplarlo. La secuencia sigue siendo un montaje ilustrativo de nueve segundos, no una simulación orbital.
+- El preset Web excluye los recursos visuales anteriores. Godot empaqueta los PNG en `index.pck`, por lo que Firebase Hosting conserva el mismo flujo y no necesita video, códecs ni descargas externas.
+- Se validaron importación, prueba narrativa completa, exportación Web y revisión visual del acople inicial y el aterrizaje. Los recursos y el conjunto de prompts quedan registrados en `docs/ARTE-VIAJE.md`.
 
 ## 2026-11-14 | Guion del equipo, cinco noches y mapa compacto
 
