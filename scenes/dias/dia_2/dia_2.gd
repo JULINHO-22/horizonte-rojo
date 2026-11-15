@@ -5,6 +5,7 @@ signal finalizado(resultado: Dictionary)
 const Recursos := preload("res://scripts/mecanicas/recursos_mision.gd")
 const Indicadores := preload("res://scripts/mecanicas/indicadores_refugio.gd")
 const HUD := preload("res://scenes/dias/dia_2/dia_2_hud.gd")
+const Taller := preload("res://scenes/dias/dia_2/taller_dia_2.gd")
 const AudioDia2 := preload("res://scenes/dias/dia_2/dia_2_audio.gd")
 
 const REPARAR := "dia_2_reparar"
@@ -16,7 +17,8 @@ const CONTROL: Vector2 = PuestoUmbra.TERMINALES.radio
 const SALIDA := Vector2(402, 382)
 const PANELES := PuestoUmbra.REVISION_SOLAR
 const PLUTO := Vector2(340, 260)
-const AIRE := Vector2(25, 27)
+const AIRE := PuestoUmbra.ESTACION_OXIGENO
+const AGUA := Vector2(25, 27)
 const PLANTAS := Vector2(405, 99)
 const CAMA := Vector2(681, 89)
 
@@ -32,15 +34,17 @@ const GIRO_CAMA := Vector2(681, 131)
 enum Paso { DECISION, SALIR, REPARAR, ENTRAR, AIRE, PLANTAS, DESCANSO }
 
 const OBJETIVOS := {
-	Paso.DECISION: [CONTROL, "Supercomputadora Â· Control", "La tormenta de polvo detiene la generaciÃ³n solar. Sal para proteger los paneles y el laboratorio o resguÃ¡rdate.", "Ir a reparar Â· 4 energÃ­a + 1 alimento"],
-	Paso.SALIR: [SALIDA, "Esclusa principal", "La esclusa conecta con el exterior azotado por las rÃ¡fagas. La reparaciÃ³n se confirma junto a los paneles.", "Salir a la superficie"],
-	Paso.REPARAR: [PANELES, "Paneles solares exteriores", "Las rÃ¡fagas empujan a Nora. AcÃ©rcate a la marca y asegura los paneles y la toma del laboratorio.", "Reparar Â· 4 energÃ­a + 1 alimento"],
-	Paso.ENTRAR: [PuestoUmbra.ESCLUSA, "Esclusa principal", "Paneles y laboratorio asegurados. Regresa al refugio para proteger el soporte vital.", "Entrar al refugio"],
-	Paso.AIRE: [AIRE, "Centro de agua Â· Soporte vital", "Activa el ciclo de electrÃ³lisis para asegurar el oxÃ­geno de la base hasta la noche.", "Asegurar aire Â· 6 energÃ­a + 1 agua"],
-	Paso.PLANTAS: [PLANTAS, "MÃ³dulo de cultivo Â· Plantas", "La lechuga tarda 15 s y aporta 2 de alimento al cosecharla.", "Sembrar Â· 1 energÃ­a + 1 agua"],
-	Paso.DESCANSO: [CAMA, "Dormitorio Â· Litera", "Comprueba que las reservas y el aire estÃ©n asegurados y descansa para completar el Sol 2.", "Terminar el DÃ­a 2"],
+	Paso.DECISION: [CONTROL, "1 · Elige tu plan", "El polvo tapa la luz. Hoy los paneles no cargan.\n¿Protegemos los equipos o nos quedamos dentro?", "Reparar · 4 energía + 1 comida"],
+	Paso.SALIR: [SALIDA, "3 · Sal por la esclusa", "Tu aire está listo. Ve a proteger los equipos.\nTodavía puedes volver y cambiar de plan.", "Salir al exterior"],
+	Paso.REPARAR: [PANELES, "3 · Sujeta los equipos", "Alinea y fija 3 cierres entre las ráfagas.\nSigue la marca hasta los paneles.", "Abrir caja de herramientas"],
+	Paso.ENTRAR: [PuestoUmbra.ESCLUSA, "4 · Vuelve a casa", "¡Los equipos están protegidos!\nLos paneles cargarán cuando pase la tormenta.", "Entrar al refugio"],
+	Paso.AIRE: [AIRE, "2 · Prepara el aire", "Ve a los tanques verdes del laboratorio.\nAgua + energía nos ayudan a tener aire.", "Conectar aire · 6 energía + 1 agua"],
+	Paso.PLANTAS: [PLANTAS, "Una pausa para comer", "Siembra una lechuga. En 15 segundos estará lista.\nDespués pulsa Q para comerla.", "Sembrar · 1 energía + 1 agua"],
+	Paso.DESCANSO: [CAMA, "4 · A descansar", "Aire listo, comida lista. ¡Buen trabajo!\nAcércate a la cama para terminar el día.", "Terminar el Día 2"],
 }
 
+var taller: Taller
+var salida_pendiente := false
 var recursos: Recursos
 var puesto: PuestoUmbra
 var interfaz: HUD
@@ -71,6 +75,7 @@ func _ready() -> void:
 	add_child(fondo)
 
 	puesto = PuestoUmbra.new()
+	puesto.laboratorio_activo = true
 	puesto.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	add_child(puesto)
 
@@ -79,6 +84,7 @@ func _ready() -> void:
 
 	# Indicadores del refugio integrados con el nuevo arte de main
 	lecturas = Indicadores.new()
+	lecturas.en_consola = true
 	add_child(lecturas)
 
 	comida_ui = Indicadores.new()
@@ -109,6 +115,14 @@ func _ready() -> void:
 	interfaz.pausa.pressed.connect(_pausar)
 	interfaz.confirmar.pressed.connect(_confirmar)
 
+	taller = Taller.new()
+	add_child(taller)
+	taller.completado.connect(_completar_taller)
+	taller.cancelado.connect(_cerrar_taller)
+	taller.sonido.connect(func(correcto: bool):
+		if correcto: audio.sonar_clic()
+		else: audio.sonar_error())
+
 	local = recursos == null
 	if local:
 		_iniciar_local()
@@ -128,6 +142,8 @@ func _preparar() -> void:
 	var estado := recursos.estado()
 	reservas_entrada = estado.reservas
 	concluido = false
+	salida_pendiente = false
+	taller.hide()
 	en_pausa = true
 	abierto = estado.sol == 2 and estado.en_curso and estado.polvo == "tormenta"
 	_mundo(true, Vector2(CONTROL.x, 282))
@@ -136,15 +152,14 @@ func _preparar() -> void:
 	else:
 		_ir(Paso.DECISION)
 
-	interfaz.presentar("DÃ­a 2 Â· Tormenta de polvo",
-		"El frente de polvo registrado por Pancam detuvo la generaciÃ³n solar en Umbra.\n\n" +
-		"En Control puedes decidir la estrategia:\n" +
-		"â€¢ Salir a reparar: asegura paneles y laboratorio (4 energÃ­a + 1 alimento).\n" +
-		"â€¢ Resguardarse: sin coste inmediato; maÃ±ana habrÃ¡ daÃ±os (-1 agua, -1 oxÃ­geno).\n\n" +
-		"Asegura el aire en el Centro de agua (6 energÃ­a + 1 agua) antes de dormir.",
-		"Empezar el DÃ­a 2")
+	interfaz.presentar("¡Se acerca una tormenta!",
+		"1   Elige tu plan en la computadora.\n\n" +
+		"2   Prepara el aire para respirar sin apuros.\n\n" +
+		"3   Protege los equipos o quédate dentro.\n\n" +
+		"Camina con WASD o flechas. Sigue la marca azul.",
+		"¡Vamos, equipo!")
 	if not abierto:
-		interfaz.presentar("DÃ­a 2", "La escena necesita una partida con el Sol 2 activo y clima de tormenta.", "")
+		interfaz.presentar("Día 2", "La escena necesita una partida con el Sol 2 activo y clima de tormenta.", "")
 	_actualizar()
 
 func _mundo(dentro: bool, posicion: Vector2) -> void:
@@ -180,7 +195,7 @@ func _ir_al_cierre(estado: Dictionary, hacia_aire: Array, hacia_este: Array) -> 
 		_ir(Paso.AIRE, hacia_aire + [CRUCE_OESTE, GIRO_AGUA, ENTRADA_AGUA])
 
 func juego_activo() -> bool:
-	return abierto and not concluido and not en_pausa and not puesto.plano
+	return abierto and not concluido and not en_pausa and not puesto.plano and (not taller.visible or taller.jugando)
 
 func _process(delta: float) -> void:
 	if abierto and not concluido:
@@ -188,9 +203,11 @@ func _process(delta: float) -> void:
 			if local:
 				recursos.avanzar(delta)
 			var direccion := Vector2(
-				float(Input.is_physical_key_pressed(KEY_D) or Input.is_action_pressed("ui_right")) - float(Input.is_physical_key_pressed(KEY_A) or Input.is_action_pressed("ui_left")),
-				float(Input.is_physical_key_pressed(KEY_S) or Input.is_action_pressed("ui_down")) - float(Input.is_physical_key_pressed(KEY_W) or Input.is_action_pressed("ui_up")))
-			puesto.avanzar(direccion.normalized(), minf(delta, 0.05))
+				float((Input.is_physical_key_pressed(KEY_D) or Input.is_key_pressed(KEY_D)) or Input.is_action_pressed("ui_right")) - float((Input.is_physical_key_pressed(KEY_A) or Input.is_key_pressed(KEY_A)) or Input.is_action_pressed("ui_left")),
+				float((Input.is_physical_key_pressed(KEY_S) or Input.is_key_pressed(KEY_S)) or Input.is_action_pressed("ui_down")) - float((Input.is_physical_key_pressed(KEY_W) or Input.is_key_pressed(KEY_W)) or Input.is_action_pressed("ui_up")))
+			if not taller.visible:
+				puesto.avanzar(direccion.normalized(), minf(delta, 0.05))
+			taller.avanzar(delta)
 			puesto.tiempo += delta
 			while not ruta.is_empty() and puesto.punto.distance_to(ruta.front()) < 9.0:
 				ruta.pop_front()
@@ -202,7 +219,12 @@ func _process(delta: float) -> void:
 func _unhandled_key_input(event: InputEvent) -> void:
 	if not event is InputEventKey or not event.pressed or event.echo:
 		return
-	match event.physical_keycode:
+	var codigo: Key = event.keycode if event.keycode != KEY_NONE else event.physical_keycode
+	if taller.visible:
+		taller.tecla(codigo)
+		get_viewport().set_input_as_handled()
+		return
+	match codigo:
 		KEY_E, KEY_ENTER:
 			if interfaz.modal.visible:
 				_confirmar()
@@ -213,12 +235,12 @@ func _unhandled_key_input(event: InputEvent) -> void:
 		KEY_ESCAPE: _pausar()
 
 func _mapa() -> void:
-	if abierto and not concluido and not en_pausa and puesto.interior:
+	if abierto and not concluido and not en_pausa and puesto.interior and not taller.visible:
 		audio.sonar_clic()
 		puesto.plano = not puesto.plano
 
 func _pausar() -> void:
-	if not abierto or concluido:
+	if not abierto or concluido or taller.visible:
 		return
 	audio.sonar_clic()
 	if en_pausa:
@@ -246,11 +268,11 @@ func _cerca_del_aire(estado: Dictionary) -> bool:
 	return puesto.interior and _cerca(AIRE) and not estado.aire_asegurado
 
 func _actuar() -> void:
-	if not juego_activo():
+	if not juego_activo() or taller.visible:
 		return
 	var estado := recursos.estado()
 	if _cerca_del_aire(estado):
-		_asegurar_aire(estado)
+		_abrir_taller("aire")
 		_actualizar()
 		return
 	var ficha: Array = OBJETIVOS[paso]
@@ -259,19 +281,18 @@ func _actuar() -> void:
 	match paso:
 		Paso.DECISION:
 			audio.sonar_clic()
-			_ir(Paso.SALIR, [Vector2(402, 352)])
+			salida_pendiente = true
+			if estado.aire_asegurado:
+				_ir(Paso.SALIR, [Vector2(402, 352)])
+			else:
+				_ir(Paso.AIRE, [CRUCE_SUR, CRUCE_OESTE, GIRO_AGUA, ENTRADA_AGUA])
+				aviso = "¡Plan listo! Primero prepara el aire. Luego salimos a reparar."
 		Paso.SALIR:
 			audio.sonar_esclusa()
 			_mundo(false, PuestoUmbra.ESCLUSA - Vector2(10, 0))
 			_ir(Paso.REPARAR)
 		Paso.REPARAR:
-			if not recursos.aplicar_decision(REPARAR, COSTO_REPARAR):
-				audio.sonar_error()
-				aviso = "Faltan reservas para reparar. Vuelve por la esclusa y resguÃ¡rdate."
-				return
-			audio.sonar_reparar()
-			_ir(Paso.ENTRAR)
-			aviso = "Â¡Paneles y toma del laboratorio asegurados! Vuelve a la esclusa."
+			_abrir_taller("reparar")
 		Paso.ENTRAR:
 			audio.sonar_esclusa()
 			_mundo(true, SALIDA)
@@ -282,7 +303,7 @@ func _actuar() -> void:
 				aviso = "Lechuga sembrada en bandeja. Espera 15 s y pulsa Q para comerla."
 			else:
 				audio.sonar_error()
-				aviso = "Necesitas una bandeja libre, 1 de energÃ­a y 1 de agua."
+				aviso = "Necesitas una bandeja libre, 1 de energía y 1 de agua."
 		Paso.DESCANSO:
 			var derrota := ""
 			if not estado.aire_asegurado:
@@ -295,10 +316,15 @@ func _actuar() -> void:
 func _asegurar_aire(estado: Dictionary) -> void:
 	if not recursos.activar_oxigeno():
 		audio.sonar_error()
-		aviso = "Falta agua para activar el oxÃ­geno." if estado.reservas.agua == 0 else "Falta energÃ­a. Durante la tormenta los paneles no cargan."
+		aviso = "Falta agua para activar el oxígeno." if estado.reservas.agua == 0 else "Falta energía. Durante la tormenta los paneles no cargan."
 		return
 	audio.sonar_oxigeno()
+	interfaz.celebrar("¡Lo lograste! Aire listo para el equipo")
 	var salida_del_centro: Array[Vector2] = [ENTRADA_AGUA, GIRO_AGUA, CRUCE_OESTE]
+	if salida_pendiente:
+		_ir(Paso.SALIR, salida_del_centro + [CRUCE_SUR, Vector2(402, 352)])
+		aviso = "¡Aire listo! Ahora puedes salir sin apuros."
+		return
 	match paso:
 		Paso.DECISION:
 			_ir(Paso.DECISION, salida_del_centro + [CRUCE_SUR])
@@ -306,31 +332,38 @@ func _asegurar_aire(estado: Dictionary) -> void:
 			_ir(Paso.SALIR, salida_del_centro + [CRUCE_SUR, Vector2(402, 352)])
 		_:
 			_ir_al_cierre(recursos.estado(), [], salida_del_centro)
-	aviso = "Soporte vital asegurado: oxÃ­geno lleno hasta la noche."
+	aviso = "Soporte vital asegurado: oxígeno lleno hasta la noche."
 
 func _alternativa() -> void:
-	if not juego_activo():
+	if not juego_activo() or taller.visible:
 		return
 	var estado := recursos.estado()
-	if _cerca_del_aire(estado) and estado.reservas.agua == 0 and estado.hielo > 0:
+	if puesto.interior and _cerca(AGUA) and estado.reservas.agua == 0 and estado.hielo > 0:
 		if recursos.purificar_hielo():
 			audio.sonar_oxigeno()
-			aviso = "Hielo purificado. Ya dispones de agua para activar el oxÃ­geno."
+			aviso = "Hielo purificado. Ya dispones de agua para activar el oxígeno."
 		else:
 			audio.sonar_error()
-			aviso = "Hacen falta 2 de energÃ­a para purificar el hielo."
+			aviso = "Hacen falta 2 de energía para purificar el hielo."
+	elif _cerca_del_aire(estado) and estado.reservas.agua == 0 and estado.hielo > 0:
+		ruta.assign([AGUA])
+		aviso = "Sigue la marca hasta el filtro azul. Pulsa Q para purificar el hielo."
 	elif paso == Paso.REPARAR and _cerca(PuestoUmbra.ESCLUSA):
 		audio.sonar_esclusa()
 		_mundo(true, SALIDA)
 		_ir(Paso.SALIR)
 	elif (paso == Paso.DECISION and _cerca(CONTROL)) or (paso == Paso.SALIR and _cerca(SALIDA)):
 		if recursos.aplicar_decision(RESGUARDARSE, {}):
+			salida_pendiente = false
 			audio.sonar_alerta()
 			var hacia_aire := [CRUCE_SUR]
 			_ir_al_cierre(recursos.estado(), hacia_aire, hacia_aire)
-			aviso = "La tripulaciÃ³n se resguarda. MaÃ±ana se sentirÃ¡ el daÃ±o en los equipos."
+			aviso = "Nos quedamos dentro. Hoy no gastas en reparar.\nMañana perderemos 1 de agua y 1 de oxígeno."
 	elif paso == Paso.AIRE and _cerca(AIRE):
 		audio.sonar_clic()
+		if salida_pendiente:
+			_ir(Paso.SALIR, [ENTRADA_AGUA, GIRO_AGUA, CRUCE_OESTE, CRUCE_SUR, Vector2(402, 352)])
+			return
 		_ir(Paso.DESCANSO, [ENTRADA_AGUA, GIRO_AGUA, CRUCE_OESTE, CRUCE_ESTE, GIRO_ESTE, GIRO_CAMA])
 	elif paso == Paso.DESCANSO and _cerca(CAMA):
 		audio.sonar_clic()
@@ -358,6 +391,7 @@ func _cosecha(estado: Dictionary) -> String:
 
 func _terminar(estado: Dictionary, derrota: String) -> void:
 	concluido = true
+	taller.hide()
 	if derrota.is_empty():
 		audio.sonar_alerta()
 	else:
@@ -374,16 +408,16 @@ func _terminar(estado: Dictionary, derrota: String) -> void:
 		"perdidas_dia_3": {"id": DANOS_DIA_3, "recursos": {"agua": 1, "oxigeno": 1}} if danado else {},
 		"cambios_reservas": cambios, "estado_recursos": estado,
 	}
-	var resumen := "Paneles y laboratorio protegidos contra la tormenta." if reparado else "A resguardo Â· MaÃ±ana: sistemas daÃ±ados (-1 agua y -1 oxÃ­geno)."
-	resumen += "\nReservas: EnergÃ­a %d Â· Agua %d Â· OxÃ­geno %d Â· Alimento %d" % [
+	var resumen := "✓  Aire listo para toda la noche.\n✓  Tres cierres protegen los equipos.\n✓  Equipo de vuelta en el refugio." if reparado else "✓  Aire listo para toda la noche.\n✓  El equipo se quedó dentro.\nMañana: equipos dañados, −1 agua y −1 oxígeno."
+	resumen += "\n\nReservas: Energía %d · Agua %d · Oxígeno %d · Alimento %d" % [
 		estado.reservas.energia, estado.reservas.agua, estado.reservas.oxigeno, estado.reservas.alimento,
 	]
 	var motivo := {
-		"oxigeno_agotado": "El oxÃ­geno de reserva se agotÃ³ antes de asegurar el soporte vital.",
-		"aire_sin_activar": "La tripulaciÃ³n intentÃ³ dormir sin activar el ciclo de oxÃ­geno.",
-		"hambre_al_dormir": "La tripulaciÃ³n intentÃ³ dormir con las reservas de alimento en cero.",
+		"oxigeno_agotado": "Se acabó el aire. En el próximo intento, ve primero a los tanques verdes.\n\nConsejo: puedes pausar con Esc mientras piensas.",
+		"aire_sin_activar": "Faltó preparar el aire antes de dormir.\n\nPrueba de nuevo: conecta las tuberías en el laboratorio.",
+		"hambre_al_dormir": "El equipo necesita comer antes de dormir.\n\nEn Plantas, siembra una lechuga y come cuando esté lista.",
 	}
-	interfaz.presentar("DÃ­a 2 completado" if derrota.is_empty() else "DÃ­a 2 terminado",
+	interfaz.presentar("Día 2 completado" if derrota.is_empty() else "Día 2 terminado",
 		motivo.get(derrota, resumen), "Volver a jugar" if local else "")
 	finalizado.emit(resultado)
 
@@ -397,9 +431,9 @@ func _actualizar() -> void:
 	# Actualizar lecturas en pantalla de la supercomputadora y HUD
 	lecturas.actualizar(estado)
 	comida_ui.actualizar(estado)
-	lecturas.visible = puesto.interior and not puesto.plano and PuestoUmbra.ROOMS.radio.has_point(puesto.punto)
-	var esquina := puesto.proyectar_suelo(Vector2(370, 198))
-	var borde := puesto.proyectar_suelo(Vector2(436, 198))
+	lecturas.visible = puesto.interior and not puesto.plano and not estado.sin_luz and PuestoUmbra.ROOMS.radio.has_point(puesto.punto)
+	var esquina := puesto.proyectar_suelo(Vector2(372.8, 203.5))
+	var borde := puesto.proyectar_suelo(Vector2(440.0, 203.5))
 	lecturas.position = esquina
 	lecturas.scale = Vector2.ONE * ((borde.x - esquina.x) / 386.0)
 
@@ -414,26 +448,31 @@ func _actualizar() -> void:
 
 	match paso:
 		Paso.DECISION, Paso.SALIR:
-			opcion = "Resguardarse Â· maÃ±ana -1 agua y -1 oxÃ­geno"
+			opcion = "Quedarme · mañana −1 agua y −1 aire"
 		Paso.REPARAR:
 			opcion = "Volver adentro"
 			puede_elegir = _cerca(PuestoUmbra.ESCLUSA)
 		Paso.AIRE:
-			opcion = "Ir al dormitorio"
+			opcion = "Preparar aire después · salir" if salida_pendiente else "Ir al dormitorio"
 		Paso.PLANTAS:
 			var lista := _cosecha(estado)
-			opcion = "Volver al dormitorio" if lista.is_empty() else "Comer cosecha Â· +%d alimento" % Recursos.CULTIVOS[lista].alimento
+			opcion = "Volver al dormitorio" if lista.is_empty() else "Comer cosecha · +%d alimento" % Recursos.CULTIVOS[lista].alimento
 		Paso.DESCANSO:
 			if not estado.aire_asegurado:
-				accion = "Dormir sin asegurar el aire"
-				opcion = "Volver a activar el oxÃ­geno"
+				accion = "Dormir sin aire · termina la misión"
+				detalle = "Falta preparar el aire. No es seguro dormir.\nPulsa Q para volver a los tanques verdes."
+				opcion = "Volver a activar el oxígeno"
 			elif estado.reservas.alimento == 0:
-				accion = "Dormir sin alimento"
+				accion = "Dormir sin comida · termina la misión"
+				detalle = "Tienes hambre. Pulsa Q para ir a Plantas.\nCome una cosecha antes de dormir."
 				opcion = "Volver a Plantas"
+
+	if paso == Paso.SALIR and not estado.aire_asegurado and aviso.is_empty():
+		detalle = "Aún falta preparar el aire. No tardes afuera.\nPuedes volver al laboratorio antes de salir."
 
 	if paso in [Paso.DECISION, Paso.SALIR, Paso.REPARAR] and aviso.is_empty() and not estado.aire_asegurado:
 		if estado.reservas.energia < 10:
-			detalle = "Reparar consume 4 de energÃ­a y deja menos de las 6 requeridas para el aire. Conviene resguardarse o asegurar el aire primero."
+			detalle = "La batería no alcanza para reparar y preparar aire.\nQuedarte dentro guarda energía para respirar."
 
 	if _cerca_del_aire(estado):
 		lugar = OBJETIVOS[Paso.AIRE][1]
@@ -442,11 +481,24 @@ func _actualizar() -> void:
 		cerca = true
 		destino = AIRE
 		if estado.reservas.agua == 0 and estado.hielo > 0:
-			opcion = "Purificar hielo guardado Â· 2 energÃ­a"
+			opcion = "Ir al filtro azul · purificar hielo"
 			puede_elegir = true
 
+	if puesto.interior and _cerca(AGUA) and estado.reservas.agua == 0 and estado.hielo > 0:
+		lugar = "Filtro azul · Prepara agua"
+		detalle = "Convierte tu hielo en agua para el aire.\nCuesta 2 de energía. Recibes hasta 3 de agua."
+		opcion = "Purificar hielo · 2 energía"
+		cerca = false
+		puede_elegir = true
+		destino = AGUA
+
+	if paso == Paso.PLANTAS and estado.bandejas.has("lechuga"):
+		var segundos := ceili(float(estado.bandejas.lechuga))
+		cerca = false
+		detalle = "Tu lechuga está creciendo: faltan %d s.\nCuando esté lista, pulsa Q para comer." % segundos if segundos > 0 else "¡Lechuga lista! Pulsa Q para comer.\nDespués puedes volver a la cama."
+
 	if puesto.plano:
-		detalle = "M Â· Cerrar el plano y volver al recorrido."
+		detalle = "M · Cerrar el plano y volver al recorrido."
 
 	oscuridad.visible = puesto.interior and estado.sin_luz and not puesto.plano
 
@@ -455,7 +507,7 @@ func _actualizar() -> void:
 	paneles.visible = en_exterior_paneles
 	if en_exterior_paneles:
 		var reparado: bool = REPARAR in estado.decisiones
-		paneles.text = "âœ“ PANELES Y LAB ASEGURADOS" if reparado else "âš ï¸ PANELES SOLARES Â· EXPUESTOS"
+		paneles.text = "✓ PANELES Y LAB ASEGURADOS" if reparado else "PANELES · SIN PROTEGER"
 		paneles.add_theme_color_override("font_color", HUD.VERDE if reparado else HUD.CIAN)
 		paneles.position = puesto.proyectar_suelo(PANELES - Vector2(0, 45)) - Vector2(100, 20)
 
@@ -463,23 +515,58 @@ func _actualizar() -> void:
 	var pluto_texto := ""
 	if paso == Paso.DECISION and not cerca:
 		if estado.reservas.energia < 10 and not estado.aire_asegurado:
-			pluto_texto = "Â¡Ojo con la baterÃ­a! Salir a reparar cuesta 4, y el aire necesita 6. PodrÃ­amos asegurar el aire primero o resguardarnos."
+			pluto_texto = "¡Ojo con la batería! Salir a reparar cuesta 4, y el aire necesita 6. Podríamos asegurar el aire primero o resguardarnos."
 		else:
-			pluto_texto = "Nora, la tormenta de polvo bloqueÃ³ los paneles. Decide en la supercomputadora si reparamos o nos resguardamos."
+			pluto_texto = "El polvo tapa la luz del Sol. Hoy cuidaremos la batería. ¿Vamos a la computadora?"
 	elif paso == Paso.SALIR:
-		pluto_texto = "Las rÃ¡fagas son fuertes afuera. Ve con cuidado hacia los paneles."
+		pluto_texto = "Las ráfagas son fuertes afuera. Ve con cuidado hacia los paneles."
 	elif paso == Paso.REPARAR:
-		pluto_texto = "AcÃ©rcate a los paneles para fijar los cobertores mecÃ¡nicos."
+		pluto_texto = "Acércate a los paneles para fijar los cobertores mecánicos."
 	elif paso == Paso.ENTRAR:
-		pluto_texto = "Â¡Excelente! Paneles a salvo. Vuelve por la esclusa a asegurar el aire."
+		pluto_texto = "¡Excelente! Paneles a salvo. Vuelve por la esclusa a asegurar el aire."
 	elif paso == Paso.AIRE and not estado.aire_asegurado:
-		pluto_texto = "En el Centro de agua podemos usar electrÃ³lisis para llenar el tanque de oxÃ­geno."
+		pluto_texto = "Usa agua y batería para preparar el aire. Busca los tanques verdes."
 	elif estado.aire_asegurado:
-		pluto_texto = "OxÃ­geno asegurado para la noche. Descansa en el dormitorio cuando estÃ©s lista."
+		pluto_texto = "Oxígeno asegurado para la noche. Descansa en el dormitorio cuando estés lista."
 
-	var pluto_a_la_vista := puesto.interior and not puesto.plano and juego_activo() and puesto.punto.distance_to(PLUTO) < 110.0
+	var pluto_a_la_vista := not taller.visible and not cerca and puesto.interior and not puesto.plano and juego_activo() and puesto.punto.distance_to(PLUTO) < 110.0
 	interfaz.aviso_de_pluto(pluto_a_la_vista, puesto.proyectar_suelo(PLUTO), pluto_texto)
 
+	taller.mostrar_aire(estado)
+	interfaz.guia.visible = not taller.visible
+	interfaz.marca.visible = not taller.visible
+	interfaz.ruta_del_dia(estado, salida_pendiente, paso == Paso.DESCANSO)
 	interfaz.actualizar(estado, lugar, detalle, accion, opcion, cerca and juego_activo(),
 		puede_elegir and juego_activo(), puesto.interior, puesto.plano,
 		puesto.proyectar_suelo(destino) - Vector2(0, 18), puesto.proyectar_suelo(puesto.punto))
+
+func _abrir_taller(tipo: String) -> void:
+	var estado := recursos.estado()
+	var costo := 6 if tipo == "aire" else 4
+	if estado.reservas.energia < costo or (tipo == "aire" and estado.reservas.agua < 1) or (tipo == "reparar" and estado.reservas.alimento < 1):
+		audio.sonar_error()
+		aviso = "Necesitas 6 de energía y 1 de agua para el aire." if tipo == "aire" else "Necesitas 4 de energía y 1 de comida. Puedes volver a resguardarte."
+		return
+	taller.abrir(tipo)
+	_actualizar()
+
+func _cerrar_taller() -> void:
+	taller.hide()
+	aviso = "No gastaste recursos. Puedes intentarlo otra vez."
+	_actualizar()
+
+func _completar_taller(tipo: String) -> void:
+	# Se comprueba otra vez: el alimento puede bajar mientras se trabaja.
+	taller.hide()
+	if tipo == "aire":
+		_asegurar_aire(recursos.estado())
+	elif recursos.aplicar_decision(REPARAR, COSTO_REPARAR):
+		salida_pendiente = false
+		interfaz.celebrar("¡3 cierres listos! Equipos protegidos")
+		audio.sonar_reparar()
+		_ir(Paso.ENTRAR)
+		aviso = "¡Tres cierres listos! Paneles y laboratorio protegidos."
+	else:
+		audio.sonar_error()
+		aviso = "Faltan reservas. No se cobró nada. Vuelve a resguardarte."
+	_actualizar()

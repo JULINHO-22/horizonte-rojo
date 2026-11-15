@@ -33,6 +33,10 @@ func _probar() -> void:
 	_clic(dia.interfaz.confirmar)
 	assert(dia.juego_activo(), "El botón de inicio debe abrir el recorrido.")
 	assert(dia.interfaz.aviso_pluto.visible)
+	_tecla_virtual(dia, KEY_ESCAPE)
+	assert(not dia.juego_activo())
+	_tecla_virtual(dia, KEY_E)
+	assert(dia.juego_activo())
 	_tecla(dia, KEY_M)
 	assert(not dia.juego_activo())
 	_tecla(dia, KEY_M)
@@ -42,7 +46,19 @@ func _probar() -> void:
 	assert(dia.puesto.terminal_cercana() == "radio", "La decisión debe estar en la terminal de Control.")
 	await _captura(dia, "control")
 	_clic(dia.interfaz.accion)
-	assert(dia.paso == Paso.SALIR)
+	assert(dia.paso == Paso.AIRE)
+	await _caminar(dia)
+	await _captura(dia, "laboratorio")
+	_clic(dia.interfaz.accion)
+	assert(dia.taller.visible and not dia.juego_activo())
+	var oxigeno_lectura: int = dia.recursos.estado().reservas.oxigeno
+	dia._process(20.0)
+	assert(dia.recursos.estado().reservas.oxigeno == oxigeno_lectura)
+	_tecla(dia, KEY_Q)
+	assert(not dia.taller.visible and not dia.recursos.estado().aire_asegurado)
+	_tecla(dia, KEY_E)
+	await _resolver(dia)
+	assert(dia.recursos.estado().aire_asegurado and dia.paso == Paso.SALIR)
 	await _captura(dia, "camino-esclusa")
 	await _caminar(dia)
 	await _captura(dia, "salida")
@@ -51,6 +67,7 @@ func _probar() -> void:
 	await _captura(dia, "exterior")
 	var antes: Dictionary = dia.recursos.estado().reservas
 	_tecla(dia, KEY_E)
+	await _resolver(dia)
 	var reparado := dia.recursos.estado()
 	assert(reparado.reservas.energia == antes.energia - 4)
 	assert(reparado.reservas.alimento == antes.alimento - 1)
@@ -58,10 +75,6 @@ func _probar() -> void:
 	await _captura(dia, "regreso")
 	await _caminar(dia)
 	_clic(dia.interfaz.accion)
-	await _caminar(dia)
-	await _captura(dia, "aire")
-	_tecla(dia, KEY_E)
-	assert(dia.recursos.estado().aire_asegurado)
 	await _caminar(dia)
 	await _captura(dia, "dormitorio")
 	_clic(dia.interfaz.accion)
@@ -113,6 +126,7 @@ func _probar() -> void:
 	_caminar_a(dia, Dia.ENTRADA_AGUA)
 	_caminar_a(dia, Dia.AIRE)
 	_tecla(dia, KEY_E)
+	await _resolver(dia)
 	assert(dia.recursos.estado().aire_asegurado and dia.paso == Paso.DECISION)
 	await _accion(dia, Paso.DECISION)
 	await _accion(dia, Paso.SALIR)
@@ -126,6 +140,8 @@ func _probar() -> void:
 	dia = _instanciar(_partida(3, 0))
 	_tecla(dia, KEY_E)
 	await _accion(dia, Paso.DECISION)
+	await _caminar(dia)
+	_tecla(dia, KEY_Q) # Se permite intentar salir antes del aire.
 	await _accion(dia, Paso.SALIR)
 	await _accion(dia, Paso.REPARAR)
 	assert(dia.paso == Paso.REPARAR and dia.recursos.estado().reservas.energia == 3)
@@ -141,6 +157,62 @@ func _probar() -> void:
 	assert(resultados.size() == 1 and resultados[0].derrota == "aire_sin_activar")
 	dia.free()
 
+	# Aire después de reparar: debe llevar a la cama, sin repetir la salida.
+	dia = _instanciar(_partida(12, 3))
+	_tecla(dia, KEY_E)
+	await _accion(dia, Paso.DECISION)
+	await _caminar(dia)
+	_tecla(dia, KEY_Q)
+	await _accion(dia, Paso.SALIR)
+	await _accion(dia, Paso.REPARAR)
+	await _accion(dia, Paso.ENTRAR)
+	await _accion(dia, Paso.AIRE)
+	assert(dia.paso == Paso.DESCANSO)
+	await _accion(dia, Paso.DESCANSO)
+	assert(dia.concluido)
+	dia.free()
+
+	# Hielo del día anterior: se purifica en el filtro azul de main.
+	partida = _partida(8, 0)
+	assert(partida.recoger_hielo())
+	dia = _instanciar(partida)
+	_tecla(dia, KEY_E)
+	await _caminar(dia)
+	_tecla(dia, KEY_Q)
+	await _caminar(dia)
+	_tecla(dia, KEY_E)
+	assert(not dia.taller.visible and not partida.estado().aire_asegurado)
+	_tecla(dia, KEY_Q)
+	_caminar_a(dia, Dia.AGUA)
+	dia._process(0.0)
+	assert(dia.interfaz.alternativa.visible)
+	_clic(dia.interfaz.alternativa)
+	assert(partida.estado().reservas.agua == 3 and partida.estado().hielo == 0)
+	await _accion(dia, Paso.AIRE)
+	assert(partida.estado().aire_asegurado and partida.estado().reservas.energia == 0)
+	dia.free()
+
+	# Hambre recuperable: plantar, esperar, comer y descansar.
+	partida = _partida(9, 3)
+	assert(partida.activar_oxigeno())
+	assert(partida.aplicar_decision(Dia.RESGUARDARSE, {}))
+	assert(partida.aplicar_perdidas("prueba_hambre", {"alimento": 10}))
+	dia = _instanciar(partida)
+	_tecla(dia, KEY_E)
+	await _caminar(dia)
+	_tecla(dia, KEY_Q)
+	await _accion(dia, Paso.PLANTAS)
+	assert(partida.estado().bandejas.has("lechuga"))
+	partida.avanzar(15.0)
+	dia._process(0.0)
+	await _captura(dia, "cosecha-lista")
+	_clic(dia.interfaz.alternativa)
+	assert(partida.estado().reservas.alimento == 2)
+	_tecla(dia, KEY_Q)
+	await _accion(dia, Paso.DESCANSO)
+	assert(dia.concluido)
+	dia.free()
+
 	dia = _instanciar()
 	_tecla(dia, KEY_E)
 	dia._process(64.0)
@@ -153,7 +225,7 @@ func _probar() -> void:
 			printerr(mensaje)
 		quit(1)
 		return
-	print("DIA_2_OK: rutas, reparación, refugio, aire antes y después, relevo y derrota.")
+	print("DIA_2_OK: rutas, retos con clic/teclado, pausas, errores recuperables, aire antes/después, hielo, hambre, relevo y derrota.")
 	quit()
 
 
@@ -205,6 +277,8 @@ func _accion(dia: Dia, etapa: int) -> void:
 	assert(dia.paso == etapa)
 	await _caminar(dia)
 	_tecla(dia, KEY_E)
+	if dia.taller.visible:
+		await _resolver(dia)
 
 
 func _caminar(dia: Dia) -> void:
@@ -252,3 +326,71 @@ func _captura(dia: Dia, nombre: String) -> void:
 	dia.puesto.queue_redraw()
 	await RenderingServer.frame_post_draw
 	assert(root.get_texture().get_image().save_png("res://build/qa/dia-2-%s.png" % nombre) == OK)
+
+func _resolver(dia: Dia) -> void:
+	assert(dia.taller.visible)
+	var antes: Dictionary = dia.recursos.estado().reservas
+	await _captura(dia, "taller-" + dia.taller.tipo)
+	_clic(dia.taller.principal)
+	assert(dia.juego_activo())
+	var giros := dia.taller.reglas.giros.duplicate()
+	_tecla(dia, KEY_ESCAPE)
+	assert(not dia.juego_activo())
+	var en_pausa: Dictionary = dia.recursos.estado().reservas
+	dia._process(30.0)
+	assert(dia.recursos.estado().reservas == en_pausa)
+	_tecla(dia, KEY_ESCAPE)
+	assert(dia.juego_activo() and dia.taller.reglas.giros == giros)
+	var posicion := dia.puesto.punto
+	Input.action_press("ui_right")
+	dia._process(0.02)
+	Input.action_release("ui_right")
+	assert(dia.puesto.punto == posicion, "Trabajar no debe mover a Nora.")
+	if dia.taller.tipo == "aire":
+		_tecla_virtual(dia, KEY_E) # Un circuito incompleto no cobra.
+		assert(not dia.recursos.estado().aire_asegurado)
+		assert(dia.recursos.estado().reservas.energia == antes.energia)
+		var metas := [2, 0, 2, 0]
+		for i in 4:
+			for intento in 4:
+				if dia.taller.reglas.giros[i] == metas[i]: break
+				if i % 2 == 0:
+					_clic(dia.taller.piezas[i])
+				else:
+					_tecla(dia, [KEY_1, KEY_2, KEY_3, KEY_4][i])
+		assert(dia.taller.reglas.aire_conectado())
+		await _captura(dia, "circuito-listo")
+		_tecla(dia, KEY_E)
+		assert(dia.recursos.estado().aire_asegurado)
+		assert(dia.recursos.estado().reservas.energia == antes.energia - 6)
+		assert(dia.recursos.estado().reservas.agua == antes.agua - 1)
+	else:
+		_tecla(dia, KEY_E) # Cierre desalineado.
+		assert(dia.taller.reglas.cierre == 0)
+		for i in 3:
+			var meta: int = dia.taller.reglas.METAS[i]
+			while dia.taller.reglas.ajuste != meta:
+				_tecla(dia, KEY_A if dia.taller.reglas.ajuste > meta else KEY_D)
+			if i == 0:
+				dia.taller.reglas.tiempo = 3.0
+				_tecla(dia, KEY_E)
+				assert(dia.taller.reglas.cierre == 0, "La ráfaga no permite fijar.")
+				await _captura(dia, "rafaga")
+				dia.taller.avanzar(1.1)
+				assert(dia.taller.reglas.calma(), "La ráfaga debe dar paso a una ventana de calma.")
+			await _captura(dia, "cierre-%d" % i)
+			_clic(dia.taller.principal)
+		assert(dia.paso == Paso.ENTRAR)
+	assert(not dia.taller.visible)
+
+func _tecla_virtual(dia: Dia, codigo: Key) -> void:
+	# SendInput en Windows puede informar un scancode distinto del símbolo lógico.
+	var evento := InputEventKey.new()
+	evento.keycode = codigo
+	evento.physical_keycode = KEY_PAUSE
+	evento.pressed = true
+	root.push_input(evento, true)
+	evento = evento.duplicate() as InputEventKey
+	evento.pressed = false
+	root.push_input(evento, true)
+	dia._process(0.0)

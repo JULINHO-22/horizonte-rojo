@@ -1,5 +1,12 @@
 # Cambios
 
+## 2026-11-15 | Día 2: retos jugables e instrucciones para niños
+
+- Integra `main` en `ab51a9b`: cristal de Control y laboratorio de Agua y Oxígeno, sin cambiar la base compartida.
+- Circuito de aire con cuatro piezas giratorias y reparación con tres cierres que se alinean y fijan entre ráfagas. Teclado y ratón comparten las acciones; fallos y cancelaciones no añaden costes.
+- Ruta que recomienda preparar aire antes de salir, instrucciones breves, progreso visual, pausa conservando piezas, avisos de éxito y corrección de textos mal codificados.
+- Conserva el contrato de reservas y relevo al Día 3. Amplía pruebas a hielo, hambre, aire después de reparar, pausas y fallos de los tableros. Detalles en `docs/dias/DIA-2.md`.
+
 ## 2026-11-15 | Día 2 mejorado: Audio procedural, telemetría integrada y pulido ambiental
 
 - Integración de la supercomputadora de Control con el nuevo componente de `Indicadores` (rayos, burbujas y gota animada con aviso de generación solar pausada) y visualización de comida con tomates en la interfaz.

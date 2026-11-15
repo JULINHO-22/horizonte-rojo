@@ -16,9 +16,9 @@ const ROJO := Color("#ff8274")
 const VERDE := Color("#8eedb0")
 
 const RECURSOS := {
-	"energia": ["ENERGÃA", ORO],
+	"energia": ["ENERGÍA", ORO],
 	"agua": ["AGUA", AZUL],
-	"oxigeno": ["OXÃGENO", CIAN],
+	"oxigeno": ["OXÍGENO", CIAN],
 	"alimento": ["COMIDA", ROJO],
 }
 
@@ -37,15 +37,19 @@ var modal_titulo: Label
 var modal_detalle: Label
 var confirmar: Button
 var solar_alerta: Label
+var pasos: Label
+var recordatorio: Label
+var logro: Label
+var animacion_logro: Tween
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 
-	# Barra superior de telemetrÃ­a (x=16 a x=866)
+	# Barra superior de telemetría (x=16 a x=866)
 	var barra_top := _panel(self, Rect2(16, 14, 850, 78), TINTA, BORDE_CIAN)
-	_texto(barra_top, Rect2(18, 10, 180, 28), "DÃA 2 Â· SOL 2", 21, PAPEL)
+	_texto(barra_top, Rect2(18, 10, 180, 28), "DÍA 2 · SOL 2", 21, PAPEL)
 
-	solar_alerta = _texto(barra_top, Rect2(18, 42, 210, 22), "TORMENTA Â· SOLAR: PAUSADO", 12, ROJO)
+	solar_alerta = _texto(barra_top, Rect2(18, 42, 210, 22), "TORMENTA · SOLAR: PAUSADO", 12, ROJO)
 
 	var x := 232
 	for id: String in RECURSOS:
@@ -64,12 +68,18 @@ func _ready() -> void:
 		medidores[id] = [valor, barra]
 		x += 152
 
-	# Botones de mapa y pausa apilados a la derecha (x=1140 a x=1264)
-	mapa = _boton(self, Rect2(1140, 14, 124, 36), "M Â· Plano")
-	pausa = _boton(self, Rect2(1140, 56, 124, 36), "Esc Â· Pausa")
+	var recorrido := _panel(self, Rect2(16, 100, 850, 38), FONDO_PANEL, BORDE_CIAN)
+	pasos = _texto(recorrido, Rect2(14, 8, 820, 24), "", 16, PAPEL)
+	recordatorio = _texto(self, Rect2(18, 146, 840, 28), "", 17, ORO)
+	recordatorio.add_theme_color_override("font_outline_color", TINTA)
+	recordatorio.add_theme_constant_override("outline_size", 6)
 
-	# Indicador de navegaciÃ³n en el suelo / objetivo
-	marca = _texto(self, Rect2(0, 0, 70, 44), "â—†", 28, CIAN)
+	# Botones de mapa y pausa apilados a la derecha (x=1140 a x=1264)
+	mapa = _boton(self, Rect2(1140, 14, 124, 36), "M · Plano")
+	pausa = _boton(self, Rect2(1140, 56, 124, 36), "Esc · Pausa")
+
+	# Indicador de navegación en el suelo / objetivo
+	marca = _texto(self, Rect2(0, 0, 70, 44), "◆", 28, CIAN)
 	marca.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	marca.add_theme_color_override("font_outline_color", TINTA)
 	marca.add_theme_constant_override("outline_size", 8)
@@ -77,7 +87,7 @@ func _ready() -> void:
 	aviso_pluto = DialogoEscena.new()
 	add_child(aviso_pluto)
 
-	# Panel guÃ­a de interacciÃ³n contextual
+	# Panel guía de interacción contextual
 	guia = _panel(self, Rect2(24, 560, ANCHO_GUIA, 120), FONDO_PANEL, BORDE_CIAN)
 	titulo = _texto(guia, Rect2(18, 10, ANCHO_GUIA - 36, 28), "", 20, CIAN)
 	detalle = _texto(guia, Rect2(18, 40, ANCHO_GUIA - 36, 68), "", 15, PAPEL)
@@ -89,15 +99,20 @@ func _ready() -> void:
 	alternativa.add_theme_font_size_override("font_size", 16)
 
 	# Pantalla modal para inicio, pausas y desenlace
+	logro = _texto(self, Rect2(340, 200, 650, 38), "", 23, VERDE)
+	logro.add_theme_color_override("font_outline_color", TINTA)
+	logro.add_theme_constant_override("outline_size", 12)
+	logro.hide()
+
 	modal = ColorRect.new()
 	modal.size = Vector2(1280, 720)
 	modal.color = Color(0.03, 0.06, 0.09, 0.82)
 	add_child(modal)
-	var caja_modal := _panel(modal, Rect2(260, 180, 760, 340), TINTA, CIAN)
+	var caja_modal := _panel(modal, Rect2(260, 138, 760, 444), TINTA, CIAN)
 	modal_titulo = _texto(caja_modal, Rect2(36, 28, 688, 44), "", 30, PAPEL)
-	modal_detalle = _texto(caja_modal, Rect2(36, 84, 688, 160), "", 18, MUTED)
+	modal_detalle = _texto(caja_modal, Rect2(36, 90, 688, 252), "", 18, MUTED)
 	modal_detalle.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	confirmar = _boton(caja_modal, Rect2(36, 260, 380, 48), "")
+	confirmar = _boton(caja_modal, Rect2(36, 368, 688, 48), "")
 	confirmar.add_theme_font_size_override("font_size", 18)
 
 func actualizar(estado: Dictionary, lugar: String, mensaje: String, principal: String, otra: String,
@@ -110,43 +125,43 @@ func actualizar(estado: Dictionary, lugar: String, mensaje: String, principal: S
 		medidor[1].value = valor
 
 	if estado.aire_asegurado:
-		medidores.oxigeno[0].text = "%d / 8 Â· SEGURO" % estado.reservas.oxigeno
+		medidores.oxigeno[0].text = "%d / 8 · SEGURO" % estado.reservas.oxigeno
 		medidores.oxigeno[0].add_theme_color_override("font_color", VERDE)
 	else:
 		medidores.oxigeno[0].add_theme_color_override("font_color", CIAN)
 
 	titulo.text = lugar
 	detalle.text = mensaje
-	accion.text = "E Â· " + principal
+	accion.text = "E · " + principal
 	accion.disabled = not actuar
 	accion.visible = actuar
 	alternativa.disabled = not elegir
 	alternativa.visible = not otra.is_empty() and elegir
-	alternativa.text = "Q Â· " + otra
+	alternativa.text = "Q · " + otra
 
 	mapa.visible = interior
-	mapa.text = "M Â· Cerrar plano" if plano else "M Â· Plano"
+	mapa.text = "M · Cerrar plano" if plano else "M · Plano"
 
 	var visible_punto := punto.clamp(Vector2(60, 120), Vector2(1220, 660))
 	_ubicar_guia(visible_punto, nora, interior)
 
-	# Indicador de navegaciÃ³n con pulsaciÃ³n
+	# Indicador de navegación con pulsación
 	var diferencia := punto - visible_punto
 	marca.position = visible_punto - Vector2(35, 22)
 	var pulso: float = 0.72 + 0.28 * sin(Time.get_ticks_msec() * 0.007)
 	marca.modulate = Color(1.0, 1.0, 1.0, pulso)
 	if diferencia.length() > 5:
 		if absf(diferencia.x) >= absf(diferencia.y):
-			marca.text = "â†" if diferencia.x < 0 else "â†’"
+			marca.text = "←" if diferencia.x < 0 else "→"
 		else:
-			marca.text = "â†‘" if diferencia.y < 0 else "â†“"
+			marca.text = "↑" if diferencia.y < 0 else "↓"
 	else:
-		marca.text = "â—†"
+		marca.text = "◆"
 
 func aviso_de_pluto(visible_en_escena: bool, posicion: Vector2, texto := "") -> void:
 	if visible_en_escena:
 		aviso_pluto.position = Vector2(clampf(posicion.x - 170.0, 42.0, 872.0), clampf(posicion.y - 170.0, 118.0, 471.0))
-		var mensaje := texto if not texto.is_empty() else "AcÃ©rcate a la consola. Tenemos que decidir quÃ© hacer con la tormenta."
+		var mensaje := texto if not texto.is_empty() else "Acércate a la consola. Tenemos que decidir qué hacer con la tormenta."
 		aviso_pluto.decir("Pluto", mensaje)
 	else:
 		aviso_pluto.hide()
@@ -171,7 +186,7 @@ func _ubicar_guia(punto: Vector2, nora: Vector2, interior: bool) -> void:
 			guia.position.x = 780
 		return
 
-	# En el interior: ubicaciÃ³n inteligente que no tape a Nora ni la consola
+	# En el interior: ubicación inteligente que no tape a Nora ni la consola
 	var x := punto.x + 52.0
 	if x + ANCHO_GUIA > 1250.0:
 		x = punto.x - 52.0 - ANCHO_GUIA
@@ -185,14 +200,26 @@ func _ubicar_guia(punto: Vector2, nora: Vector2, interior: bool) -> void:
 		else:
 			y = minf(700.0 - guia.size.y, nora.y + 40.0)
 
-	guia.position = Vector2(clampf(x, 24.0, 1256.0 - ANCHO_GUIA), clampf(y, 110.0, 705.0 - guia.size.y))
+	guia.position = Vector2(clampf(x, 24.0, 1256.0 - ANCHO_GUIA), clampf(y, 184.0, 705.0 - guia.size.y))
 
 func presentar(encabezado: String, mensaje: String, avance: String) -> void:
+	logro.hide()
 	modal_titulo.text = encabezado
 	modal_detalle.text = mensaje
-	confirmar.text = "E Â· " + avance
+	confirmar.text = "E · " + avance
 	confirmar.visible = not avance.is_empty()
 	modal.show()
+
+func celebrar(mensaje: String) -> void:
+	if is_instance_valid(animacion_logro):
+		animacion_logro.kill()
+	logro.text = mensaje
+	logro.modulate.a = 1.0
+	logro.show()
+	animacion_logro = create_tween()
+	animacion_logro.tween_interval(2.5)
+	animacion_logro.tween_property(logro, "modulate:a", 0.0, 0.6)
+	animacion_logro.tween_callback(logro.hide)
 
 func _estilo(color: Color, borde: Color, grosor: int) -> StyleBoxFlat:
 	var estilo := StyleBoxFlat.new()
@@ -240,3 +267,20 @@ func _boton(padre: Control, rect: Rect2, texto: String) -> Button:
 	boton.add_theme_stylebox_override("disabled", _estilo(Color("#14222a"), Color("#3b4f57"), 1))
 	padre.add_child(boton)
 	return boton
+
+func ruta_del_dia(estado: Dictionary, salida_pendiente: bool, descansando: bool) -> void:
+	var decidido: bool = salida_pendiente or not estado.decisiones.is_empty()
+	var protegido: bool = "dia_2_reparar" in estado.decisiones
+	var dentro: bool = "dia_2_resguardarse" in estado.decisiones
+	pasos.text = "%s PLAN     →     %s AIRE     →     %s EQUIPOS     →     %s DESCANSO" % [
+		"✓" if decidido else "1", "✓" if estado.aire_asegurado else "2",
+		"✓" if protegido else ("–" if dentro else "3"), "4" if not descansando else "→"]
+	if estado.reservas.alimento <= 1 and estado.aire_asegurado:
+		recordatorio.text = "Hace falta comida · visita Plantas antes de dormir."
+		recordatorio.add_theme_color_override("font_color", ORO)
+	elif estado.aire_asegurado:
+		recordatorio.text = "Aire seguro · ya puedes explorar con calma."
+		recordatorio.add_theme_color_override("font_color", VERDE)
+	else:
+		recordatorio.text = "Primero el aire · busca los tanques verdes." if estado.reservas.oxigeno > 3 else "Queda poco aire · sigue la marca hasta los tanques verdes."
+		recordatorio.add_theme_color_override("font_color", ORO if estado.reservas.oxigeno > 3 else ROJO)

@@ -1,6 +1,6 @@
 class_name Dia2Audio
 extends Node
-## Audio procedural para el DÃ­a 2 Â· Tormenta de polvo.
+## Audio procedural para el Día 2 · Tormenta de polvo.
 ## Genera efectos sonoros en memoria sin depender de archivos de audio externos.
 
 var canal_efectos: AudioStreamPlayer
