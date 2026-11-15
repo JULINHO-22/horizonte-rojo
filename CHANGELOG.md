@@ -1,5 +1,9 @@
 # Cambios
 
+## 2026-11-15 | Iconos de Control
+
+- Se sustituyen las máscaras de píxeles por iconos generados con bordes suaves. El nivel del agua se anima dentro de la gota.
+
 ## Indicadores en la supercomputadora
 
 - Energía, oxígeno y agua disponen de zonas separadas dentro de la pantalla del equipo. La comida se muestra en la esquina superior derecha.
