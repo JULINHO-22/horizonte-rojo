@@ -1,5 +1,10 @@
 # Cambios
 
+## 2026-11-14 | Base compartida de mecánicas
+
+- Modelo separado de energía, agua, oxígeno, alimento, cultivos y continuidad entre días. Incluye reglas de noche, registro de decisiones y estado para guardar.
+- Banco de pruebas independiente en Godot y prueba automatizada de recursos. El equipo dispone del contrato y un prompt base para cada día.
+
 ## 2026-11-14 | Cinemática inicial 2D pixel art por etapas
 
 - La dirección visual definitiva del proyecto es 2D pixel art. Se reemplaza la iteración que mezclaba fondos realistas con una nave pixelada.

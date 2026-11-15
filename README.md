@@ -18,6 +18,10 @@ El recorrido guarda su avance en `user://narrativa.cfg`, separado de las partida
 
 El código anterior de actividades sigue disponible para el equipo en `scenes/simulacion_provisional.tscn` (**F6**). No es el guion aprobado ni la versión principal.
 
+## Probar la base de mecánicas
+
+Abre `scenes/pruebas/banco_recursos.tscn` y pulsa **F6**. Consulta [reglas y API](docs/MECANICAS-BASICAS.md) y [prompt por día](docs/PROMPT-NIVELES.md).
+
 ## Jugar en navegador
 
 Instala las plantillas de exportación de **Godot 4.7.2** y ejecuta `./web/exportar.ps1 -Godot "<ruta al ejecutable de consola de Godot>"` en PowerShell. El script exporta el juego, copia la portada y arma `build/Horizonte-Rojo-Web.zip`. Sirve el directorio completo por HTTP. Para probarlo desde PowerShell, ejecuta `python -m http.server 8065 --bind 127.0.0.1 --directory build/web` y abre [Horizonte Rojo en el navegador](http://127.0.0.1:8065/). Pulsa **Entrar al recorrido** y después **Comenzar viaje**. Si el mismo navegador conserva una partida para esa dirección, retoma el último punto guardado.
