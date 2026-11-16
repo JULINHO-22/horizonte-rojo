@@ -62,18 +62,19 @@ func _elegir_dia(dia: int) -> void:
 	_boton_brief(_selector, I18n.t("prueba.s4.btn"), Rect2(68, 198, 310, 53), _elegir_dia.bind(4), dia == 4)
 	_boton_brief(_selector, I18n.t("prueba.s5.btn"), Rect2(392, 198, 310, 53), _elegir_dia.bind(5), dia == 5)
 	var resumen := I18n.t("prueba.s4.desc") if dia == 4 else I18n.t("prueba.s5.desc")
-	Vista.rotulo(_selector, resumen, Rect2(70, 278, 1140, 52), 24, TEXTO)
+	Vista.rotulo(_selector, resumen, Rect2(70, 268, 1140, 50), 24, TEXTO)
 	var columna := 0
 	for i in range(PERFILES.size()):
 		var perfil: Dictionary = PERFILES[i]
 		if perfil.sol != dia:
 			continue
 		var x := 68 + columna * 386
-		var tarjeta := Vista.placa(_selector, Rect2(x, 348, 372, 250))
+		var tarjeta := Vista.placa(_selector, Rect2(x, 336, 372, 286))
 		tarjeta.add_theme_stylebox_override("panel", Vista._estilo(PIZARRA, Color("#607986")))
-		Vista.rotulo(tarjeta, I18n.t("prueba.perf.%s.t" % perfil.clave), Rect2(22, 20, 328, 39), 26, ACENTO)
-		Vista.rotulo(tarjeta, I18n.t("prueba.perf.%s.n" % perfil.clave), Rect2(22, 75, 328, 92), 20, TEXTO)
-		_boton_brief(tarjeta, I18n.t("prueba.jugar"), Rect2(22, 181, 328, 46), iniciar.bind(i))
+		Vista.rotulo(tarjeta, I18n.t("prueba.perf.%s.t" % perfil.clave), Rect2(22, 16, 328, 39), 24, ACENTO)
+		var desc := Vista.rotulo(tarjeta, I18n.t("prueba.perf.%s.n" % perfil.clave), Rect2(22, 62, 328, 148), 18, TEXTO)
+		desc.add_theme_constant_override("line_spacing", -4)
+		_boton_brief(tarjeta, I18n.t("prueba.jugar"), Rect2(22, 222, 328, 46), iniciar.bind(i))
 		columna += 1
 	Vista.rotulo(_selector, I18n.t("prueba.atajo"), Rect2(68, 652, 630, 36), 19, TEXTO)
 	if is_instance_valid(_pantalla):

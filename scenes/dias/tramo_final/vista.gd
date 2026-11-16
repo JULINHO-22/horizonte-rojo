@@ -34,21 +34,43 @@ func mostrar_lecturas(registro: Dictionary, causa: String, donki: String, curios
 	_informe.mouse_filter = MOUSE_FILTER_IGNORE
 	add_child(_informe)
 	var lectura := preload("res://scripts/dialogo_escena.gd").new()
-	lectura.position = Vector2(868, 145)
+	lectura.position = Vector2(868, 128)
 	_informe.add_child(lectura)
+	lectura.frase.add_theme_constant_override("line_spacing", 1)
 	var cambios := I18n.tf("vista.cambios", [
 		antes.energia, despues.energia, antes.oxigeno, despues.oxigeno,
 		antes.agua, despues.agua, antes.alimento, despues.alimento])
 	lectura.decir("Reservas del refugio", cambios + "\n" + causa)
-	for opcion in [{"titulo": I18n.t("vista.link.donki"), "url": donki, "x": 872}, {"titulo": I18n.t("vista.link.curiosity"), "url": curiosity, "x": 1015}]:
+	var enlaces: Array[LinkButton] = []
+	for opcion in [{"titulo": I18n.t("vista.link.donki"), "url": donki}, {"titulo": I18n.t("vista.link.curiosity"), "url": curiosity}]:
 		var enlace := LinkButton.new()
 		enlace.text = opcion.titulo
 		enlace.uri = opcion.url
-		enlace.position = Vector2(opcion.x, 357)
+		enlace.position = Vector2(872, 357)
 		enlace.add_theme_color_override("font_color", PAPEL)
 		enlace.add_theme_color_override("font_outline_color", Color("#101b23"))
 		enlace.add_theme_constant_override("outline_size", 5)
 		_informe.add_child(enlace)
+		enlaces.append(enlace)
+	_ubicar_enlaces_informe(lectura, enlaces)
+	_ubicar_enlaces_informe.call_deferred(lectura, enlaces)
+
+func _ubicar_enlaces_informe(lectura: Control, enlaces: Array[LinkButton]) -> void:
+	if not is_instance_valid(lectura):
+		return
+	var frase: Label = lectura.frase
+	var alto_frase := maxf(frase.size.y, frase.get_minimum_size().y)
+	var y_enlaces := maxf(357.0, lectura.position.y + frase.position.y + alto_frase + 12.0)
+	var x := 872.0
+	for enlace in enlaces:
+		if not is_instance_valid(enlace):
+			continue
+		var ancho := maxf(enlace.size.x, enlace.get_minimum_size().x)
+		if x > 872.0 and x + ancho > 1252.0:
+			x = 872.0
+			y_enlaces += 28.0
+		enlace.position = Vector2(x, y_enlaces)
+		x += maxf(143.0, ancho + 24.0)
 
 func cerrar_lecturas() -> void:
 	if is_instance_valid(_informe):
