@@ -350,6 +350,8 @@ func _soltar_taladro(fuente: StringName) -> void:
 
 func _completar_taladro() -> void:
 	var sitio := _deposito_cercano()
+	if sitio.is_empty():
+		return
 	if not recursos.recoger_hielo(sitio.hielo, sitio.energia, sitio.id, sitio.alimento):
 		puesto.taladro_sol_uno_x = -1.0
 		voz.decir("Iris", I18n.t("sol1.iris.revisar_antes"))
@@ -370,6 +372,8 @@ func _actualizar_guia() -> void:
 	_actualizar_guia_cuerpo()
 	if is_instance_valid(sabias_que):
 		var zonas: Array[Rect2] = [Rect2(24, 24, 1230, 52)]
+		if is_instance_valid(boton_plano) and boton_plano.visible:
+			zonas.append(boton_plano.get_global_rect())
 		if is_instance_valid(boton) and boton.visible:
 			zonas.append(Rect2(boton.position, boton.size))
 		if is_instance_valid(voz) and voz.visible:
@@ -389,8 +393,7 @@ func _actualizar_guia_cuerpo() -> void:
 		_guia_expedicion()
 	elif fase == "camino_base":
 		pista.text = I18n.t("base.pista.camino_base")
-		var rover := puesto.proyectar_suelo(Vector2(minf(puesto.punto.x + 85, PuestoUmbra.ESCLUSA.x - 44), PuestoUmbra.SUELO))
-		voz.position = Vector2(clampf(rover.x + 20, 40, 860), clampf(rover.y - 250, 74, 350))
+		voz.position = Vector2(45, 82)
 		voz.visible = reloj < 6.0
 	elif fase == "camino_nave":
 		pista.text = I18n.t("base.pista.camino_nave")
@@ -618,6 +621,8 @@ func _abrir_menu_soles() -> void:
 	capa = anterior
 
 func _cerrar_menu_soles() -> void:
+	if not is_instance_valid(menu_soles):
+		return
 	remove_child(menu_soles)
 	menu_soles.queue_free()
 	menu_soles = null

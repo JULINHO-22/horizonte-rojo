@@ -146,7 +146,7 @@ func _process(delta: float) -> void:
 	if _ocupado or vista.abierta() or is_instance_valid(vista._informe) or mapa.plano:
 		_ocultar_ciencia()
 	elif is_instance_valid(sabias_que):
-		var zonas: Array[Rect2] = []
+		var zonas: Array[Rect2] = [Rect2(24, 18, 1232, 84)]
 		if is_instance_valid(vista._dialogo) and vista._dialogo.visible:
 			zonas.append(Rect2(vista._dialogo.position, Vector2(360, 175)))
 		if is_instance_valid(boton_accion) and boton_accion.visible:

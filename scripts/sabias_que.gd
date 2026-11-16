@@ -206,7 +206,7 @@ func _reubicar() -> void:
 	var candidatos := [
 		Vector2(1256.0 - ancho, 698.0 - alto),
 		Vector2(24.0, 644.0 - alto),
-		Vector2(1256.0 - ancho, 102.0),
+		Vector2(1256.0 - ancho, 114.0),
 		Vector2(24.0, 148.0),
 	]
 	var zonas: Array[Rect2] = _zonas_evitar.duplicate()

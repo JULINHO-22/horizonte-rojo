@@ -625,7 +625,7 @@ func _actualizar() -> void:
 		if not juego_activo() or taller.visible or is_instance_valid(huerto) or puesto.plano:
 			sabias_que.ocultar()
 		else:
-			var evitar: Array[Rect2] = [Rect2(24, 14, 1240, 126)]
+			var evitar: Array[Rect2] = [Rect2(24, 14, 830, 122), Rect2(920, 14, 344, 84)]
 			if interfaz.guia.visible:
 				evitar.append(interfaz.guia.get_global_rect())
 			if interfaz.aviso_pluto.visible:

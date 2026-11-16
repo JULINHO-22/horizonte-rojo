@@ -498,18 +498,14 @@ func _actualizar_hud() -> void:
 
 func _decir_pluto(texto: String) -> void:
 	dialogo.decir("Pluto", texto)
-	dialogo.show()
-	move_child(dialogo, get_child_count() - 1)
 	_ubicar_interfaz()
 
 
 func _ubicar_interfaz() -> void:
 	if puesto == null or dialogo == null:
 		return
-	var pluto := puesto.proyectar_suelo(puesto.posicion_pluto())
-	dialogo.position = Vector2(
-		clampf(pluto.x + 24, 24, 896),
-		clampf(pluto.y - 210, 82, 475))
+	dialogo.position = Vector2(24, 90)
+	dialogo.visible = modal == null and not is_instance_valid(diagnostico) and not is_instance_valid(huerto) and not is_instance_valid(panel_control) and not plano and not dialogo.frase.text.is_empty()
 
 
 func _ubicar_accion() -> void:

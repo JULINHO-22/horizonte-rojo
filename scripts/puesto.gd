@@ -443,14 +443,17 @@ func _dibujar_exterior() -> void:
 		elif chequeo and not campo and not guia_pluto and not bienvenida_percy:
 			iris_x = lerpf(284.0, 717.0, smoothstep(0.0, 5.0, tiempo))
 		iris.x = iris_x
+		var acompanantes_izquierda := (carrera or evacuacion or bienvenida_percy) and direccion_izquierda
+		var iris_invertida := true if taladro_sol_uno_x >= 0 else acompanantes_izquierda
 		var iris_camina := (perforando and avance_muestra < 0.34) or corriendo or (evacuacion and caminando) or (aterrizaje and tiempo < 8.7) or (chequeo and not campo and not guia_pluto and tiempo < 5.0)
 		iris_camina = iris_camina or (bienvenida_percy and caminando)
-		_sprite(IRIS_PASOS if iris_camina else IRIS, iris, ALTURA_TRAJE, 0.0, (carrera or evacuacion) and direccion_izquierda,
+		_sprite(IRIS_PASOS if iris_camina else IRIS, iris, ALTURA_TRAJE, 0.0, iris_invertida,
 			int(fposmod(iris.x / 48.0, 1.0) * 8) if iris_camina else -1)
 		if not aterrizaje or tiempo >= 9.3:
+			var teo_invertido := (teo.x > taladro_sol_uno_x) if taladro_sol_uno_x >= 0 else acompanantes_izquierda
 			var teo_camina := perforando or corriendo or (evacuacion and caminando) or (aterrizaje and tiempo < 13.5)
 			teo_camina = teo_camina or (bienvenida_percy and caminando)
-			_sprite(TEO_PASOS if teo_camina else TEO_NORMAL, teo, ALTURA_TRAJE - 1.0, 0.0, (carrera or evacuacion) and direccion_izquierda,
+			_sprite(TEO_PASOS if teo_camina else TEO_NORMAL, teo, ALTURA_TRAJE - 1.0, 0.0, teo_invertido,
 				int(fposmod(teo.x / 60.0, 1.0) * 8) if teo_camina else -1)
 		if not aterrizaje or tiempo >= 7.0:
 			var andando := (caminando or (aterrizaje and tiempo < 9.6)) and altura <= 0.0

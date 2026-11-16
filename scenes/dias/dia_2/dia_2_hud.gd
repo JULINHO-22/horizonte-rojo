@@ -123,59 +123,31 @@ func actualizar(lugar: String, mensaje: String, principal: String, otra: String,
 	else:
 		marca.text = "◆"
 
-func aviso_de_pluto(visible_en_escena: bool, posicion: Vector2, texto := "") -> void:
+func aviso_de_pluto(visible_en_escena: bool, _posicion: Vector2, texto := "") -> void:
 	if visible_en_escena:
-		aviso_pluto.position = Vector2(clampf(posicion.x - 170.0, 42.0, 872.0), clampf(posicion.y - 170.0, 118.0, 471.0))
+		aviso_pluto.position = Vector2(24.0, 146.0)
 		var mensaje := texto if not texto.is_empty() else I18n.t("sol2.hud.pluto_inicio")
 		aviso_pluto.decir("Pluto", mensaje)
 	else:
 		aviso_pluto.hide()
 
-func _ubicar_guia(punto: Vector2, nora: Vector2, interior: bool) -> void:
+func _ubicar_guia(_punto: Vector2, nora: Vector2, interior: bool) -> void:
 	var opciones := int(accion.visible) + int(alternativa.visible)
 	var alto_base := 116.0
 	guia.size.y = alto_base + opciones * 48.0
 	alternativa.position.y = 162.0 if accion.visible else 114.0
 
-	if not interior:
-		# En el exterior, anclar en la esquina contraria a Nora para no tapar los paneles ni a los astronautas
-		if nora.x < 580.0:
-			guia.position = Vector2(1280.0 - ANCHO_GUIA - 24.0, 700.0 - guia.size.y)
-		else:
-			var y_ext := 700.0 - guia.size.y
-			var zona_pad := ControlesTactiles.zona_stick()
-			if zona_pad.size.x > 0.0:
-				y_ext = zona_pad.position.y - guia.size.y - 14.0
-			guia.position = Vector2(24.0, y_ext)
-		return
-
-	if opciones == 0:
-		var y_int := 570.0
-		if ControlesTactiles.activo() and punto.x >= 500.0:
-			y_int = ControlesTactiles.zona_stick().position.y - guia.size.y - 14.0
-		guia.position = Vector2(24, y_int)
-		if punto.x < 500 and punto.y > 550:
-			guia.position.x = 780
-		return
-
-	# En el interior: ubicación inteligente que no tape a Nora ni la consola
-	var x := punto.x + 52.0
-	if x + ANCHO_GUIA > 1250.0:
-		x = punto.x - 52.0 - ANCHO_GUIA
-	if x < 24.0:
-		x = 24.0
-
-	var y := punto.y - 48.0
-	if nora.x >= x - 30.0 and nora.x <= x + ANCHO_GUIA + 30.0:
-		if nora.y > 360.0:
-			y = maxf(110.0, nora.y - guia.size.y - 30.0)
-		else:
-			y = minf(700.0 - guia.size.y, nora.y + 40.0)
-
-	guia.position = Vector2(clampf(x, 24.0, 1256.0 - ANCHO_GUIA), clampf(y, 184.0, 705.0 - guia.size.y))
 	var zona_pad := ControlesTactiles.zona_stick()
-	if zona_pad.size.x > 0.0 and Rect2(guia.position, guia.size).intersects(zona_pad.grow(10.0)):
-		guia.position.y = maxf(184.0, zona_pad.position.y - guia.size.y - 14.0)
+	var y_abajo := 700.0 - guia.size.y
+	# Anclar en una esquina inferior despejada para mantener libre el centro (Nora, Pluto y la sala).
+	var preferir_derecha := nora.x < 640.0 or (interior and zona_pad.size.x > 0.0)
+	if preferir_derecha:
+		guia.position = Vector2(1280.0 - ANCHO_GUIA - 24.0, y_abajo)
+	else:
+		var y_izq := maxf(335.0, y_abajo) if interior else y_abajo
+		if zona_pad.size.x > 0.0:
+			y_izq = maxf(184.0, zona_pad.position.y - guia.size.y - 14.0)
+		guia.position = Vector2(24.0, y_izq)
 
 func presentar(encabezado: String, mensaje: String, avance: String) -> void:
 	logro.hide()
