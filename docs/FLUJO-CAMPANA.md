@@ -14,11 +14,11 @@ Después de la tormenta, energía ≥ 2, oxígeno ≥ 3, agua ≥ 1 y comida ≥
 
 La campaña conserva las decisiones de balance de la integración anterior que permiten recuperar el Sol 2. El dormitorio del Sol 1 orienta al jugador para dejar margen y el guardado antiguo del Sol 2 puede recibir una reserva de emergencia una vez. El Sol 5 termina con el informe y el desenlace.
 
-Pulsa **T** o **Tablet** en cualquier zona jugable de la campaña para consultar las reservas. El tiempo se detiene hasta cerrar la tablet. **E** en Control muestra las tareas y las decisiones que corresponden a ese sol. En los soles 4 y 5 los equipos, la compuerta y la radio se accionan junto al escenario.
+Pulsa **Q** o **Reservas** en cualquier zona jugable de la campaña para consultar la tablet. Reutiliza los instrumentos del panel original de Control y muestra la comida y el hielo al pie. El tiempo se detiene hasta cerrarla. **E** en Control muestra las tareas y las decisiones del sol. **F** ejecuta la opción alternativa en el Sol 2. En los soles 4 y 5 los equipos, la compuerta y la radio se accionan junto al escenario.
 
-El rótulo animado de cada sol avisa de las tareas al despertar. Para la noche se funde del dormitorio a una toma pixel art de la tripulación descansando con un acercamiento leve, luego se apagan las luces y aparece el siguiente sol.
+El rótulo animado de cada sol aparece sobre el paisaje marciano mientras el recorrido está en pausa. Muestra el aviso de tareas y se puede adelantar con **E**. Para la noche se funde del dormitorio a una toma pixel art de la tripulación descansando con un acercamiento leve, luego se apagan las luces y aparece el siguiente sol.
 
 ## Arte integrado con ImageGen
 
-- [Tablet](../assets/tablet_umbra.png). «Front-facing orthographic rugged tablet prop for a Mars outpost 2D pixel art game. Single landscape device alone on genuine transparent alpha. Almost flat near-black blank glass, thin bronze graphite pixel-stepped bezel, copper scuffs and tiny amber status lamps. Hard deliberate chunky pixel clusters, zero perspective, no UI or text.»
 - [Dormitorio de noche](../assets/dormitorio_noche.png). Se usó `dormitorio_umbra.png` como referencia. «Preserve exact room composition and warm hand-placed pixel art. Show three astronauts sleeping under the existing purple, teal and blue blankets. Dark Martian night through the existing window, dim amber lights, no UI, landscape 2:1.»
+- [Umbra sin señal](../assets/umbra_sin_senal.png). «Wide 16:9 2D pixel-art cinematic background. Night exterior of the Umbra Mars outpost on the right, dim amber service lights, red dust and silhouetted mountains, dark empty left half for the headline. Somber and calm, no characters, no text or UI.»

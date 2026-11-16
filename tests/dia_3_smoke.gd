@@ -7,6 +7,12 @@ const Dia3 := preload("res://scenes/dias/dia_3/dia_3.tscn")
 func _initialize() -> void:
 	call_deferred("_probar")
 
+func _tecla(codigo: Key) -> void:
+	var evento := InputEventKey.new()
+	evento.physical_keycode = codigo
+	evento.pressed = true
+	root.push_input(evento)
+
 
 func _estado_dia_3():
 	var recursos := Recursos.new()
@@ -32,14 +38,26 @@ func _probar() -> void:
 	escena_protegida._comenzar_recorrido()
 	escena_protegida.puesto.punto = PuestoUmbra.TERMINALES.cultivos
 	escena_protegida._accion()
-	assert(escena_protegida.modal != null and escena_protegida.invernadero_revisado)
-	escena_protegida._sembrar("lechuga")
-	escena_protegida._cerrar_panel_plantas()
+	assert(is_instance_valid(escena_protegida.huerto) and escena_protegida.invernadero_revisado)
+	escena_protegida.huerto.accion.pressed.emit()
+	escena_protegida.huerto.accion.button_down.emit()
+	escena_protegida.huerto._process(1.2)
+	escena_protegida.huerto.accion.button_up.emit()
+	assert(protegidos.estado().bandejas.has("lechuga"))
+	escena_protegida.huerto.cerrar_solicitado.emit()
 	assert(escena_protegida.fase == "ir_oxigeno")
 	escena_protegida.puesto.punto = PuestoUmbra.ESTACION_OXIGENO
 	escena_protegida._accion()
 	assert(escena_protegida.fase == "decision")
-	escena_protegida._elegir_oxigeno()
+	_tecla(KEY_E)
+	assert(not protegidos.estado().aire_asegurado)
+	_tecla(KEY_1)
+	assert(not protegidos.estado().aire_asegurado and escena_protegida.diagnostico.aplicar.visible)
+	if DisplayServer.get_name() != "headless":
+		await RenderingServer.frame_post_draw
+		DirAccess.make_dir_recursive_absolute("res://build/qa")
+		root.get_texture().get_image().save_png("res://build/qa/dia3-diagnostico.png")
+	_tecla(KEY_E)
 	var estado_protegido: Dictionary = protegidos.estado()
 	assert(escena_protegida.decision == "oxigeno")
 	assert(estado_protegido.aire_asegurado)
@@ -62,10 +80,13 @@ func _probar() -> void:
 	assert(danados.estado().reservas.agua == 3)
 	assert(danados.estado().reservas.oxigeno == 5)
 	escena_danada._comenzar_recorrido()
-	escena_danada._abrir_panel_plantas()
-	escena_danada._cerrar_panel_plantas()
+	escena_danada.puesto.punto = PuestoUmbra.TERMINALES.cultivos
+	escena_danada._accion()
+	assert(escena_danada.huerto.plantas_visuales[1].etapa == 2)
+	escena_danada.huerto.cerrar_solicitado.emit()
 	escena_danada._activar_fallo()
-	escena_danada._elegir_invernadero()
+	_tecla(KEY_2)
+	escena_danada.diagnostico.aplicar.pressed.emit()
 	var estado_danado: Dictionary = danados.estado()
 	assert(escena_danada.decision == "invernadero")
 	assert(estado_danado.aire_asegurado)
@@ -82,7 +103,7 @@ func _probar() -> void:
 	prueba_local._comenzar_recorrido()
 	prueba_local.puesto.punto = PuestoUmbra.TERMINALES.cultivos
 	prueba_local._accion()
-	prueba_local._cerrar_panel_plantas()
+	prueba_local.huerto.cerrar_solicitado.emit()
 	prueba_local.puesto.punto = PuestoUmbra.ESTACION_OXIGENO
 	prueba_local._accion()
 	prueba_local._elegir_invernadero()

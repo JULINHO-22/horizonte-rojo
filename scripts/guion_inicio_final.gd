@@ -3,15 +3,19 @@ extends Control
 const Campana := preload("res://scripts/campana_narrativa.gd")
 const Viaje := preload("res://scripts/viaje_espacial.gd")
 const DialogoEscena := preload("res://scripts/dialogo_escena.gd")
+const AccionEscena := preload("res://scripts/accion_escena.gd")
+const Invernadero := preload("res://scripts/invernadero_umbra.gd")
+const Laboratorio := preload("res://scripts/laboratorio_umbra.gd")
+const AccionSostenida := preload("res://scripts/mecanicas/accion_sostenida.gd")
+const DerrotaUmbra := preload("res://scripts/derrota_umbra.gd")
 const VISTAS_FINALES := {
 	"--final-recursos": "res://scenes/pruebas/banco_recursos.tscn",
 	"--final-incompleta": "res://scenes/final_incompleta.tscn",
 	"--final-cumplida": "res://scenes/final_cumplida.tscn",
 }
 const AREA := Rect2(0, 0, 1280, 720)
-const TINTA := Color("#101c28")
 const PAPEL := Color("#fff1db")
-const CIAN := Color("#83eadc")
+const CIAN := Color("#7df0e0")
 const DURACION_IDA := 5.4
 const DURACION_ATERRIZAJE := 2.6
 const DURACION_REGRESO := 9.0
@@ -26,10 +30,10 @@ const Recursos := preload("res://scripts/mecanicas/recursos_mision.gd")
 const Tutorial := preload("res://scenes/dias/dia_1/tutorial_sol_uno.gd")
 var recursos := Recursos.new()
 const SOLES_JUGABLES := {
-	2: preload("res://scenes/dias/dia_2/dia_2.tscn"),
-	3: preload("res://scenes/dias/dia_3/dia_3.tscn"),
-	4: preload("res://scenes/dias/tramo_final/nivel.tscn"),
-	5: preload("res://scenes/dias/tramo_final/nivel.tscn"),
+	2: "res://scenes/dias/dia_2/dia_2.tscn",
+	3: "res://scenes/dias/dia_3/dia_3.tscn",
+	4: "res://scenes/dias/tramo_final/nivel.tscn",
+	5: "res://scenes/dias/tramo_final/nivel.tscn",
 }
 var nivel_activo: Control
 var historial_soles := {}
@@ -39,22 +43,21 @@ var integrar_soles := true
 const PanelControl := preload("res://scripts/panel_control.gd")
 const Tablet := preload("res://scripts/tablet_reservas.gd")
 const DORMITORIO_NOCHE := preload("res://assets/dormitorio_noche.png")
-const NOMBRES_SOLES := ["Llegada a Umbra", "Tormenta de polvo", "Aire o invernadero", "Preparar el refugio", "Tormenta solar"]
-const AVISOS_SOLES := ["Revisa las tareas en Control", "Alerta de polvo · Plan pendiente en Control",
-	"Revisión de sistemas · Consulta Control", "Alerta solar · Plan pendiente en Control",
-	"Alerta solar · Consulta Control y avisa a Tierra"]
+const AMANECER_MARTE := preload("res://assets/NarrativaInicio/MartePixelArt.png")
 const MapaNucleo := preload("res://scenes/dias/tramo_final/mapa_tramo.gd")
 var visita_nucleo: MapaNucleo
 var marco_nucleo: Control
 var panel_control: PanelControl
 var interfaz_tablet: Tablet
-var boton_tablet: Button
+var boton_tablet: LinkButton
 var sol_anunciado := 0
+var anuncio_sol: Control
 var escena_descanso: TextureRect
 var extraccion_hasta := 0.0
-var estaciones: VBoxContainer
+var taladro := AccionSostenida.new()
 var estacion := ""
-var turnos_cosecha: Dictionary = {}
+var huerto: Invernadero
+var laboratorio: Laboratorio
 var campana = Campana.new()
 var fase := "portada"
 var reloj := 0.0
@@ -95,7 +98,7 @@ func _ready() -> void:
 		_mostrar()
 
 func _process(delta: float) -> void:
-	if is_instance_valid(menu_soles) or is_instance_valid(interfaz_tablet):
+	if is_instance_valid(menu_soles) or is_instance_valid(interfaz_tablet) or is_instance_valid(anuncio_sol):
 		return
 	if is_instance_valid(nivel_activo):
 		if campana.sol == 2 and nivel_activo.juego_activo():
@@ -128,10 +131,9 @@ func _process(delta: float) -> void:
 			if is_instance_valid(panel_control):
 				return
 			if not estacion.is_empty():
-				if _sol_uno() and estacion == "cultivos":
+				if is_instance_valid(huerto):
 					if not _avanzar_recursos(delta):
 						return
-					_actualizar_cosecha(recursos.estado())
 					_refrescar_recursos()
 				return
 			if not _avanzar_recursos(delta):
@@ -143,8 +145,16 @@ func _process(delta: float) -> void:
 		"expedicion_sol_1":
 			if not _avanzar_recursos(delta):
 				return
+			if taladro.activa():
+				puesto.tiempo += delta
+				if taladro.avanzar(delta):
+					_completar_taladro()
+				else:
+					puesto.avance_muestra = taladro.progreso
+					boton.text = I18n.tf("sol1.btn.perforando", [floori(taladro.progreso * 100)])
+				puesto.queue_redraw()
+				return
 			if reloj < extraccion_hasta:
-				puesto.avance_muestra = 1.0 - (extraccion_hasta - reloj) / 1.5
 				puesto.queue_redraw()
 				return
 			puesto.taladro_sol_uno_x = -1.0
@@ -193,21 +203,31 @@ func _input(evento: InputEvent) -> void:
 		return
 	if evento.ctrl_pressed and evento.shift_pressed and evento.physical_keycode == KEY_M:
 		get_viewport().set_input_as_handled()
+		_soltar_taladro(&"")
 		if is_instance_valid(interfaz_tablet):
 			_cerrar_tablet()
+		_cerrar_anuncio_sol()
 		if is_instance_valid(menu_soles):
 			_cerrar_menu_soles()
 		else:
 			_abrir_menu_soles()
-	elif not is_instance_valid(menu_soles) and ((evento.physical_keycode == KEY_T and fase in ["base", "expedicion_sol_1"]) or
+	elif not is_instance_valid(menu_soles) and (((evento.keycode == KEY_Q or evento.physical_keycode == KEY_Q) and fase in ["base", "expedicion_sol_1"]) or
 			(evento.physical_keycode == KEY_ESCAPE and is_instance_valid(interfaz_tablet))):
 		get_viewport().set_input_as_handled()
 		_alternar_tablet()
+	elif is_instance_valid(anuncio_sol) and evento.physical_keycode in [KEY_E, KEY_ENTER, KEY_SPACE, KEY_ESCAPE]:
+		_cerrar_anuncio_sol()
+		get_viewport().set_input_as_handled()
 
 func _unhandled_key_input(event: InputEvent) -> void:
-	if is_instance_valid(nivel_activo) or is_instance_valid(menu_soles):
+	if is_instance_valid(nivel_activo) or is_instance_valid(menu_soles) or is_instance_valid(anuncio_sol) or is_instance_valid(interfaz_tablet) or is_instance_valid(huerto) or is_instance_valid(laboratorio):
 		return
-	if not event is InputEventKey or not event.pressed or event.echo:
+	if not event is InputEventKey or event.echo:
+		return
+	var codigo: Key = event.keycode if event.keycode != KEY_NONE else event.physical_keycode
+	if not event.pressed:
+		if codigo in [KEY_E, KEY_ENTER]:
+			_soltar_taladro(&"teclado")
 		return
 	if is_instance_valid(visita_nucleo):
 		if event.physical_keycode == KEY_ESCAPE or (event.physical_keycode == KEY_E and _cerca_salida_nucleo()):
@@ -219,15 +239,18 @@ func _unhandled_key_input(event: InputEvent) -> void:
 			_cerrar_control()
 		get_viewport().set_input_as_handled()
 		return
-	if event.physical_keycode == KEY_E or event.physical_keycode == KEY_ENTER:
-		_accion()
+	if codigo in [KEY_E, KEY_ENTER]:
+		if not _iniciar_taladro(&"teclado"):
+			_accion()
 	elif event.physical_keycode == KEY_M and fase == "base":
 		plano = not plano
 		puesto.plano = plano
 	elif event.physical_keycode == KEY_ESCAPE and fase in ["ida", "aterrizaje"]:
 		_iniciar_caminata()
-	elif event.physical_keycode == KEY_ESCAPE and not estacion.is_empty():
-		_cerrar_estacion()
+
+func _notification(que: int) -> void:
+	if que == NOTIFICATION_APPLICATION_FOCUS_OUT:
+		_soltar_taladro(&"")
 
 func _direccion() -> Vector2:
 	return Vector2(
@@ -286,27 +309,49 @@ func _guia_expedicion() -> void:
 	_ubicar_accion()
 
 func _accion_expedicion() -> void:
-	if reloj < extraccion_hasta:
-		return
-	var datos := recursos.estado()
-	if absf(posicion.x - PuestoUmbra.ESCLUSA.x) < 28:
+	if not taladro.activa() and reloj >= extraccion_hasta and absf(posicion.x - PuestoUmbra.ESCLUSA.x) < 28:
 		posicion = PuestoUmbra.ENTRADA
 		_cambiar("esclusa")
-		return
-	if not Tutorial.deposito(datos).is_empty():
-		return
+
+func _iniciar_taladro(fuente: StringName) -> bool:
+	if fase != "expedicion_sol_1" or is_instance_valid(interfaz_tablet):
+		return false
 	var sitio := _deposito_cercano()
-	if sitio.is_empty():
-		return
-	if not recursos.recoger_hielo(sitio.hielo, sitio.energia, sitio.id, sitio.alimento):
+	var datos := recursos.estado()
+	if sitio.is_empty() or not Tutorial.deposito(datos).is_empty():
+		return false
+	if datos.reservas.energia < sitio.energia or datos.reservas.alimento < sitio.alimento:
 		voz.decir("Iris", I18n.t("sol1.iris.tablet"))
 		aviso_tiempo = 6
-		return
+		return true
+	if not taladro.iniciar(fuente, 1.5):
+		return true
 	puesto.taladro_sol_uno_x = sitio.x
+	puesto.avance_muestra = 0.0
+	puesto.velocidad = Vector2.ZERO
+	puesto.caminando = false
+	voz.decir("Iris", I18n.t("sol1.iris.sostener_taladro"))
+	aviso_tiempo = 3
+	return true
+
+func _soltar_taladro(fuente: StringName) -> void:
+	if taladro.soltar(fuente):
+		puesto.taladro_sol_uno_x = -1.0
+		puesto.avance_muestra = 0.0
+		puesto.queue_redraw()
+		_actualizar_guia()
+
+func _completar_taladro() -> void:
+	var sitio := _deposito_cercano()
+	if not recursos.recoger_hielo(sitio.hielo, sitio.energia, sitio.id, sitio.alimento):
+		puesto.taladro_sol_uno_x = -1.0
+		voz.decir("Iris", I18n.t("sol1.iris.revisar_antes"))
+		aviso_tiempo = 6
+		return
 	puesto.depositos_sol_uno = []
 	puesto.hielo_sol_uno = true
-	puesto.avance_muestra = 0
-	extraccion_hasta = reloj + 1.5
+	puesto.avance_muestra = 1.0
+	extraccion_hasta = reloj + 0.28
 	boton.hide()
 	voz.decir("Iris", I18n.tf("sol1.iris.sacamos", [sitio.hielo]))
 	aviso_tiempo = 5
@@ -473,7 +518,8 @@ func _faltantes_para_tormenta(reservas: Dictionary) -> Dictionary:
 	}
 
 func _montar_sol() -> void:
-	nivel_activo = SOLES_JUGABLES[campana.sol].instantiate()
+	var escena := load(SOLES_JUGABLES[campana.sol]) as PackedScene
+	nivel_activo = escena.instantiate()
 	match campana.sol:
 		2:
 			var datos := recursos.estado()
@@ -484,10 +530,11 @@ func _montar_sol() -> void:
 						_guardar("base")
 			nivel_activo.configurar(recursos)
 			nivel_activo.finalizado.connect(_cerrar_sol_2, CONNECT_DEFERRED)
+			nivel_activo.avance_guardado.connect(_guardar.bind("base"))
 		3:
 			nivel_activo.configurar(recursos, historial_soles.get("sistemas_danados", false))
 			nivel_activo.descanso_solicitado.connect(_cerrar_sol_3, CONNECT_DEFERRED)
-			nivel_activo.decision_guardada.connect(_guardar.bind("base"))
+			nivel_activo.avance_guardado.connect(_guardar.bind("base"))
 		4, 5:
 			nivel_activo.configurar(recursos, historial_soles)
 			nivel_activo.terminado.connect(_cerrar_tramo, CONNECT_DEFERRED)
@@ -502,6 +549,8 @@ func _registrar_historial(datos: Dictionary) -> void:
 func _cerrar_sol_2(datos: Dictionary) -> void:
 	historial_soles.sistemas_danados = datos.sistemas_danados
 	historial_soles.paneles_protegidos = datos.paneles_protegidos
+	if not datos.completado:
+		historial_soles.motivo_derrota = datos.get("derrota", "")
 	_cerrar_sol(datos.completado)
 
 func _cerrar_sol_3(datos: Dictionary) -> void:
@@ -604,7 +653,7 @@ func _cambiar(destino: String) -> void:
 	if fase == "noche":
 		posicion = PuestoUmbra.TERMINALES.dormitorio
 	estacion = ""
-	turnos_cosecha.clear()
+	taladro.soltar()
 	extraccion_hasta = 0
 	aviso_tiempo = 0
 	if fase == "base":
@@ -621,8 +670,11 @@ func _cambiar(destino: String) -> void:
 
 func _mostrar() -> void:
 	nivel_activo = null
+	huerto = null
+	laboratorio = null
 	interfaz_tablet = null
 	boton_tablet = null
+	anuncio_sol = null
 	panel_control = null
 	visita_nucleo = null
 	marco_nucleo = null
@@ -632,9 +684,19 @@ func _mostrar() -> void:
 	puesto = null
 	viaje = null
 	capa = Control.new()
+	capa.size = AREA.size
+	capa.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(capa)
 	if fase in ["final_cumplida", "final_incompleta"]:
 		_ver_final("--" + fase.replace("_", "-"))
+		return
+	if fase == "derrota":
+		var cierre := DerrotaUmbra.new()
+		cierre.sol = campana.sol
+		var motivo: String = recursos.estado().derrota
+		cierre.motivo = historial_soles.get("motivo_derrota", motivo) if motivo.is_empty() else motivo
+		cierre.reinicio_solicitado.connect(_reiniciar)
+		capa.add_child(cierre)
 		return
 	if integrar_soles and fase == "base" and SOLES_JUGABLES.has(campana.sol) and not campana.listo_para_regresar():
 		_montar_sol()
@@ -665,12 +727,6 @@ func _mostrar() -> void:
 		"despegue":
 			_imagen(PuestoUmbra.SENDERO, AREA)
 			nave_salida = _imagen(PuestoUmbra.NAVE, Rect2(280, 275, 170, 260), true)
-		"derrota":
-			_sombra(AREA, Color.BLACK)
-			_etiqueta(I18n.t("ui.game_over"), Rect2(485, 290, 400, 100), 56)
-			if campana.sol == 5:
-				var silencio := _etiqueta(I18n.t("derrota.transmision"), Rect2(330, 380, 620, 42), 24)
-				silencio.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		"epilogo":
 			_imagen(PuestoUmbra.CENTRO_AGUA, AREA)
 			_sombra(Rect2(0, 0, 1280, 720), Color(0.03, 0.07, 0.12, 0.78))
@@ -685,13 +741,15 @@ func _mostrar() -> void:
 			_sombra(AREA, Color(0.03, 0.07, 0.12, 0.30))
 			_etiqueta(I18n.t("portada.titulo"), Rect2(85, 145, 1100, 100), 64)
 			_etiqueta(I18n.t("portada.subtitulo"), Rect2(90, 255, 900, 60), 32)
-			_etiqueta(I18n.t("portada.bajada"), Rect2(90, 322, 660, 68), 24)
+			_etiqueta(I18n.t("portada.bajada"), Rect2(90, 322, 660, 72), 24)
 	titulo = _etiqueta("", Rect2(34, 26, 590, 36), 23)
 	voz = DialogoEscena.new()
 	voz.position = Vector2(45, 82)
 	capa.add_child(voz)
 	pista = _etiqueta("", Rect2(34, 653, 445, 35), 17)
 	boton = _boton("", Rect2(986, 28, 256, 45), _accion)
+	boton.button_down.connect(_iniciar_taladro.bind(&"puntero"))
+	boton.button_up.connect(_soltar_taladro.bind(&"puntero"))
 	boton.visible = false
 	match fase:
 		"portada":
@@ -732,10 +790,6 @@ func _mostrar() -> void:
 		"expedicion_sol_1":
 			titulo.text = I18n.t("soles.dia1_titulo")
 			_actualizar_guia()
-		"derrota":
-			boton.position = Vector2(512, 450 if campana.sol == 5 else 410)
-			boton.text = I18n.t("ui.volver_intentar")
-			boton.show()
 		"base":
 			_refrescar_recursos()
 			titulo.text = I18n.tf("soles.base_titulo", [campana.sol])
@@ -762,46 +816,85 @@ func _mostrar() -> void:
 		_mostrar_accesos_sol()
 
 func _mostrar_accesos_sol() -> void:
-	boton_tablet = _boton(I18n.t("ui.tablet_btn"), Rect2(965, 18, 158, 42), _alternar_tablet)
-	boton_tablet.focus_mode = Control.FOCUS_NONE
+	boton_tablet = LinkButton.new()
+	boton_tablet.text = I18n.t("ui.tablet_btn")
+	boton_tablet.tooltip_text = I18n.t("ui.tablet_tooltip")
+	boton_tablet.underline = LinkButton.UNDERLINE_MODE_ALWAYS
+	boton_tablet.add_theme_font_size_override("font_size", 20)
+	boton_tablet.add_theme_color_override("font_color", Color("#ffdbac"))
+	boton_tablet.add_theme_color_override("font_hover_color", Color("#fff5df"))
+	boton_tablet.add_theme_color_override("font_focus_color", Color("#fff5df"))
+	boton_tablet.add_theme_color_override("font_outline_color", Color("#18110d"))
+	boton_tablet.add_theme_constant_override("outline_size", 7)
+	boton_tablet.position = Vector2(minf(957.0, 1246.0 - boton_tablet.get_minimum_size().x), 26.0)
+	boton_tablet.pressed.connect(_alternar_tablet)
 	boton_tablet.z_index = 10
+	capa.add_child(boton_tablet)
 	if fase != "base" or sol_anunciado == campana.sol or campana.listo_para_regresar():
 		return
 	sol_anunciado = campana.sol
-	var anuncio := Control.new()
-	anuncio.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	capa.add_child(anuncio)
-	anuncio.z_index = 9
+	anuncio_sol = Control.new()
+	anuncio_sol.size = AREA.size
+	anuncio_sol.mouse_filter = Control.MOUSE_FILTER_STOP
+	anuncio_sol.z_index = 20
+	capa.add_child(anuncio_sol)
+	if is_instance_valid(nivel_activo):
+		nivel_activo.process_mode = Node.PROCESS_MODE_DISABLED
+
 	var anterior := capa
-	capa = anuncio
+	capa = anuncio_sol
+	_imagen(AMANECER_MARTE, AREA)
+	_sombra(AREA, Color("#130e17a9"))
+	var texto := Control.new()
+	texto.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	capa.add_child(texto)
+	capa = texto
 	var rotulos := [
-		_etiqueta(I18n.tf("soles.sol_num", [campana.sol]), Rect2(350, 115, 580, 78), 65),
-		_etiqueta(I18n.t("soles.nom.%d" % campana.sol), Rect2(336, 206, 608, 45), 30),
-		_etiqueta(I18n.t("soles.aviso.%d" % campana.sol), Rect2(268, 256, 744, 35), 21),
+		_etiqueta(I18n.tf("soles.sol_num_anuncio", [campana.sol]), Rect2(240, 194, 800, 130), 96),
+		_etiqueta(I18n.t("soles.nom.%d" % campana.sol), Rect2(240, 337, 800, 60), 35),
+		_etiqueta(I18n.t("soles.aviso.%d" % campana.sol), Rect2(230, 414, 820, 96), 22),
 	]
+	capa = anuncio_sol
+	var continuar := _boton(I18n.t("ui.e_continuar"), Rect2(540, 610, 200, 44), _cerrar_anuncio_sol)
+	continuar.focus_mode = Control.FOCUS_NONE
 	capa = anterior
 	for rotulo: Label in rotulos:
 		rotulo.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	rotulos[2].add_theme_color_override("font_color", Color("#ffcb91"))
-	anuncio.modulate.a = 0.0
-	anuncio.position.y = 12
-	var entrada := anuncio.create_tween().set_parallel()
-	entrada.tween_property(anuncio, "modulate:a", 1.0, 0.35)
-	entrada.tween_property(anuncio, "position:y", 0.0, 0.35)
-	entrada.chain().tween_interval(3.0)
-	entrada.chain().tween_property(anuncio, "modulate:a", 0.0, 0.5)
-	entrada.chain().tween_callback(anuncio.queue_free)
+	texto.modulate.a = 0.0
+	texto.position.y = 14
+	var entrada := anuncio_sol.create_tween().set_parallel().set_trans(Tween.TRANS_SINE)
+	entrada.tween_property(texto, "modulate:a", 1.0, 0.45)
+	entrada.tween_property(texto, "position:y", 0.0, 0.45)
+	entrada.chain().tween_interval(2.25)
+	entrada.chain().tween_property(anuncio_sol, "modulate:a", 0.0, 0.4)
+	entrada.chain().tween_callback(_cerrar_anuncio_sol)
+
+func _cerrar_anuncio_sol() -> void:
+	if not is_instance_valid(anuncio_sol):
+		return
+	anuncio_sol.hide()
+	anuncio_sol.queue_free()
+	anuncio_sol = null
+	if is_instance_valid(nivel_activo):
+		nivel_activo.process_mode = Node.PROCESS_MODE_INHERIT
 
 func _alternar_tablet() -> void:
 	if is_instance_valid(interfaz_tablet):
 		_cerrar_tablet()
 		return
+	_cerrar_anuncio_sol()
+	_soltar_taladro(&"")
 	interfaz_tablet = Tablet.new()
 	interfaz_tablet.estado = recursos.estado()
 	interfaz_tablet.z_index = 25
 	interfaz_tablet.cerrar_solicitado.connect(_cerrar_tablet)
 	if is_instance_valid(nivel_activo):
 		nivel_activo.process_mode = Node.PROCESS_MODE_DISABLED
+	elif is_instance_valid(huerto):
+		huerto.process_mode = Node.PROCESS_MODE_DISABLED
+	elif is_instance_valid(laboratorio):
+		laboratorio.process_mode = Node.PROCESS_MODE_DISABLED
 	capa.add_child(interfaz_tablet)
 
 func _cerrar_tablet() -> void:
@@ -810,6 +903,10 @@ func _cerrar_tablet() -> void:
 	interfaz_tablet = null
 	if is_instance_valid(nivel_activo):
 		nivel_activo.process_mode = Node.PROCESS_MODE_INHERIT
+	elif is_instance_valid(huerto):
+		huerto.process_mode = Node.PROCESS_MODE_INHERIT
+	elif is_instance_valid(laboratorio):
+		laboratorio.process_mode = Node.PROCESS_MODE_INHERIT
 
 func _refrescar_recursos() -> void:
 	var datos := recursos.estado()
@@ -890,131 +987,58 @@ func _estacion_cercana() -> String:
 func _abrir_estacion(id: String) -> void:
 	estacion = id
 	boton.hide()
-	estaciones = VBoxContainer.new()
-	estaciones.position = Vector2(818, 78 if _sol_uno() else 180)
-	estaciones.custom_minimum_size.x = 384
-	if _sol_uno() and id == "cultivos":
-		estaciones.theme = _tema_plantas()
-	capa.add_child(estaciones)
-	if _sol_uno():
-		_opciones_sol_uno(id)
-	elif id == "agua":
-		voz.decir("Pluto", I18n.t("estacion.agua.desc"))
-		_opcion(I18n.t("estacion.agua.prueba"), _hielo_prueba)
-		_opcion(I18n.t("estacion.agua.purificar2"), recursos.purificar_hielo)
-	elif id == "oxigeno":
-		voz.decir("Pluto", I18n.t("estacion.ox.desc"))
-		_opcion(I18n.t("estacion.ox.asegurar"), recursos.activar_oxigeno)
-	else:
-		for cultivo: String in Recursos.CULTIVOS:
-			var ficha: Dictionary = Recursos.CULTIVOS[cultivo]
-			_opcion(I18n.tf("estacion.cultivo.libre", [
-				I18n.cultivo(cultivo), ficha.energia, int(ficha.segundos), ficha.alimento]), recursos.sembrar.bind(cultivo))
-			_opcion(I18n.tf("estacion.cultivo.comer", [I18n.cultivo(cultivo, true)]), recursos.comer.bind(cultivo))
-	var cerrar := Button.new()
-	cerrar.text = I18n.t("ui.cerrar_esc")
-	cerrar.pressed.connect(_cerrar_estacion)
-	estaciones.add_child(cerrar)
-	if _sol_uno():
-		estaciones.get_child(0).grab_focus()
+	if id == "cultivos":
+		_abrir_huerto()
+		return
+	laboratorio = Laboratorio.new()
+	laboratorio.tipo = id
+	laboratorio.recursos = recursos
+	laboratorio.cerrar_solicitado.connect(_cerrar_estacion)
+	laboratorio.trabajo_completado.connect(_registrar_laboratorio)
+	capa.add_child(laboratorio)
+	capa.move_child(boton_tablet, -1)
 
-func _tema_plantas() -> Theme:
-	var tema := Theme.new()
-	tema.set_constant("separation", "VBoxContainer", 5)
-	tema.set_font_size("font_size", "Button", 17)
-	tema.set_color("font_disabled_color", "Button", Color("#c2d4df"))
-	var colores := {
-		"normal": TINTA, "hover": Color("#274858"), "pressed": Color("#315866"),
-		"disabled": Color("#233340"),
-	}
-	for estado: String in colores:
-		var estilo := StyleBoxFlat.new()
-		estilo.bg_color = colores[estado]
-		estilo.border_color = Color("#476473")
-		estilo.set_border_width_all(1)
-		estilo.set_corner_radius_all(6)
-		estilo.content_margin_top = 6
-		estilo.content_margin_bottom = 6
-		estilo.content_margin_left = 10
-		estilo.content_margin_right = 10
-		tema.set_stylebox(estado, "Button", estilo)
-	return tema
+func _registrar_laboratorio(_ganancia: int) -> void:
+	_refrescar_recursos()
+	if _sol_uno():
+		var datos := recursos.estado()
+		voz.decir("Pluto", Tutorial.guia(Tutorial.objetivo(datos)))
+		aviso_tiempo = 6
+	_guardar()
 
-func _opciones_sol_uno(id: String) -> void:
-	var datos := recursos.estado()
-	if id == "oxigeno":
-		voz.decir("Pluto", I18n.t("estacion.sol1.ox"))
-		_opcion(I18n.t("estacion.ox.asegurar"), recursos.activar_oxigeno)
-	elif id == "agua":
-		voz.decir("Pluto", I18n.t("estacion.sol1.agua"))
-		_opcion(I18n.t("estacion.sol1.agua_btn"), recursos.purificar_hielo)
-	else:
-		voz.decir("Pluto", I18n.t("estacion.sol1.cultivos"))
-		for cultivo: String in Recursos.CULTIVOS:
-			turnos_cosecha[cultivo] = _opcion("", _usar_bandeja.bind(cultivo))
+func _abrir_huerto() -> void:
+	huerto = Invernadero.new()
+	huerto.recursos = recursos
+	if _sol_uno():
+		var datos := recursos.estado()
 		var anterior := Tutorial.cosecha(datos)
 		if Recursos.CULTIVOS.has(anterior) and Tutorial.COMIDA not in datos.decisiones:
-			_opcion(I18n.t("estacion.sol1.guardada"), _comer_guardado.bind(anterior))
-		_actualizar_cosecha(datos)
+			huerto.cosecha_guardada = anterior
+			huerto.comer_guardado = _comer_guardado
+	huerto.cerrar_solicitado.connect(_cerrar_estacion)
+	huerto.cultivo_atendido.connect(_guardar_huerto)
+	capa.add_child(huerto)
+	capa.move_child(boton_tablet, -1)
 
-func _actualizar_cosecha(datos: Dictionary) -> void:
-	for cultivo: String in turnos_cosecha:
-		var control: Button = turnos_cosecha[cultivo]
-		var ficha: Dictionary = Recursos.CULTIVOS[cultivo]
-		if not datos.bandejas.has(cultivo):
-			control.text = I18n.tf("estacion.sol1.sembrar", [I18n.cultivo(cultivo), ficha.energia, int(ficha.segundos)])
-			control.disabled = false
-			continue
-		var espera := ceili(datos.bandejas[cultivo])
-		var reloj_cultivo := "%02d:%02d" % [int(espera / 60.0), espera % 60]
-		var lleno: bool = datos.reservas.alimento == Recursos.LIMITES.alimento
-		var estado := I18n.t("estacion.sol1.llena") if lleno else I18n.tf("estacion.sol1.recoger", [ficha.alimento])
-		control.text = I18n.tf("estacion.sol1.bandeja", [I18n.cultivo(cultivo), I18n.tf("estacion.sol1.faltan", [reloj_cultivo]) if espera > 0 else estado])
-		control.disabled = espera > 0 or lleno
-
-func _usar_bandeja(cultivo: String) -> bool:
-	if not recursos.estado().bandejas.has(cultivo):
-		return recursos.sembrar(cultivo)
-	if not recursos.comer(cultivo):
-		return false
-	recursos.aplicar_decision(Tutorial.COMIDA, {})
-	return true
+func _guardar_huerto(cosechado: bool) -> void:
+	if _sol_uno() and cosechado:
+		recursos.aplicar_decision(Tutorial.COMIDA, {})
+	_refrescar_recursos()
+	_guardar()
 
 func _comer_guardado(cultivo: String) -> bool:
 	if recursos.estado().reservas.alimento == Recursos.LIMITES.alimento:
 		return false
 	return recursos.aplicar_decision(Tutorial.COMIDA, {"alimento": Recursos.CULTIVOS[cultivo].alimento})
 
-func _opcion(texto: String, accion: Callable) -> Button:
-	var control := Button.new()
-	control.text = texto
-	control.pressed.connect(_usar_estacion.bind(accion))
-	estaciones.add_child(control)
-	return control
-
-func _usar_estacion(accion: Callable) -> void:
-	var aplicada: bool = accion.call()
-	if _sol_uno() and aplicada:
-		var datos := recursos.estado()
-		_actualizar_cosecha(datos)
-		voz.decir("Pluto", Tutorial.guia(Tutorial.objetivo(datos)))
-	else:
-		voz.decir("Pluto", I18n.t("estacion.pluto.listo" if aplicada else "estacion.pluto.revisar"))
-		if _sol_uno() and estacion == "agua":
-			voz.decir("Pluto", I18n.t("estacion.pluto.falta_agua"))
-	aviso_tiempo = 6
-	_refrescar_recursos()
-	if aplicada:
-		_guardar()
-
-func _hielo_prueba() -> bool:
-	return recursos.aplicar_decision("reserva_hielo_prueba", {}) and recursos.recoger_hielo()
-
 func _cerrar_estacion() -> void:
 	estacion = ""
-	turnos_cosecha.clear()
-	estaciones.hide()
-	estaciones.queue_free()
+	var actividad: Control = huerto if is_instance_valid(huerto) else laboratorio
+	capa.remove_child(actividad)
+	actividad.queue_free()
+	huerto = null
+	laboratorio = null
+	_actualizar_guia()
 
 func _crear_mapa(interior: bool) -> void:
 	var marco := Control.new()
@@ -1090,22 +1114,17 @@ func _boton(texto: String, rect: Rect2, accion: Callable) -> Button:
 	control.size = rect.size
 	control.text = texto
 	control.add_theme_font_size_override("font_size", 19)
-	var normal := StyleBoxFlat.new()
-	normal.bg_color = TINTA
-	normal.border_color = CIAN
-	normal.set_border_width_all(1)
-	normal.set_corner_radius_all(7)
-	control.add_theme_stylebox_override("normal", normal)
+	AccionEscena.aplicar(control)
 	control.pressed.connect(accion)
 	capa.add_child(control)
 	return control
 
 func _selector_idioma() -> void:
-	var etiqueta := _etiqueta(I18n.t("ui.idioma_titulo"), Rect2(616, 22, 630, 24), 15)
+	var etiqueta := _etiqueta(I18n.t("ui.idioma_titulo"), Rect2(616, 16, 630, 26), 15)
 	etiqueta.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	for i in range(I18n.IDIOMAS.size()):
 		var codigo: String = I18n.IDIOMAS[i]
-		var btn := _boton(I18n.etiqueta(codigo), Rect2(616 + i * 106, 50, 100, 36), _elegir_idioma.bind(codigo))
+		var btn := _boton(I18n.etiqueta(codigo), Rect2(616 + i * 106, 52, 100, 36), _elegir_idioma.bind(codigo))
 		btn.focus_mode = Control.FOCUS_NONE
 		btn.add_theme_font_size_override("font_size", 15)
 		if codigo == I18n.idioma():

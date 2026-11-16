@@ -66,6 +66,8 @@ func _probar() -> void:
 	assert(not Reglas.impedimento("ambas", nivel.recursos.estado()).is_empty())
 	assert(not Reglas.completar_plan(nivel.recursos, "ambas"))
 	banco.iniciar(0)
+	await _probar_huerto(banco._pantalla)
+	banco.iniciar(0)
 	nivel = banco._pantalla
 	nivel.set_process(false)
 	_camino(nivel, [Tramo.RADIO])
@@ -186,7 +188,17 @@ func _probar() -> void:
 		nivel.impacto_registrado.connect(func(historia: Dictionary): historia_impacto.merge(historia))
 		if i == 0:
 			await _captura("dia5-cierre")
-		_clic(nivel, "sello", Tramo.PUERTA_PROTEGIDA)
+		var punto_sello := nivel.mapa.ancla_interaccion("sello", Tramo.PUERTA_PROTEGIDA)
+		_pulsar(punto_sello, true)
+		nivel._process(0.47)
+		assert(nivel.etapa == "sellar" and nivel.mapa.compuerta > 0.0)
+		if i == 0:
+			await _captura("dia5-sellando")
+		_pulsar(punto_sello, false)
+		assert(nivel.etapa == "sellar" and nivel.mapa.compuerta == 0.0)
+		_pulsar(punto_sello, true)
+		nivel._process(1.5)
+		_pulsar(punto_sello, false)
 		assert(nivel.etapa == "impacto")
 		await create_timer(1.95).timeout
 		assert(nivel.mapa.fase_radiacion == "Pico de radiación")
@@ -199,7 +211,9 @@ func _probar() -> void:
 		assert(banco._recursos.estado().reservas == registro.despues)
 		if i == 2:
 			await create_timer(0.70).timeout
-			assert(banco._pantalla is ColorRect)
+			assert(banco._pantalla.get_script() == preload("res://scripts/derrota_umbra.gd"))
+			assert(banco._pantalla.sol == 5)
+			await create_timer(0.6).timeout
 			await _captura("dia5-game-over")
 		else:
 			_camino(nivel, [Tramo.RADIO_PROTEGIDA])
@@ -247,6 +261,30 @@ func _probar_cinematica(cierre: Control, cumplida: bool) -> void:
 	assert(cierre.fase == ("victoria" if cumplida else "noticia"))
 	if not cumplida:
 		assert(cierre.accion.text == "Repetir final" and cierre.voz.frase.text.contains("a salvo"))
+
+func _probar_huerto(nivel: Tramo) -> void:
+	_camino(nivel, [Tramo.RADIO, Vector2(538, 245), Vector2(538, 133), Vector2(407, 133), Tramo.HUERTO])
+	var antes := nivel.recursos.estado()
+	_clic(nivel, "plantas", Tramo.HUERTO)
+	assert(nivel.recursos.estado() == antes and nivel._confirmacion == "plantas")
+	_clic(nivel, "plantas", Tramo.HUERTO)
+	assert(nivel.recursos.estado() == antes, "El riego se cancela al soltar.")
+	var punto_riego := nivel.mapa.ancla_interaccion("plantas", Tramo.HUERTO)
+	_pulsar(punto_riego, true)
+	nivel._process(1.2)
+	_pulsar(punto_riego, false)
+	assert(nivel.recursos.estado().bandejas.lechuga == 15.0)
+	assert(nivel.recursos.estado().reservas.agua == antes.reservas.agua - 1)
+	assert(nivel.mapa._cultivos.lechuga.etapa == 0)
+	_camino(nivel, [Vector2(407, 133), Vector2(538, 133), Vector2(538, 245), Vector2(402, 245), PuestoUmbra.TERMINALES.energia])
+	for i in 4:
+		_clic(nivel, "carga", PuestoUmbra.TERMINALES.energia)
+	assert(nivel.mapa._cultivos.lechuga.etapa == 2)
+	_camino(nivel, [Vector2(402, 245), Vector2(538, 245), Vector2(538, 133), Vector2(407, 133), Tramo.HUERTO])
+	await _captura("dia4-huerto")
+	_clic(nivel, "plantas", Tramo.HUERTO)
+	assert(nivel.recursos.estado().bandejas.is_empty())
+	assert(nivel.recursos.estado().reservas.alimento == antes.reservas.alimento + 1)
 
 func _probar_planes_y_proteccion() -> void:
 	for id in ["hielo", "refuerzo"]:

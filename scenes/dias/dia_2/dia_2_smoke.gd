@@ -56,7 +56,7 @@ func _probar() -> void:
 	var oxigeno_lectura: int = dia.recursos.estado().reservas.oxigeno
 	dia._process(20.0)
 	assert(dia.recursos.estado().reservas.oxigeno == oxigeno_lectura)
-	_tecla(dia, KEY_Q)
+	_tecla(dia, KEY_F)
 	assert(not dia.taller.visible and not dia.recursos.estado().aire_asegurado)
 	_tecla(dia, KEY_E)
 	await _resolver(dia)
@@ -94,7 +94,6 @@ func _probar() -> void:
 	dia = _instanciar(partida)
 	resultados.clear()
 	dia.finalizado.connect(resultados.append)
-	_tecla(dia, KEY_E)
 	dia._process(45.0)
 	assert(partida.estado().reservas.oxigeno == 8, "Solo el controlador puede avanzar su reloj.")
 	partida.avanzar(16.0)
@@ -120,7 +119,6 @@ func _probar() -> void:
 	dia.free()
 
 	dia = _instanciar(_partida(12, 3))
-	_tecla(dia, KEY_E)
 	# Ir al Centro de agua antes de tomar la decisión de Control.
 	_caminar_a(dia, Dia.CRUCE_SUR)
 	_caminar_a(dia, Dia.CRUCE_OESTE)
@@ -140,19 +138,18 @@ func _probar() -> void:
 	dia.free()
 
 	dia = _instanciar(_partida(3, 0))
-	_tecla(dia, KEY_E)
 	await _accion(dia, Paso.DECISION)
 	await _caminar(dia)
-	_tecla(dia, KEY_Q) # Se permite intentar salir antes del aire.
+	_tecla(dia, KEY_F) # Se permite intentar salir antes del aire.
 	await _accion(dia, Paso.SALIR)
 	await _accion(dia, Paso.REPARAR)
 	assert(dia.paso == Paso.REPARAR and dia.recursos.estado().reservas.energia == 3)
 	_caminar_a(dia, PuestoUmbra.ESCLUSA, 25.0)
-	_tecla(dia, KEY_Q)
-	_tecla(dia, KEY_Q)
+	_tecla(dia, KEY_F)
+	_tecla(dia, KEY_F)
 	await _accion(dia, Paso.AIRE)
 	assert(dia.paso == Paso.AIRE and not dia.recursos.estado().aire_asegurado)
-	_tecla(dia, KEY_Q)
+	_tecla(dia, KEY_F)
 	resultados.clear()
 	dia.finalizado.connect(resultados.append)
 	await _accion(dia, Paso.DESCANSO)
@@ -161,10 +158,9 @@ func _probar() -> void:
 
 	# Aire después de reparar: debe llevar a la cama, sin repetir la salida.
 	dia = _instanciar(_partida(12, 3))
-	_tecla(dia, KEY_E)
 	await _accion(dia, Paso.DECISION)
 	await _caminar(dia)
-	_tecla(dia, KEY_Q)
+	_tecla(dia, KEY_F)
 	await _accion(dia, Paso.SALIR)
 	await _accion(dia, Paso.REPARAR)
 	await _accion(dia, Paso.ENTRAR)
@@ -178,17 +174,23 @@ func _probar() -> void:
 	partida = _partida(8, 0)
 	assert(partida.recoger_hielo())
 	dia = _instanciar(partida)
-	_tecla(dia, KEY_E)
 	await _caminar(dia)
-	_tecla(dia, KEY_Q)
+	_tecla(dia, KEY_F)
 	await _caminar(dia)
 	_tecla(dia, KEY_E)
 	assert(not dia.taller.visible and not partida.estado().aire_asegurado)
-	_tecla(dia, KEY_Q)
+	_tecla(dia, KEY_F)
 	_caminar_a(dia, Dia.AGUA)
 	dia._process(0.0)
-	assert(dia.interfaz.alternativa.visible)
-	_clic(dia.interfaz.alternativa)
+	assert(dia.interfaz.accion.visible)
+	_clic(dia.interfaz.accion)
+	assert(is_instance_valid(dia.laboratorio))
+	_tecla(dia, KEY_E)
+	assert(dia.laboratorio.muestra_cargada and partida.estado().hielo == 1)
+	_puntero(dia.laboratorio.mando, true)
+	dia.laboratorio._process(1.4)
+	_puntero(dia.laboratorio.mando, false)
+	_tecla(dia, KEY_ESCAPE)
 	assert(partida.estado().reservas.agua == 3 and partida.estado().hielo == 0)
 	await _accion(dia, Paso.AIRE)
 	assert(partida.estado().aire_asegurado and partida.estado().reservas.energia == 0)
@@ -200,17 +202,26 @@ func _probar() -> void:
 	assert(partida.aplicar_decision(Dia.RESGUARDARSE, {}))
 	assert(partida.aplicar_perdidas("prueba_hambre", {"alimento": 10}))
 	dia = _instanciar(partida)
-	_tecla(dia, KEY_E)
 	await _caminar(dia)
-	_tecla(dia, KEY_Q)
+	_tecla(dia, KEY_F)
 	await _accion(dia, Paso.PLANTAS)
+	assert(is_instance_valid(dia.huerto))
+	_tecla(dia, KEY_E)
+	assert(partida.estado().bandejas.is_empty())
+	_clic(dia.huerto.accion)
+	assert(partida.estado().bandejas.is_empty())
+	_puntero(dia.huerto.bandejas[0], true)
+	dia.huerto._process(1.2)
+	_puntero(dia.huerto.bandejas[0], false)
 	assert(partida.estado().bandejas.has("lechuga"))
 	partida.avanzar(15.0)
 	dia._process(0.0)
 	await _captura(dia, "cosecha-lista")
-	_clic(dia.interfaz.alternativa)
+	assert(not dia.huerto.accion.disabled and "Recoger" in dia.huerto.accion.text)
+	_clic(dia.huerto.bandejas[0])
 	assert(partida.estado().reservas.alimento == 2)
-	_tecla(dia, KEY_Q)
+	_tecla(dia, KEY_ESCAPE)
+	_tecla(dia, KEY_F)
 	await _accion(dia, Paso.DESCANSO)
 	assert(dia.concluido)
 	dia.free()
@@ -263,16 +274,19 @@ func _tecla(dia: Dia, codigo: Key) -> void:
 
 
 func _clic(boton: Button) -> void:
-	assert(boton.is_visible_in_tree() and not boton.disabled, "El botón debe estar disponible.")
+	_puntero(boton, true)
+	_puntero(boton, false)
+
+
+func _puntero(boton: Button, presionado: bool) -> void:
+	if presionado:
+		assert(boton.is_visible_in_tree() and not boton.disabled, "El botón debe estar disponible.")
 	var evento := InputEventMouseButton.new()
 	evento.button_index = MOUSE_BUTTON_LEFT
 	evento.position = boton.get_global_rect().get_center()
 	evento.global_position = evento.position
-	evento.pressed = true
+	evento.pressed = presionado
 	root.push_input(evento, true)
-	var soltar := evento.duplicate() as InputEventMouseButton
-	soltar.pressed = false
-	root.push_input(soltar, true)
 
 
 func _accion(dia: Dia, etapa: int) -> void:
@@ -364,6 +378,7 @@ func _resolver(dia: Dia) -> void:
 				else:
 					_tecla(dia, [KEY_1, KEY_2, KEY_3, KEY_4][i])
 		assert(dia.taller.reglas.aire_conectado())
+		dia.taller.avanzar(0.6)
 		await _captura(dia, "circuito-listo")
 		_tecla(dia, KEY_E)
 		assert(dia.recursos.estado().aire_asegurado)

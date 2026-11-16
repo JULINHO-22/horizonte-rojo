@@ -7,7 +7,6 @@ const DEPOSITOS := [
 	{"id": "sol_1_hielo_cercano", "clave": "cercano", "x": 1040.0, "energia": 1, "hielo": 1, "alimento": 0},
 	{"id": "sol_1_hielo_profundo", "clave": "profundo", "x": 1290.0, "energia": 1, "hielo": 2, "alimento": 1},
 ]
-
 static func guia(objetivo_id: String) -> String:
 	return I18n.t("sol1.guia." + objetivo_id, "")
 

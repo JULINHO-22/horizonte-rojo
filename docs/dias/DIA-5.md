@@ -1,6 +1,6 @@
 # Día 5 | Bajo protección
 
-En Control, pulsa **E** o toca el equipo para avisar a Tierra. La respuesta tarda. Sigue por la puerta sur y baja por el acceso lateral dentro de la esclusa, marcado también en el plano. La campaña permite visitar el mismo núcleo antes de la emergencia. La esclusa sigue siendo el vestíbulo que conecta la base con el exterior. Nora aparece cruzando el umbral abierto hasta el lado donde esperan Iris y Teo. El control a la derecha acciona la compuerta detrás de la tripulación. El indicador exterior sube y baja según las lecturas archivadas de Curiosity. La tormenta del día 2 es de polvo y la del día 5 corresponde a partículas del Sol.
+En Control, pulsa **E** o toca el equipo para avisar a Tierra. La respuesta tarda. Sigue por la puerta sur y baja por el acceso lateral dentro de la esclusa, marcado también en el plano. La campaña permite visitar el mismo núcleo antes de la emergencia. La esclusa sigue siendo el vestíbulo que conecta la base con el exterior. Nora aparece cruzando el umbral abierto hasta el lado donde esperan Iris y Teo. Mantén **E** o el control de la compuerta hasta sellarla. Soltar antes vuelve a abrir las hojas. Tras cerrar, el indicador exterior sube y baja según las lecturas archivadas de Curiosity. La tormenta del día 2 es de polvo y la del día 5 corresponde a partículas del Sol.
 
 | Antecedente | Pérdidas del impacto |
 | --- | --- |
@@ -45,7 +45,7 @@ El catálogo y las lecturas se consultaron por API pública. La muestra archivad
 - [CSV de Curiosity en NASA OSDR/RadLab](https://visualization.osdr.nasa.gov/radlab/api/?spacecraft=Curiosity&timestamp%3E=2017-09-10&timestamp%3C2017-09-13&timestamp&absorbed_dose_rate)
 - [NASA sobre áreas protegidas contra la radiación](https://www.nasa.gov/science-research/heliophysics/real-martians-how-to-protect-astronauts-from-space-radiation-on-mars/)
 
-El día 5 presenta las acciones junto a la computadora, el control de la puerta y la emisora. La respuesta de Tierra y el informe del impacto se leen sobre sombras difuminadas dentro de la sala. Vuelve a usar la emisora para enviar resultados o confirmar la evacuación. Tras la señal de fin de alerta, abre la compuerta para volver a la cápsula. En campaña, **T** consulta las reservas.
+El día 5 presenta las acciones junto a la computadora, el control de la puerta y la emisora. La respuesta de Tierra y el informe del impacto se leen sobre sombras difuminadas dentro de la sala. Vuelve a usar la emisora para enviar resultados o confirmar la evacuación. Tras la señal de fin de alerta, abre la compuerta para volver a la cápsula. En campaña, **Q** consulta las reservas.
 
 El arte de la compuerta abierta se generó con ImageGen editando la ilustración del núcleo. El archivo `assets/dias/dia_5/nucleo_paso_abierto.png` aporta el pasillo. Godot desplaza las hojas de la compuerta original sobre el pasillo durante el cierre.
 

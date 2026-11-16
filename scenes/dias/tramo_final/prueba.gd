@@ -146,12 +146,12 @@ func _mostrar_noche(historial: Dictionary) -> void:
 
 func _derrota() -> void:
 	_limpiar()
-	_pantalla = ColorRect.new()
-	_pantalla.color = Color.BLACK
-	_pantalla.size = Vector2(1280, 720)
-	add_child(_pantalla)
-	Vista.rotulo(_pantalla, I18n.t("ui.game_over"), Rect2(440, 280, 400, 90), 52, Vista.PAPEL).horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	Vista.boton(_pantalla, I18n.t("prueba.volver"), Rect2(523, 394, 234, 49), _menu).grab_focus()
+	var cierre := preload("res://scripts/derrota_umbra.gd").new()
+	cierre.sol = _recursos.estado().sol
+	cierre.motivo = _recursos.estado().derrota
+	cierre.reinicio_solicitado.connect(_menu)
+	_pantalla = cierre
+	add_child(cierre)
 
 func _limpiar() -> void:
 	if is_instance_valid(_pantalla):

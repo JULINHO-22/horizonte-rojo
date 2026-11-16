@@ -6,6 +6,7 @@ const MENTA := Color("#9ce6d8")
 const AMBAR := Color("#f5bb75")
 
 const PanelControl := preload("res://scripts/panel_control.gd")
+const AccionEscena := preload("res://scripts/accion_escena.gd")
 var _dialogo: Control
 var _ventana: PanelControl
 var _salida_plano: Label
@@ -55,7 +56,7 @@ func mostrar_lecturas(registro: Dictionary, causa: String, donki: String, curios
 	_ubicar_enlaces_informe(lectura, enlaces)
 	_ubicar_enlaces_informe.call_deferred(lectura, enlaces)
 
-func _ubicar_enlaces_informe(lectura: Control, enlaces: Array[LinkButton]) -> void:
+func _ubicar_enlaces_informe(lectura: Variant, enlaces: Array[LinkButton]) -> void:
 	if not is_instance_valid(lectura):
 		return
 	var frase: Label = lectura.frase
@@ -123,10 +124,7 @@ static func boton(padre: Control, texto: String, rect: Rect2, accion: Callable) 
 	b.position = rect.position
 	b.size = rect.size
 	b.add_theme_font_size_override("font_size", 18)
-	b.add_theme_color_override("font_color", PAPEL)
-	b.add_theme_stylebox_override("normal", _estilo(Color("#233740"), Color("#5d8085")))
-	b.add_theme_stylebox_override("hover", _estilo(Color("#304e52"), MENTA))
-	b.add_theme_stylebox_override("pressed", _estilo(Color("#19333a"), MENTA))
+	AccionEscena.aplicar(b)
 	if accion.is_valid():
 		b.pressed.connect(accion)
 	padre.add_child(b)

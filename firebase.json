@@ -5,6 +5,6 @@
       "source": "/index.**",
       "headers": [{ "key": "Cache-Control", "value": "no-cache" }]
     }],
-    "ignore": ["firebase.json", "**/.*", "**/*.import"]
+    "ignore": ["firebase.json", "portada.png", "**/.*", "**/*.import"]
   }
 }

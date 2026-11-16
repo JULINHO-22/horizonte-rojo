@@ -5,10 +5,19 @@ $proyecto = Split-Path -Parent $PSScriptRoot
 Push-Location -LiteralPath $proyecto
 try {
     New-Item -ItemType Directory -Force 'build/web' | Out-Null
+    New-Item -ItemType File -Force 'build/.gdignore' | Out-Null
     & $motor --headless --export-release Web build/web/index.html
-    if ($LASTEXITCODE -ne 0) { throw "Godot no pudo exportar Horizonte Rojo." }
-    Copy-Item -LiteralPath 'assets/refugio_horizonte.png' -Destination 'build/web/portada.png'
-    Compress-Archive -Path 'build/web/*' -DestinationPath 'build/Horizonte-Rojo-Web.zip' -Force
+    if ($LASTEXITCODE -ne 0) { throw "Godot no pudo exportar Red Horizon." }
+    & $motor --headless --script res://web/preparar_portada.gd
+    if ($LASTEXITCODE -ne 0) { throw "Godot no pudo generar la portada Web." }
+    $tipografia = @('barlow-latin.woff2', 'barlow-condensed-bold-latin.woff2', 'OFL-Barlow.txt')
+    $tipografia | ForEach-Object {
+        Copy-Item -LiteralPath (Join-Path 'web/estaticos' $_) -Destination 'build/web' -ErrorAction Stop
+    }
+    $archivos = @('index.html', 'index.js', 'index.wasm', 'index.pck', 'index.png',
+        'index.audio.worklet.js', 'index.audio.position.worklet.js', 'portada-umbra.webp') + $tipografia
+    $rutas = $archivos | ForEach-Object { Join-Path 'build/web' $_ }
+    Compress-Archive -LiteralPath $rutas -DestinationPath 'build/Red-Horizon-Web.zip' -Force
 } finally {
     Pop-Location
 }

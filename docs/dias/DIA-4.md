@@ -12,7 +12,7 @@ El día empieza con una alerta en Control. Pluto avisa si los sistemas quedaron 
 
 **Blindaje.** Recoge las protecciones en el Taller y trasládalas al núcleo, cuyo acceso se encuentra en la esclusa. Arrastra una pieza de blindaje a cada uno de los tres soportes junto a la compuerta. Si pruebas en la rejilla, Teo explica por qué debe seguir libre. Comprueba el aire al terminar. En el plan combinado las dos tareas concluyen antes de registrar las reservas y el refuerzo, de modo que se aplica el precio del plan completo.
 
-**Cierre.** Agua y Oxígeno permite preparar el aire antes de salir o después de terminar. Cerca de las baterías puedes esperar un intervalo solar y ver cambiar las reservas. En Plantas puedes sembrar lechuga o comer de una bandeja madura. El dormitorio avisa de las consecuencias de descansar con hambre o sin aire preparado. El anfitrión ejecuta el descanso mediante el modelo compartido.
+**Cierre.** Agua y Oxígeno permite preparar el aire antes de salir o después de terminar. Cerca de las baterías puedes esperar un intervalo solar y ver cambiar las reservas. En Plantas, toca la bandeja o pulsa **E** para colocar la semilla de lechuga. Mantén el mando para regarla en el escenario. Al esperar en Energía, la planta crece y se actualiza el tiempo restante. Recoge y come junto a la bandeja madura. El dormitorio avisa de las consecuencias de descansar con hambre o sin aire preparado. El anfitrión ejecuta el descanso mediante el modelo compartido.
 
 ## Contrato de entrada y salida
 
@@ -25,4 +25,4 @@ Abre `scenes/dias/tramo_final/prueba.tscn` con F6 y selecciona una entrada de d�
 
 El filtro y los depósitos se inspiran en funciones reales de recuperación de agua y de producción de oxígeno. El juego representa ambas con reservas simplificadas. [Soporte vital, NASA](https://www.nasa.gov/reference/environmental-control-and-life-support-systems-eclss/) · [Hielo subterráneo, NASA SWIM](https://science.nasa.gov/resource/swim-map-shows-subsurface-water-ice-on-mars/)
 
-Abre la computadora para consultar la tarea y elegir el plan. En campaña, consulta las reservas con **T**. Confirma la espera o el descanso volviendo a tocar el equipo. Alejarte cancela la confirmación.
+Abre la computadora para consultar la tarea y elegir el plan. En campaña, consulta las reservas con **Q**. Confirma la espera o el descanso volviendo a tocar el equipo. Alejarte cancela la confirmación.

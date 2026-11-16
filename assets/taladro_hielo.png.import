@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://b2wh35bmy2qj"
-path="res://.godot/imported/tablet_umbra.png-40b36ccfd9ede7c324a6d6292eaf0752.ctex"
+uid="uid://36nhtu1ty3yo"
+path="res://.godot/imported/taladro_hielo.png-f56ab18b5d1e69d6ae1f5ee8e995bc49.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/tablet_umbra.png"
-dest_files=["res://.godot/imported/tablet_umbra.png-40b36ccfd9ede7c324a6d6292eaf0752.ctex"]
+source_file="res://assets/taladro_hielo.png"
+dest_files=["res://.godot/imported/taladro_hielo.png-f56ab18b5d1e69d6ae1f5ee8e995bc49.ctex"]
 
 [params]
 
@@ -36,5 +36,5 @@ process/premult_alpha=false
 process/normal_map_invert_y=false
 process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
-process/size_limit=0
+process/size_limit=768
 detect_3d/compress_to=1

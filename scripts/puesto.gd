@@ -26,6 +26,7 @@ const DRON := preload("res://assets/dron.png")
 const CAJA_CERRADA := preload("res://assets/caja_hielo_cerrada.png")
 const CAJA_ABIERTA := preload("res://assets/caja_hielo_abierta.png")
 const NUCLEO_HIELO := preload("res://assets/nucleo_hielo.png")
+const EquipoPixel := preload("res://scripts/equipo_pixel.gd")
 const OSCURO := Color("#131820")
 const LUZ := Color("#83eadc")
 const MARFIL_SALA := Color("#e7d9c8")
@@ -158,6 +159,8 @@ var escala_visual := 1.0
 var caminando := false
 static var secuencias: Dictionary = {}
 static var nube_polvo := _crear_nube_polvo()
+static var perforadora := EquipoPixel.perforadora()
+static var broca := EquipoPixel.broca()
 var punto := Vector2(111, 343)
 var paso := 0.0
 var tiempo := 0.0
@@ -588,14 +591,20 @@ func _dibujar_objeto(textura: Texture2D, apoyo: Vector2, ancho: float) -> void:
 
 func _dibujar_extraccion(sitio := MUESTRA + Vector2(5, -2), caja := CAJA_HIELO - Vector2(0, 1)) -> void:
 	_dibujar_objeto(CAJA_ABIERTA, caja, 25)
-	var profundidad := 19 * smoothstep(0.0, 0.44, avance_muestra)
-	draw_line(sitio + Vector2(-11, 0), sitio + Vector2(0, -27), OSCURO, 3.0, true)
-	draw_line(sitio + Vector2(11, 0), sitio + Vector2(0, -27), OSCURO, 3.0, true)
-	draw_line(sitio + Vector2(0, -24), sitio + Vector2(0, -18 + profundidad), OCRE, 4.0, true)
+	var suelo := sitio - Vector2(17.0, 0) if expedicion_sol_uno else sitio
+	var bajada := smoothstep(0.0, 0.39, avance_muestra)
+	var subida := smoothstep(0.43, 0.69, avance_muestra)
+	var profundidad := bajada * (1.0 - subida)
+	var temblor := sin(tiempo * 89.0) * 0.55 * profundidad
+	_dibujar_objeto(broca, suelo + Vector2(1.0 + temblor, -8.0 + profundidad * 8.5), 4.5)
+	_dibujar_objeto(perforadora, suelo, 45.0)
+	if profundidad > 0.1:
+		draw_texture_rect(nube_polvo, Rect2(suelo - Vector2(15, 8), Vector2(30, 12)), false,
+			Color(0.93, 0.58, 0.35, profundidad * 0.56))
 	if avance_muestra >= 0.43:
-		var salida := smoothstep(0.43, 0.72, avance_muestra)
 		var depositado := smoothstep(0.72, 1.0, avance_muestra)
-		_dibujar_objeto(NUCLEO_HIELO, sitio + Vector2(0, 13 - 27 * salida + 14 * depositado), 15)
+		var muestra := (suelo + Vector2(1.0, 3.0 - 24.0 * subida)).lerp(caja - Vector2(0, 5), depositado)
+		_dibujar_objeto(NUCLEO_HIELO, muestra, lerpf(13.0, 8.0, depositado))
 
 
 static func _crear_nube_polvo() -> GradientTexture2D:

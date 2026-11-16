@@ -6,6 +6,41 @@
 - Se añade selector de idioma al inicio tanto en la portada de escritorio como en la portada web (`web/umbra.html`), con persistencia separada en `user://idioma.cfg` (y `localStorage` + `--lang=` en web) para conservar la elección aunque se reinicie la campaña.
 - Se incluyen fuentes SIL OFL 1.1 (`NotoSansArabic-SemiBold.ttf` y `NotoSansSC-SemiBold.ttf` en `assets/fonts/`) registradas como respaldo en `ThemeDB.fallback_font` para renderizar árabe y chino simplificado sin caracteres faltantes.
 
+## 2026-11-15 | Portada y actividades de Red Horizon
+
+- Portada adaptable con arte pixel art de Umbra al anochecer, tipografía Barlow y un acceso directo al recorrido. La descarga y las escenas extra tienen sus propios controles.
+- El riego, el taladro, la válvula de oxígeno y el sello del núcleo responden mientras se mantiene el mando. Soltar antes devuelve el equipo a su estado inicial. Las bandejas muestran el tiempo y el progreso de cada cultivo.
+- El hielo se coloca en la cubeta y se funde antes de filtrarse. El Sol 2 anima los codos y los cierres de sus retos. En el Sol 3 se elige una ruta y después se confirma tras revisar su efecto.
+
+## 2026-11-15 | Invernadero de Umbra
+
+- Los soles 1 a 3 comparten una vista pixel art de las bandejas. Coloca la semilla, riega la tierra y observa cómo el brote crece hasta la cosecha. La cuenta regresiva sigue avanzando al volver al recorrido.
+- La vista indica el coste, el tiempo y la comida que aporta cada cultivo. El riego aplica el coste existente y guarda la bandeja. Recoger y comer muestra cuánto alimento se recuperó.
+- En el Sol 4 las plantas crecen en el escenario. La siembra y el riego se hacen junto a las bandejas y la espera se confirma en Energía.
+
+## 2026-11-15 | Entrada al Sol 2 y acceso a reservas
+
+- Se fija el tamaño de las escenas de campaña. El Sol 2 ya muestra el refugio y sus controles al cargar en navegador.
+- Nora empieza junto a la consola en el Sol 2 y puede abrir el plan con E o clic. El acceso subrayado «Ver reservas» se puede seleccionar con el ratón. Q es el atajo.
+
+## 2026-11-15 | Carga más rápida en navegador
+
+- La portada usa una imagen más ligera y muestra el progreso de descarga y el arranque desde el primer momento.
+- La exportación web empaca las escenas de campaña y sus vistas previas. Comprime fondos, reduce sprites sobredimensionados y deja el simulador provisional en Godot.
+- Los soles 2 a 5 cargan su escena al entrar. El lienzo web limita la resolución de render a la resolución base del juego.
+
+## 2026-11-15 | Red Horizon, mantenimiento y cierre de misión
+
+- Red Horizon es el nombre de la portada web y de la ventana. Las partidas existentes conservan su ubicación.
+- Q abre y cierra la tablet. F ejecuta la opción alternativa o cancela el tablero del Sol 2. Las acciones sobre el escenario se presentan como texto con sombra.
+- El circuito de aire y los tres cierres del Sol 2 usan sprites pixel art de codos y conectores, un riel y un pestillo. Se conservan los controles, los tiempos y los costos.
+- La derrota muestra a Umbra al anochecer, identifica el sol y explica el motivo de la interrupción cuando se conoce.
+
+## 2026-11-15 | Instrumentos originales y apertura de cada sol
+
+- La tablet recupera los instrumentos, colores y proporciones del panel original de Control. La comida y el hielo quedan al pie del panel.
+- Cada sol se anuncia en una transición sobre el paisaje marciano. El aviso termina antes de que reaparezcan los diálogos y controles.
+
 ## 2026-11-15 | Tablet, tareas y transiciones de campaña
 
 - Los cinco soles consultan las reservas con la tablet portátil (T). Control muestra el trabajo pendiente y las decisiones de la misión.

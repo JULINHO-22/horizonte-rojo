@@ -392,7 +392,7 @@ func _inicio() -> void:
 	_imagen(PuestoUmbra.SENDERO, AREA)
 	_panel(Rect2(307, 242, 666, 278), FONDO)
 	_texto("PUESTO UMBRA   /   SIMULACIÓN DE UNA MISIÓN A MARTE", Rect2(344, 269, 595, 28), 17, AMBAR)
-	_texto("Horizonte Rojo", Rect2(344, 308, 598, 64), 46)
+	_texto("Red Horizon", Rect2(344, 308, 598, 64), 46)
 	_texto("Prueba el equipo con Teo. La misión es mantener con vida a la tripulación y enviar evidencia de que el agua local puede sostener el puesto.",
 		Rect2(344, 380, 592, 70), 19, MUTED)
 	_boton("Iniciar misión", Rect2(344, 460, 592, 40), _comenzar, CIAN)

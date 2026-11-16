@@ -1,8 +1,11 @@
 extends Control
 
 signal finalizado(resultado: Dictionary)
+signal avance_guardado
 
 const Recursos := preload("res://scripts/mecanicas/recursos_mision.gd")
+const Invernadero := preload("res://scripts/invernadero_umbra.gd")
+const Laboratorio := preload("res://scripts/laboratorio_umbra.gd")
 const HUD := preload("res://scenes/dias/dia_2/dia_2_hud.gd")
 const PanelControl := preload("res://scripts/panel_control.gd")
 var panel_control: PanelControl
@@ -47,6 +50,8 @@ func _obj(p: Paso, campo: String) -> String:
 	return I18n.t(OBJETIVOS[p][1] + "." + campo)
 
 var taller: Taller
+var huerto: Invernadero
+var laboratorio: Laboratorio
 var salida_pendiente := false
 var recursos: Recursos
 var puesto: PuestoUmbra
@@ -138,7 +143,7 @@ func _preparar() -> void:
 	taller.hide()
 	en_pausa = true
 	abierto = estado.sol == 2 and estado.en_curso and estado.polvo == "tormenta"
-	_mundo(true, Vector2(CONTROL.x, 282))
+	_mundo(true, Vector2(CONTROL.x, 282) if local else CONTROL + Vector2(0, 12))
 	if REPARAR in estado.decisiones or RESGUARDARSE in estado.decisiones:
 		_ir_al_cierre(estado, [CRUCE_SUR], [CRUCE_SUR])
 	else:
@@ -158,7 +163,8 @@ func _preparar() -> void:
 	elif not local:
 		en_pausa = false
 		interfaz.modal.hide()
-		aviso = I18n.t("sol2.pluto.consola")
+		if paso == Paso.DECISION:
+			aviso = I18n.t("sol2.pluto.consola_cerca")
 	_actualizar()
 
 func _mundo(dentro: bool, posicion: Vector2) -> void:
@@ -194,7 +200,7 @@ func _ir_al_cierre(estado: Dictionary, hacia_aire: Array, hacia_este: Array) -> 
 		_ir(Paso.AIRE, hacia_aire + [CRUCE_OESTE, GIRO_AGUA, ENTRADA_AGUA])
 
 func juego_activo() -> bool:
-	return abierto and not concluido and not en_pausa and not is_instance_valid(panel_control) and not puesto.plano and (not taller.visible or taller.jugando)
+	return abierto and not concluido and not en_pausa and not is_instance_valid(panel_control) and not is_instance_valid(laboratorio) and not puesto.plano and (not taller.visible or taller.jugando)
 
 func _process(delta: float) -> void:
 	if abierto and not concluido:
@@ -204,7 +210,7 @@ func _process(delta: float) -> void:
 			var direccion := Vector2(
 				float((Input.is_physical_key_pressed(KEY_D) or Input.is_key_pressed(KEY_D)) or Input.is_action_pressed("ui_right")) - float((Input.is_physical_key_pressed(KEY_A) or Input.is_key_pressed(KEY_A)) or Input.is_action_pressed("ui_left")),
 				float((Input.is_physical_key_pressed(KEY_S) or Input.is_key_pressed(KEY_S)) or Input.is_action_pressed("ui_down")) - float((Input.is_physical_key_pressed(KEY_W) or Input.is_key_pressed(KEY_W)) or Input.is_action_pressed("ui_up")))
-			if not taller.visible:
+			if not taller.visible and not is_instance_valid(huerto):
 				puesto.avanzar(direccion.normalized(), minf(delta, 0.05))
 			taller.avanzar(delta)
 			puesto.tiempo += delta
@@ -216,12 +222,16 @@ func _process(delta: float) -> void:
 	_actualizar()
 
 func _unhandled_key_input(event: InputEvent) -> void:
-	if not event is InputEventKey or not event.pressed or event.echo:
+	if is_instance_valid(huerto) or is_instance_valid(laboratorio) or not event is InputEventKey or not event.pressed or event.echo:
 		return
 	var codigo: Key = event.keycode if event.keycode != KEY_NONE else event.physical_keycode
 	if is_instance_valid(panel_control):
 		if codigo == KEY_ESCAPE:
 			_cerrar_control()
+		elif codigo == KEY_E:
+			var elegido := get_viewport().gui_get_focus_owner() as Button
+			if elegido != null and elegido.get_parent() == panel_control and not elegido.disabled:
+				elegido.pressed.emit()
 		get_viewport().set_input_as_handled()
 		return
 	if taller.visible:
@@ -234,7 +244,7 @@ func _unhandled_key_input(event: InputEvent) -> void:
 				_confirmar()
 			else:
 				_actuar()
-		KEY_Q: _alternativa()
+		KEY_F: _alternativa()
 		KEY_M: _mapa()
 		KEY_ESCAPE: _pausar()
 
@@ -272,15 +282,21 @@ func _cerca_del_aire(estado: Dictionary) -> bool:
 	return puesto.interior and _cerca(AIRE) and not estado.aire_asegurado
 
 func _actuar() -> void:
-	if not juego_activo() or taller.visible:
+	if not juego_activo() or taller.visible or is_instance_valid(huerto):
 		return
 	var estado := recursos.estado()
+	if _puede_usar_filtro(estado):
+		_abrir_filtro()
+		return
 	if _cerca_del_aire(estado):
 		_abrir_taller("aire")
 		_actualizar()
 		return
 	if puesto.interior and paso != Paso.DECISION and _cerca(CONTROL):
 		_abrir_control(false)
+		return
+	if puesto.interior and _cerca(PLANTAS):
+		_abrir_huerto()
 		return
 	var ficha: Array = OBJETIVOS[paso]
 	if not _cerca(ficha[0]):
@@ -298,13 +314,6 @@ func _actuar() -> void:
 			audio.sonar_esclusa()
 			_mundo(true, SALIDA)
 			_ir_al_cierre(estado, [CRUCE_SUR], [CRUCE_SUR])
-		Paso.PLANTAS:
-			if recursos.sembrar("lechuga"):
-				audio.sonar_clic()
-				aviso = I18n.t("sol2.plantar.ok")
-			else:
-				audio.sonar_error()
-				aviso = I18n.t("sol2.plantar.falta")
 		Paso.DESCANSO:
 			var derrota := ""
 			if not estado.aire_asegurado:
@@ -323,8 +332,9 @@ func _abrir_control(elegir: bool) -> void:
 	add_child(panel_control)
 	if elegir:
 		panel_control.mostrar_tarea(I18n.t("sol2.plan.msg"))
-		panel_control.accion(I18n.t("sol2.plan.reparar"), Rect2(34, 237, 418, 44), _plan_reparar)
-		panel_control.accion(I18n.t("sol2.plan.quedarme_largo"), Rect2(468, 237, 438, 44), _plan_resguardo)
+		var reparar := panel_control.accion(I18n.t("sol2.plan.reparar"), Rect2(34, 276, 418, 44), _plan_reparar)
+		panel_control.accion(I18n.t("sol2.plan.quedarme_largo"), Rect2(468, 276, 438, 44), _plan_resguardo)
+		reparar.grab_focus()
 	else:
 		panel_control.mostrar_tarea(_obj(paso, "msg"))
 
@@ -372,13 +382,8 @@ func _alternativa() -> void:
 	if not juego_activo() or taller.visible:
 		return
 	var estado := recursos.estado()
-	if puesto.interior and _cerca(AGUA) and estado.reservas.agua == 0 and estado.hielo > 0:
-		if recursos.purificar_hielo():
-			audio.sonar_oxigeno()
-			aviso = I18n.t("sol2.hielo.ok")
-		else:
-			audio.sonar_error()
-			aviso = I18n.t("sol2.hielo.falta")
+	if _puede_usar_filtro(estado):
+		_abrir_filtro()
 	elif _cerca_del_aire(estado) and estado.reservas.agua == 0 and estado.hielo > 0:
 		ruta.assign([AGUA])
 		aviso = I18n.t("sol2.hielo.guia")
@@ -406,25 +411,59 @@ func _alternativa() -> void:
 		else:
 			_ir(Paso.AIRE, [GIRO_CAMA, GIRO_ESTE, CRUCE_ESTE, CRUCE_OESTE, GIRO_AGUA, ENTRADA_AGUA])
 	elif paso == Paso.PLANTAS and _cerca(PLANTAS):
-		var cosecha := _cosecha(estado)
-		if not cosecha.is_empty() and recursos.comer(cosecha):
-			audio.sonar_clic()
-			aviso = I18n.t("sol2.comer.ok")
-		else:
-			audio.sonar_clic()
-			_ir(Paso.DESCANSO, [GIRO_PLANTAS, GIRO_CAMA])
+		audio.sonar_clic()
+		_ir(Paso.DESCANSO, [GIRO_PLANTAS, GIRO_CAMA])
 	_actualizar()
 
-func _cosecha(estado: Dictionary) -> String:
-	if estado.reservas.alimento == Recursos.LIMITES.alimento:
-		return ""
-	for cultivo: String in estado.bandejas:
-		if estado.bandejas[cultivo] == 0:
-			return cultivo
-	return ""
+func _puede_usar_filtro(estado: Dictionary) -> bool:
+	return puesto.interior and _cerca(AGUA) and estado.reservas.agua == 0 and estado.hielo > 0
+
+func _abrir_filtro() -> void:
+	laboratorio = Laboratorio.new()
+	laboratorio.recursos = recursos
+	laboratorio.cerrar_solicitado.connect(_cerrar_filtro)
+	laboratorio.trabajo_completado.connect(_registrar_filtro)
+	interfaz.hide()
+	add_child(laboratorio)
+
+func _registrar_filtro(_ganancia: int) -> void:
+	audio.sonar_oxigeno()
+	aviso = I18n.t("sol2.filtro.listo_agua")
+	avance_guardado.emit()
+
+func _cerrar_filtro() -> void:
+	remove_child(laboratorio)
+	laboratorio.queue_free()
+	laboratorio = null
+	interfaz.show()
+
+func _abrir_huerto() -> void:
+	huerto = Invernadero.new()
+	huerto.recursos = recursos
+	huerto.semillas_disponibles = ["lechuga"]
+	huerto.cerrar_solicitado.connect(_cerrar_huerto)
+	huerto.cultivo_atendido.connect(_registrar_cultivo)
+	interfaz.hide()
+	add_child(huerto)
+
+func _registrar_cultivo(cosechado: bool) -> void:
+	audio.sonar_clic()
+	if cosechado and paso == Paso.PLANTAS:
+		aviso = I18n.t("sol2.plantas.recuperaste")
+	avance_guardado.emit()
+
+func _cerrar_huerto() -> void:
+	remove_child(huerto)
+	huerto.queue_free()
+	huerto = null
+	interfaz.show()
 
 func _terminar(estado: Dictionary, derrota: String) -> void:
 	concluido = true
+	if is_instance_valid(huerto):
+		_cerrar_huerto()
+	if is_instance_valid(laboratorio):
+		_cerrar_filtro()
 	taller.hide()
 	if derrota.is_empty():
 		audio.sonar_alerta()
@@ -461,6 +500,8 @@ func _actualizar() -> void:
 		_terminar(estado, estado.derrota)
 		if is_queued_for_deletion():
 			return
+	if is_instance_valid(huerto) or is_instance_valid(laboratorio):
+		return
 
 	var ficha: Array = OBJETIVOS[paso]
 	var destino: Vector2 = ficha[0] if ruta.is_empty() else ruta.front()
@@ -480,8 +521,7 @@ func _actualizar() -> void:
 		Paso.AIRE:
 			opcion = I18n.t("sol2.alt.aire_despues" if salida_pendiente else "sol2.alt.dormitorio")
 		Paso.PLANTAS:
-			var lista := _cosecha(estado)
-			opcion = I18n.t("sol2.btn.volver_dormitorio") if lista.is_empty() else I18n.tf("sol2.alt.comer", [Recursos.CULTIVOS[lista].alimento])
+			opcion = I18n.t("sol2.btn.volver_dormitorio")
 		Paso.DESCANSO:
 			if not estado.aire_asegurado:
 				accion = I18n.t("sol2.cama.sin_aire_act")
@@ -512,18 +552,18 @@ func _actualizar() -> void:
 		accion = I18n.t("sol2.alt.consultar_tareas")
 		cerca = true
 
-	if puesto.interior and _cerca(AGUA) and estado.reservas.agua == 0 and estado.hielo > 0:
+	if _puede_usar_filtro(estado):
 		lugar = I18n.t("sol2.filtro.tit")
 		detalle = I18n.t("sol2.filtro.msg")
-		opcion = I18n.t("sol2.filtro.act")
-		cerca = false
-		puede_elegir = true
+		accion = I18n.t("sol2.filtro.act")
+		opcion = ""
+		cerca = true
+		puede_elegir = false
 		destino = AGUA
 
-	if paso == Paso.PLANTAS and estado.bandejas.has("lechuga"):
-		var segundos := ceili(float(estado.bandejas.lechuga))
-		cerca = false
-		detalle = I18n.tf("sol2.lechuga.creciendo", [segundos]) if segundos > 0 else I18n.t("sol2.lechuga.lista")
+	if puesto.interior and _cerca(PLANTAS):
+		cerca = true
+		accion = I18n.t("sol2.guia.plantas.act")
 
 	if puesto.plano:
 		detalle = I18n.t("sol2.pista.cerrar_plano")
@@ -554,6 +594,8 @@ func _actualizar() -> void:
 		pluto_texto = I18n.t("sol2.pluto.paneles_salvo")
 	elif paso == Paso.AIRE and not estado.aire_asegurado:
 		pluto_texto = I18n.t("sol2.pluto.tanques")
+	elif paso == Paso.PLANTAS:
+		pluto_texto = I18n.t("sol2.pluto.plantas")
 	elif estado.aire_asegurado:
 		pluto_texto = I18n.t("sol2.pluto.descansa")
 
@@ -561,8 +603,7 @@ func _actualizar() -> void:
 	interfaz.aviso_de_pluto(pluto_a_la_vista, puesto.proyectar_suelo(puesto.posicion_pluto()), pluto_texto)
 
 	taller.mostrar_aire(estado)
-	interfaz.guia.visible = not taller.visible
-	interfaz.marca.visible = not taller.visible
+	interfaz.visible = not taller.visible
 	interfaz.ruta_del_dia(estado, salida_pendiente, paso == Paso.DESCANSO)
 	interfaz.actualizar(lugar, detalle, accion, opcion, cerca and juego_activo(),
 		puede_elegir and juego_activo(), puesto.interior, puesto.plano,
