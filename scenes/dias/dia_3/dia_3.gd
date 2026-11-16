@@ -12,6 +12,7 @@ const DialogoEscena := preload("res://scripts/dialogo_escena.gd")
 const AccionEscena := preload("res://scripts/accion_escena.gd")
 const Invernadero := preload("res://scripts/invernadero_umbra.gd")
 const Diagnostico := preload("res://scripts/diagnostico_umbra.gd")
+const SabiasQue := preload("res://scripts/sabias_que.gd")
 const AREA := Rect2(0, 0, 1280, 720)
 const TINTA_CLARA := Color("#2a1c17")
 const PAPEL := Color("#fff1db")
@@ -37,6 +38,8 @@ var boton_accion: Button
 var panel_control: PanelControl
 var huerto: Invernadero
 var diagnostico: Diagnostico
+var sabias_que: SabiasQue
+var _ciencia_huerto := false
 var plano := false
 
 
@@ -71,7 +74,19 @@ func _process(delta: float) -> void:
 		recursos.avanzar(paso)
 	elif is_instance_valid(huerto):
 		recursos.avanzar(delta)
+		if is_instance_valid(sabias_que):
+			sabias_que.ocultar()
 		return
+	if is_instance_valid(sabias_que):
+		if not _juego_activo() or plano:
+			sabias_que.ocultar()
+		else:
+			var zonas: Array[Rect2] = [Rect2(24, 18, 520, 68), Rect2(24, 676, 540, 32)]
+			if boton_accion.visible:
+				zonas.append(boton_accion.get_global_rect())
+			if dialogo.visible:
+				zonas.append(dialogo.get_global_rect())
+			sabias_que.evitar(zonas)
 	_actualizar_guia()
 	_ubicar_interfaz()
 
@@ -186,6 +201,8 @@ func _crear_interfaz() -> void:
 	velo_fallo.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(velo_fallo)
 	move_child(velo_fallo, capa_mapa.get_index() + 1)
+	sabias_que = SabiasQue.new()
+	add_child(sabias_que)
 	_ubicar_interfaz()
 
 
@@ -287,12 +304,17 @@ func _cerrar_control() -> void:
 
 func _abrir_huerto() -> void:
 	invernadero_revisado = true
+	_ciencia_huerto = false
 	huerto = Invernadero.new()
 	huerto.recursos = recursos
 	huerto.cerrar_solicitado.connect(_cerrar_huerto)
-	huerto.cultivo_atendido.connect(func(_cosechado: bool): avance_guardado.emit())
+	huerto.cultivo_atendido.connect(func(_cosechado: bool):
+		_ciencia_huerto = true
+		avance_guardado.emit())
 	boton_accion.hide()
 	add_child(huerto)
+	if is_instance_valid(sabias_que):
+		sabias_que.ocultar()
 
 
 func _cerrar_huerto() -> void:
@@ -304,6 +326,10 @@ func _cerrar_huerto() -> void:
 		puesto.objetivo_mision = "agua"
 		_decir_pluto(I18n.t("sol3.plantas.sig"))
 	_actualizar_guia()
+	if _ciencia_huerto:
+		_ciencia_huerto = false
+		if is_instance_valid(sabias_que) and _juego_activo() and not plano:
+			sabias_que.mostrar("cultivos")
 
 
 func _activar_fallo() -> void:
@@ -391,6 +417,8 @@ func _cerrar_decision(mensaje: String) -> void:
 	_decir_pluto(mensaje + I18n.t("sol3.fallo.revisa_alim"))
 	_actualizar_hud()
 	_actualizar_guia()
+	if is_instance_valid(sabias_que) and _juego_activo() and not plano:
+		sabias_que.mostrar("soporte")
 
 
 func _solicitar_dormir() -> void:
@@ -458,6 +486,8 @@ func _ubicar_accion() -> void:
 
 
 func _mostrar_fin(encabezado: String, texto: String) -> void:
+	if is_instance_valid(sabias_que):
+		sabias_que.ocultar()
 	fase = "terminado"
 	puesto.objetivo_mision = ""
 	var columna := _crear_modal(encabezado)

@@ -8,6 +8,7 @@ const Invernadero := preload("res://scripts/invernadero_umbra.gd")
 const Laboratorio := preload("res://scripts/laboratorio_umbra.gd")
 const AccionSostenida := preload("res://scripts/mecanicas/accion_sostenida.gd")
 const DerrotaUmbra := preload("res://scripts/derrota_umbra.gd")
+const SabiasQue := preload("res://scripts/sabias_que.gd")
 const VISTAS_FINALES := {
 	"--final-recursos": "res://scenes/pruebas/banco_recursos.tscn",
 	"--final-incompleta": "res://scenes/final_incompleta.tscn",
@@ -75,6 +76,8 @@ var plano := false
 var aviso_tiempo := 0.0
 var segundos_guardado := 0.0
 var restaurado := {}
+var sabias_que: SabiasQue
+var _ciencia_pendiente := ""
 
 func _ready() -> void:
 	get_window().min_size = Vector2i(800, 450)
@@ -245,6 +248,8 @@ func _unhandled_key_input(event: InputEvent) -> void:
 	elif event.physical_keycode == KEY_M and fase == "base":
 		plano = not plano
 		puesto.plano = plano
+		if plano and is_instance_valid(sabias_que):
+			sabias_que.ocultar()
 	elif event.physical_keycode == KEY_ESCAPE and fase in ["ida", "aterrizaje"]:
 		_iniciar_caminata()
 
@@ -355,10 +360,23 @@ func _completar_taladro() -> void:
 	boton.hide()
 	voz.decir("Iris", I18n.tf("sol1.iris.sacamos", [sitio.hielo]))
 	aviso_tiempo = 5
+	_mostrar_ciencia("hielo")
 	_guardar()
 
 func _actualizar_guia() -> void:
 	boton.visible = false
+	_actualizar_guia_cuerpo()
+	if is_instance_valid(sabias_que):
+		var zonas: Array[Rect2] = [Rect2(24, 24, 1230, 52)]
+		if is_instance_valid(boton) and boton.visible:
+			zonas.append(Rect2(boton.position, boton.size))
+		if is_instance_valid(voz) and voz.visible:
+			zonas.append(Rect2(voz.position, voz.size))
+		if is_instance_valid(pista) and not pista.text.is_empty():
+			zonas.append(Rect2(pista.position, pista.size))
+		sabias_que.evitar(zonas)
+
+func _actualizar_guia_cuerpo() -> void:
 	if fase == "expedicion_sol_1":
 		_guia_expedicion()
 	elif fase == "camino_base":
@@ -574,6 +592,7 @@ func _cerrar_sol(completado: bool) -> void:
 		_guardar()
 
 func _abrir_menu_soles() -> void:
+	_ocultar_ciencia()
 	capa.process_mode = Node.PROCESS_MODE_DISABLED
 	menu_soles = ColorRect.new()
 	menu_soles.color = Color("#1d2a36")
@@ -631,6 +650,9 @@ func _ubicar_accion() -> void:
 		clampf(suelo.y + 18, 240, 650))
 
 func _reiniciar() -> void:
+	SabiasQue.reiniciar_vistos()
+	_ciencia_pendiente = ""
+	_ocultar_ciencia()
 	sol_anunciado = 0
 	if not prueba_soles:
 		campana.borrar()
@@ -699,9 +721,12 @@ func _mostrar() -> void:
 		capa.add_child(cierre)
 		return
 	if integrar_soles and fase == "base" and SOLES_JUGABLES.has(campana.sol) and not campana.listo_para_regresar():
+		_ocultar_ciencia()
 		_montar_sol()
 		_mostrar_accesos_sol()
 		return
+	if fase not in ["camino_base", "base", "esclusa", "expedicion_sol_1"]:
+		_ocultar_ciencia()
 	match fase:
 		"ida", "regreso", "llegada_tierra", "pilotaje":
 			viaje = Viaje.new()
@@ -785,6 +810,7 @@ func _mostrar() -> void:
 		"camino_base":
 			voz.decir("Percy", I18n.t("viaje.percy_llegada"))
 			_actualizar_guia()
+			_mostrar_ciencia("atmosfera")
 		"camino_nave":
 			voz.decir("Percy", I18n.t("viaje.percy_despedida"))
 		"expedicion_sol_1":
@@ -883,6 +909,7 @@ func _alternar_tablet() -> void:
 	if is_instance_valid(interfaz_tablet):
 		_cerrar_tablet()
 		return
+	_ocultar_ciencia()
 	_cerrar_anuncio_sol()
 	_soltar_taladro(&"")
 	interfaz_tablet = Tablet.new()
@@ -921,6 +948,7 @@ func _refrescar_recursos() -> void:
 		puesto.modulate = Color.WHITE
 
 func _abrir_control() -> void:
+	_ocultar_ciencia()
 	boton.hide()
 	panel_control = PanelControl.new()
 	var estado := recursos.estado()
@@ -949,6 +977,7 @@ func _confirmar_ruta() -> void:
 	aviso_tiempo = 9
 
 func _abrir_nucleo() -> void:
+	_ocultar_ciencia()
 	marco_nucleo = Control.new()
 	marco_nucleo.size = AREA.size
 	marco_nucleo.clip_contents = true
@@ -985,6 +1014,7 @@ func _estacion_cercana() -> String:
 	return puesto.terminal_cercana()
 
 func _abrir_estacion(id: String) -> void:
+	_ocultar_ciencia()
 	estacion = id
 	boton.hide()
 	if id == "cultivos":
@@ -999,6 +1029,7 @@ func _abrir_estacion(id: String) -> void:
 	capa.move_child(boton_tablet, -1)
 
 func _registrar_laboratorio(_ganancia: int) -> void:
+	_ciencia_pendiente = "agua" if estacion == "agua" else "oxigeno"
 	_refrescar_recursos()
 	if _sol_uno():
 		var datos := recursos.estado()
@@ -1021,6 +1052,7 @@ func _abrir_huerto() -> void:
 	capa.move_child(boton_tablet, -1)
 
 func _guardar_huerto(cosechado: bool) -> void:
+	_ciencia_pendiente = "cultivos"
 	if _sol_uno() and cosechado:
 		recursos.aplicar_decision(Tutorial.COMIDA, {})
 	_refrescar_recursos()
@@ -1039,6 +1071,22 @@ func _cerrar_estacion() -> void:
 	huerto = null
 	laboratorio = null
 	_actualizar_guia()
+	if not _ciencia_pendiente.is_empty():
+		var tema := _ciencia_pendiente
+		_ciencia_pendiente = ""
+		_mostrar_ciencia(tema)
+
+func _mostrar_ciencia(tema: String) -> void:
+	if is_instance_valid(panel_control) or is_instance_valid(huerto) or is_instance_valid(laboratorio) or is_instance_valid(interfaz_tablet) or is_instance_valid(menu_soles) or is_instance_valid(anuncio_sol) or is_instance_valid(marco_nucleo) or plano:
+		return
+	if not is_instance_valid(sabias_que):
+		sabias_que = SabiasQue.new()
+		add_child(sabias_que)
+	sabias_que.mostrar(tema)
+
+func _ocultar_ciencia() -> void:
+	if is_instance_valid(sabias_que):
+		sabias_que.ocultar()
 
 func _crear_mapa(interior: bool) -> void:
 	var marco := Control.new()

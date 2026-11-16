@@ -10,6 +10,7 @@ const Mapa := preload("res://scenes/dias/tramo_final/mapa_tramo.gd")
 const Vista := preload("res://scenes/dias/tramo_final/vista.gd")
 const ArchivoNASA := preload("res://scenes/dias/tramo_final/archivo_nasa.gd")
 const Sostener := preload("res://scripts/mecanicas/accion_sostenida.gd")
+const SabiasQue := preload("res://scripts/sabias_que.gd")
 const RADIO := Vector2(402, 251)
 const ESCLUSA := Vector2(400, 382)
 const TALLER := Vector2(660, 245)
@@ -39,6 +40,7 @@ var _ocupado := false
 var _fin := false
 var _gesto := Sostener.new()
 var _equipo_sostenido := ""
+var sabias_que: SabiasQue
 
 func configurar(partida: Recursos, antecedentes: Dictionary) -> void:
 	recursos = partida
@@ -61,6 +63,8 @@ func _ready() -> void:
 	mapa.lecturas = _lecturas
 	vista = Vista.new()
 	marco.add_sibling(vista)
+	sabias_que = SabiasQue.new()
+	vista.add_sibling(sabias_que)
 	if recursos.estado().sol == 4:
 		plan = historial.get("plan_dia4", "")
 		if recursos.estado().decisiones.has(Reglas.ID_PLAN) and Reglas.PLANES.has(plan):
@@ -77,6 +81,7 @@ func _ready() -> void:
 		mapa.paneles = 3 if historial.get("refugio_reforzado", false) else 0
 		_paso("aviso5", I18n.t("tramo.s5.aviso"), {"control": RADIO})
 		vista.decir("Iris", I18n.t("tramo.s5.iris"))
+		_mostrar_ciencia("tormenta_solar")
 
 func _process(delta: float) -> void:
 	if _fin:
@@ -99,6 +104,13 @@ func _process(delta: float) -> void:
 		mapa.nombres[id] = _texto_accion(id)
 	mapa.tiempo += delta
 	mapa.queue_redraw()
+	if _ocupado or vista.abierta() or is_instance_valid(vista._informe) or mapa.plano:
+		_ocultar_ciencia()
+	elif is_instance_valid(sabias_que):
+		var zonas: Array[Rect2] = []
+		if is_instance_valid(vista._dialogo) and vista._dialogo.visible:
+			zonas.append(Rect2(vista._dialogo.position, Vector2(360, 175)))
+		sabias_que.evitar(zonas)
 
 func _unhandled_key_input(evento: InputEvent) -> void:
 	if not evento is InputEventKey or evento.echo or _fin:
@@ -345,9 +357,11 @@ func _elegir(id: String) -> void:
 	vista.cerrar()
 	if id == "refuerzo":
 		_ir_taller()
+		_mostrar_ciencia("blindaje")
 	else:
 		_paso("salida_hielo", I18n.t("tramo.pista.barranco"), {"afuera": ESCLUSA})
 		vista.decir("Pluto", I18n.t("tramo.pluto.swim"))
+		_mostrar_ciencia("hielo")
 
 func _ir_taller() -> void:
 	_paso("recoger_blindaje", I18n.t("tramo.pista.taller_recoger"), {"taller": TALLER})
@@ -385,6 +399,7 @@ func _purificar() -> void:
 	await ciclo.finished
 	mapa.agua_en_curso = false
 	_ocupado = false
+	_mostrar_ciencia("agua")
 	if plan == "ambas":
 		vista.decir("Pluto", I18n.t("tramo.pluto.muestra_limpia"))
 		_ir_taller()
@@ -453,6 +468,7 @@ func _estacion_final_dia(id: String) -> void:
 				vista.decir("Iris", I18n.t("tramo.iris.aire_noche"))
 			elif recursos.activar_oxigeno():
 				vista.decir("Iris", I18n.t("tramo.iris.aire_bateria"))
+				_mostrar_ciencia("oxigeno")
 				if etapa == "noche":
 					_preparar_noche()
 			else:
@@ -509,6 +525,7 @@ func _atender_huerto() -> void:
 		if recursos.comer(cultivo):
 			mapa.recoger_cultivo(cultivo)
 			vista.decir("Iris", I18n.t("tramo.iris.cosecha"))
+			_mostrar_ciencia("cultivos")
 		else:
 			vista.decir("Iris", I18n.t("tramo.iris.comida_suficiente"))
 	elif estado.bandejas.has("lechuga"):
@@ -524,6 +541,7 @@ func _regar_huerto() -> void:
 		_confirmacion = ""
 		mapa.mostrar_huerto(recursos.estado().bandejas)
 		vista.decir("Iris", I18n.t("tramo.iris.regamos_ya"))
+		_mostrar_ciencia("cultivos")
 	else:
 		vista.decir("Iris", I18n.t("tramo.iris.riega_recursos"))
 
@@ -617,6 +635,7 @@ func _restaurar_impacto(registro: Dictionary) -> void:
 	vista.decir("Iris", consecuencia)
 
 func _informe_final() -> void:
+	_ocultar_ciencia()
 	mapa.fase_radiacion = ""
 	var registro: Dictionary = historial.impacto_solar
 	var logrado: bool = registro.final == "mision_cumplida"
@@ -648,4 +667,13 @@ func _abrir_fuente(url: String) -> void:
 
 func _emitir_final(resultado: String) -> void:
 	_fin = true
+	_ocultar_ciencia()
 	terminado.emit(resultado, historial.duplicate(true))
+
+func _mostrar_ciencia(tema: String) -> void:
+	if is_instance_valid(sabias_que) and not _fin and not _ocupado and not vista.abierta() and not is_instance_valid(vista._informe) and not mapa.plano:
+		sabias_que.mostrar(tema)
+
+func _ocultar_ciencia() -> void:
+	if is_instance_valid(sabias_que):
+		sabias_que.ocultar()

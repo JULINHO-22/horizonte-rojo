@@ -8,7 +8,10 @@ const Invernadero := preload("res://scripts/invernadero_umbra.gd")
 const Laboratorio := preload("res://scripts/laboratorio_umbra.gd")
 const HUD := preload("res://scenes/dias/dia_2/dia_2_hud.gd")
 const PanelControl := preload("res://scripts/panel_control.gd")
+const SabiasQue := preload("res://scripts/sabias_que.gd")
 var panel_control: PanelControl
+var sabias_que: SabiasQue
+var _ciencia_pendiente := ""
 const Taller := preload("res://scenes/dias/dia_2/taller_dia_2.gd")
 const AudioDia2 := preload("res://scenes/dias/dia_2/dia_2_audio.gd")
 
@@ -106,6 +109,8 @@ func _ready() -> void:
 
 	interfaz = HUD.new()
 	add_child(interfaz)
+	sabias_que = SabiasQue.new()
+	add_child(sabias_que)
 	interfaz.accion.pressed.connect(_actuar)
 	interfaz.alternativa.pressed.connect(_alternativa)
 	interfaz.mapa.pressed.connect(_mapa)
@@ -429,6 +434,7 @@ func _abrir_filtro() -> void:
 func _registrar_filtro(_ganancia: int) -> void:
 	audio.sonar_oxigeno()
 	aviso = I18n.t("sol2.filtro.listo_agua")
+	_ciencia_pendiente = "agua"
 	avance_guardado.emit()
 
 func _cerrar_filtro() -> void:
@@ -448,6 +454,7 @@ func _abrir_huerto() -> void:
 
 func _registrar_cultivo(cosechado: bool) -> void:
 	audio.sonar_clic()
+	_ciencia_pendiente = "cultivos"
 	if cosechado and paso == Paso.PLANTAS:
 		aviso = I18n.t("sol2.plantas.recuperaste")
 	avance_guardado.emit()
@@ -608,6 +615,22 @@ func _actualizar() -> void:
 	interfaz.actualizar(lugar, detalle, accion, opcion, cerca and juego_activo(),
 		puede_elegir and juego_activo(), puesto.interior, puesto.plano,
 		puesto.proyectar_suelo(destino) - Vector2(0, 18), puesto.proyectar_suelo(puesto.punto))
+	if is_instance_valid(sabias_que):
+		if not juego_activo() or taller.visible or is_instance_valid(huerto) or puesto.plano:
+			sabias_que.ocultar()
+		else:
+			var evitar: Array[Rect2] = [Rect2(24, 14, 1240, 126)]
+			if interfaz.guia.visible:
+				evitar.append(interfaz.guia.get_global_rect())
+			if interfaz.aviso_pluto.visible:
+				evitar.append(interfaz.aviso_pluto.get_global_rect())
+			sabias_que.evitar(evitar)
+			if not _ciencia_pendiente.is_empty():
+				var tema := _ciencia_pendiente
+				_ciencia_pendiente = ""
+				sabias_que.mostrar(tema)
+			elif not SabiasQue.ya_visto("polvo"):
+				sabias_que.mostrar("polvo")
 
 func _abrir_taller(tipo: String) -> void:
 	var estado := recursos.estado()
@@ -629,6 +652,8 @@ func _completar_taller(tipo: String) -> void:
 	taller.hide()
 	if tipo == "aire":
 		_asegurar_aire(recursos.estado())
+		if recursos.estado().aire_asegurado:
+			_ciencia_pendiente = "oxigeno"
 	elif recursos.aplicar_decision(REPARAR, COSTO_REPARAR):
 		salida_pendiente = false
 		interfaz.celebrar(I18n.t("sol2.taller.logro_cierres"))
