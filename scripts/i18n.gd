@@ -92,13 +92,13 @@ static func _asegurar_inicio() -> void:
 		return
 	var cfg := ConfigFile.new()
 	if cfg.load(RUTA_CONFIG) == OK:
-		var guardado := _normalizar(str(cfg.get_value("idioma", "codigo", "es")))
+		var guardado := _normalizar(str(cfg.get_value("idioma", "codigo", "en")))
 		if not guardado.is_empty():
 			_actual = guardado
 			TranslationServer.set_locale(LOCALES_GODOT.get(_actual, _actual))
 			return
-	_actual = "es"
-	TranslationServer.set_locale("es")
+	_actual = "en"
+	TranslationServer.set_locale("en")
 
 
 static func idioma() -> String:
@@ -110,7 +110,7 @@ static func set_idioma(codigo: String, guardar := true) -> void:
 	_asegurar_fuentes()
 	var valido := _normalizar(codigo)
 	if valido.is_empty():
-		valido = "es"
+		valido = "en"
 	_actual = valido
 	TranslationServer.set_locale(LOCALES_GODOT.get(valido, valido))
 	if guardar:

@@ -604,6 +604,7 @@ const TEXTOS := {
 	"final.btn.ir_llegada": "الانتقال للوصول",
 	"final.btn.salir_menu": "العودة للقائمة",
 	"final.pista.avanzar": "\u200Fمسافة · التالي",
+	"final.pista.tocar": "\u200Fلمس · التالي",
 	"final.btn.omitir_viaje": "\u200Fتخطي الرحلة · Esc",
 	"final.tit.de_vuelta": "العودة إلى الأرض",
 	"final.btn.omitir_llegada": "تخطي الوصول",

@@ -13,6 +13,7 @@ const AccionEscena := preload("res://scripts/accion_escena.gd")
 const Invernadero := preload("res://scripts/invernadero_umbra.gd")
 const Diagnostico := preload("res://scripts/diagnostico_umbra.gd")
 const SabiasQue := preload("res://scripts/sabias_que.gd")
+const ControlesTactiles := preload("res://scripts/controles_tactiles.gd")
 const AREA := Rect2(0, 0, 1280, 720)
 const TINTA_CLARA := Color("#2a1c17")
 const PAPEL := Color("#fff1db")
@@ -39,6 +40,8 @@ var panel_control: PanelControl
 var huerto: Invernadero
 var diagnostico: Diagnostico
 var sabias_que: SabiasQue
+var pad_tactil: ControlesTactiles
+var boton_plano: Button
 var _ciencia_huerto := false
 var plano := false
 
@@ -74,9 +77,21 @@ func _process(delta: float) -> void:
 		recursos.avanzar(paso)
 	elif is_instance_valid(huerto):
 		recursos.avanzar(delta)
+		if is_instance_valid(pad_tactil):
+			pad_tactil.establecer_habilitado(false)
+		if is_instance_valid(boton_plano):
+			boton_plano.hide()
 		if is_instance_valid(sabias_que):
 			sabias_que.ocultar()
 		return
+	if is_instance_valid(pad_tactil):
+		pad_tactil.establecer_habilitado(_juego_activo() and not plano)
+	if is_instance_valid(boton_plano):
+		boton_plano.text = I18n.t("ui.m_cerrar_plano" if plano else "ui.m_plano")
+		var libre := modal == null and not is_instance_valid(panel_control) and not is_instance_valid(huerto) and not is_instance_valid(diagnostico) and fase in ["ir_plantas", "ir_oxigeno", "cierre"]
+		boton_plano.visible = libre and (ControlesTactiles.activo() or plano)
+	if is_instance_valid(pista):
+		pista.position.x = 204.0 if (is_instance_valid(pad_tactil) and pad_tactil.visible) else 24.0
 	if is_instance_valid(sabias_que):
 		if not _juego_activo() or plano:
 			sabias_que.ocultar()
@@ -203,6 +218,13 @@ func _crear_interfaz() -> void:
 	move_child(velo_fallo, capa_mapa.get_index() + 1)
 	sabias_que = SabiasQue.new()
 	add_child(sabias_que)
+	pad_tactil = ControlesTactiles.new()
+	add_child(pad_tactil)
+	boton_plano = _boton(I18n.t("ui.m_plano"), Rect2(1096, 62, 160, 36), _alternar_plano)
+	boton_plano.focus_mode = Control.FOCUS_NONE
+	boton_plano.add_theme_font_size_override("font_size", 16)
+	boton_plano.visible = false
+	add_child(boton_plano)
 	_ubicar_interfaz()
 
 
@@ -228,9 +250,17 @@ func _caminar(delta: float) -> void:
 	var direccion := Vector2(
 		int(Input.is_physical_key_pressed(KEY_D) or Input.is_action_pressed("ui_right")) - int(Input.is_physical_key_pressed(KEY_A) or Input.is_action_pressed("ui_left")),
 		int(Input.is_physical_key_pressed(KEY_S) or Input.is_action_pressed("ui_down")) - int(Input.is_physical_key_pressed(KEY_W) or Input.is_action_pressed("ui_up")))
-	puesto.avanzar(direccion.normalized(), delta)
+	puesto.avanzar((direccion + ControlesTactiles.direccion()).limit_length(1.0), delta)
 	puesto.actualizar_camara(delta)
 	puesto.tiempo += delta
+	puesto.queue_redraw()
+
+
+func _alternar_plano() -> void:
+	if modal != null or fase not in ["ir_plantas", "ir_oxigeno", "cierre"] or is_instance_valid(panel_control) or is_instance_valid(huerto) or is_instance_valid(diagnostico):
+		return
+	plano = not plano
+	puesto.plano = plano
 	puesto.queue_redraw()
 
 
@@ -313,6 +343,10 @@ func _abrir_huerto() -> void:
 		avance_guardado.emit())
 	boton_accion.hide()
 	add_child(huerto)
+	if is_instance_valid(pad_tactil):
+		pad_tactil.establecer_habilitado(false)
+	if is_instance_valid(boton_plano):
+		boton_plano.hide()
 	if is_instance_valid(sabias_que):
 		sabias_que.ocultar()
 
@@ -486,6 +520,10 @@ func _ubicar_accion() -> void:
 
 
 func _mostrar_fin(encabezado: String, texto: String) -> void:
+	if is_instance_valid(pad_tactil):
+		pad_tactil.establecer_habilitado(false)
+	if is_instance_valid(boton_plano):
+		boton_plano.hide()
 	if is_instance_valid(sabias_que):
 		sabias_que.ocultar()
 	fase = "terminado"

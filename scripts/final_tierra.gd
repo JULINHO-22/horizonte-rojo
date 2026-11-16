@@ -2,6 +2,7 @@ extends Control
 ## Vista previa autónoma. La campaña decidirá qué escena lanzar cuando se definan sus reglas.
 const DialogoEscena := preload("res://scripts/dialogo_escena.gd")
 const Viaje = preload("res://scripts/viaje_espacial.gd")
+const ControlesTactiles := preload("res://scripts/controles_tactiles.gd")
 const HANGAR := preload("res://assets/Finales/hangar.png")
 const SALON := preload("res://assets/Finales/ceremonia.png")
 const DIRECTORA := preload("res://assets/Finales/directora.png")
@@ -90,11 +91,24 @@ func _process(delta: float) -> void:
 	queue_redraw()
 
 func _input(evento: InputEvent) -> void:
-	if not evento is InputEventKey or not evento.pressed or evento.echo:
-		return
-	if evento.physical_keycode == KEY_SPACE:
+	if evento is InputEventKey and evento.pressed and not evento.echo and evento.physical_keycode == KEY_SPACE:
 		get_viewport().set_input_as_handled()
 		_avanzar_dialogo()
+	elif evento is InputEventScreenTouch and evento.pressed:
+		if _punto_en_boton(evento.position):
+			return
+		ControlesTactiles.activar(true)
+		get_viewport().set_input_as_handled()
+		_avanzar_dialogo()
+
+func _punto_en_boton(posicion: Vector2) -> bool:
+	return (is_instance_valid(accion) and accion.visible and accion.get_global_rect().has_point(posicion)) or (is_instance_valid(salida) and salida.visible and salida.get_global_rect().has_point(posicion))
+
+func _gui_input(evento: InputEvent) -> void:
+	if evento is InputEventMouseButton and evento.pressed and evento.button_index == MOUSE_BUTTON_LEFT and ControlesTactiles.activo():
+		if evento.device != InputEvent.DEVICE_ID_EMULATION and not _punto_en_boton(evento.global_position):
+			accept_event()
+			_avanzar_dialogo()
 
 func _unhandled_key_input(evento: InputEvent) -> void:
 	if evento is InputEventKey and evento.pressed and not evento.echo:
@@ -169,7 +183,7 @@ func _presentar() -> void:
 	accion.position = Vector2(974, 529) if en_tv else Vector2(1006, 34)
 	salida.position = Vector2(974, 583) if en_tv else Vector2(1006, 93)
 	indicacion.position = Vector2(978, 635) if en_tv else Vector2(1007, 150)
-	indicacion.text = I18n.t("final.pista.avanzar")
+	indicacion.text = I18n.t("final.pista.tocar" if ControlesTactiles.activo() else "final.pista.avanzar")
 	indicacion.visible = fase != "victoria" and not (fase == "noticia" and reloj >= FIN_NOTICIA)
 	titulo.position = Vector2(42, 38)
 	titulo.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT

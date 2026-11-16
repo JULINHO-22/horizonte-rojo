@@ -11,6 +11,8 @@ const Vista := preload("res://scenes/dias/tramo_final/vista.gd")
 const ArchivoNASA := preload("res://scenes/dias/tramo_final/archivo_nasa.gd")
 const Sostener := preload("res://scripts/mecanicas/accion_sostenida.gd")
 const SabiasQue := preload("res://scripts/sabias_que.gd")
+const ControlesTactiles := preload("res://scripts/controles_tactiles.gd")
+const AccionEscena := preload("res://scripts/accion_escena.gd")
 const RADIO := Vector2(402, 251)
 const ESCLUSA := Vector2(400, 382)
 const TALLER := Vector2(660, 245)
@@ -41,6 +43,10 @@ var _fin := false
 var _gesto := Sostener.new()
 var _equipo_sostenido := ""
 var sabias_que: SabiasQue
+var pad_tactil: ControlesTactiles
+var boton_plano: Button
+var boton_accion: Button
+var _accion_tactil_gesto := false
 
 func configurar(partida: Recursos, antecedentes: Dictionary) -> void:
 	recursos = partida
@@ -65,6 +71,28 @@ func _ready() -> void:
 	marco.add_sibling(vista)
 	sabias_que = SabiasQue.new()
 	vista.add_sibling(sabias_que)
+	pad_tactil = ControlesTactiles.new()
+	vista.add_sibling(pad_tactil)
+	boton_plano = Button.new()
+	boton_plano.position = Vector2(1096, 62)
+	boton_plano.size = Vector2(160, 38)
+	boton_plano.focus_mode = Control.FOCUS_NONE
+	boton_plano.add_theme_font_size_override("font_size", 16)
+	AccionEscena.aplicar(boton_plano)
+	boton_plano.pressed.connect(_alternar_plano)
+	boton_plano.visible = false
+	pad_tactil.add_sibling(boton_plano)
+	boton_accion = Button.new()
+	boton_accion.position = Vector2(952, 626)
+	boton_accion.size = Vector2(304, 52)
+	boton_accion.focus_mode = Control.FOCUS_NONE
+	boton_accion.add_theme_font_size_override("font_size", 18)
+	AccionEscena.aplicar(boton_accion)
+	boton_accion.button_down.connect(_accion_tactil_down)
+	boton_accion.button_up.connect(_accion_tactil_up)
+	boton_accion.pressed.connect(_accion_tactil_pressed)
+	boton_accion.visible = false
+	boton_plano.add_sibling(boton_accion)
 	if recursos.estado().sol == 4:
 		plan = historial.get("plan_dia4", "")
 		if recursos.estado().decisiones.has(Reglas.ID_PLAN) and Reglas.PLANES.has(plan):
@@ -93,7 +121,7 @@ func _process(delta: float) -> void:
 		float(Input.is_physical_key_pressed(KEY_S) or Input.is_action_pressed("ui_down")) - float(Input.is_physical_key_pressed(KEY_W) or Input.is_action_pressed("ui_up"))
 	)
 	if not _ocupado and not _gesto.activa() and not vista.abierta() and mapa.arrastre.is_empty():
-		mapa.avanzar(direccion.normalized(), minf(0.05, delta))
+		mapa.avanzar((direccion + ControlesTactiles.direccion()).limit_length(1.0), minf(0.05, delta))
 		mapa.actualizar_camara(delta)
 	mapa.ubicar_huerto()
 	if not _confirmacion.is_empty() and _cercana() != _confirmacion:
@@ -104,12 +132,25 @@ func _process(delta: float) -> void:
 		mapa.nombres[id] = _texto_accion(id)
 	mapa.tiempo += delta
 	mapa.queue_redraw()
+	var activo_tramo := not _fin and not _ocupado and not vista.abierta()
+	if is_instance_valid(pad_tactil):
+		pad_tactil.establecer_habilitado(activo_tramo and not mapa.plano)
+	if is_instance_valid(boton_plano):
+		boton_plano.text = I18n.t("ui.m_cerrar_plano" if mapa.plano else "ui.m_plano")
+		boton_plano.visible = activo_tramo and mapa.interior and (ControlesTactiles.activo() or mapa.plano)
+	if is_instance_valid(boton_accion):
+		var cerca := _cercana()
+		boton_accion.visible = activo_tramo and not mapa.plano and ControlesTactiles.activo() and not cerca.is_empty()
+		if boton_accion.visible:
+			boton_accion.text = I18n.tf("ui.e_prefix", [_texto_accion(cerca)])
 	if _ocupado or vista.abierta() or is_instance_valid(vista._informe) or mapa.plano:
 		_ocultar_ciencia()
 	elif is_instance_valid(sabias_que):
 		var zonas: Array[Rect2] = []
 		if is_instance_valid(vista._dialogo) and vista._dialogo.visible:
 			zonas.append(Rect2(vista._dialogo.position, Vector2(360, 175)))
+		if is_instance_valid(boton_accion) and boton_accion.visible:
+			zonas.append(Rect2(boton_accion.position, boton_accion.size))
 		sabias_que.evitar(zonas)
 
 func _unhandled_key_input(evento: InputEvent) -> void:
@@ -145,7 +186,7 @@ func _input(evento: InputEvent) -> void:
 
 func _apuntado(posicion: Vector2) -> String:
 	var alcance := mapa.alcance_interaccion()
-	var mejor := 43.0
+	var mejor := 64.0 if ControlesTactiles.activo() else 43.0
 	var id_cerca := ""
 	for id: String in _guias:
 		if mapa.punto.distance_to(_guias[id]) >= alcance:
@@ -161,7 +202,8 @@ func _puntero_inicio(posicion: Vector2) -> void:
 	if _iniciar_gesto(id, &"puntero"):
 		return
 	if etapa in ["purificar", "blindaje"] and not mapa.carga.is_empty():
-		if mapa.ancla_carga().distance_to(posicion) < 55.0:
+		var radio_carga := 74.0 if ControlesTactiles.activo() else 55.0
+		if mapa.ancla_carga().distance_to(posicion) < radio_carga:
 			mapa.arrastre = "objeto"
 		elif not id.is_empty():
 			vista.decir("Pluto", I18n.t("tramo.pista.arrastra"))
@@ -677,3 +719,25 @@ func _mostrar_ciencia(tema: String) -> void:
 func _ocultar_ciencia() -> void:
 	if is_instance_valid(sabias_que):
 		sabias_que.ocultar()
+
+func _alternar_plano() -> void:
+	if mapa == null or not mapa.interior or vista.abierta() or _ocupado or _gesto.activa() or not mapa.arrastre.is_empty():
+		return
+	mapa.plano = not mapa.plano
+	vista.mostrar_plano(mapa.plano)
+
+func _accion_tactil_down() -> void:
+	_accion_tactil_gesto = false
+	var id := _cercana()
+	if not id.is_empty() and mapa.arrastre.is_empty():
+		_accion_tactil_gesto = _iniciar_gesto(id, &"tactil")
+
+func _accion_tactil_up() -> void:
+	_soltar_gesto(&"tactil")
+
+func _accion_tactil_pressed() -> void:
+	if _accion_tactil_gesto:
+		_accion_tactil_gesto = false
+		return
+	if mapa.arrastre.is_empty():
+		_interactuar()

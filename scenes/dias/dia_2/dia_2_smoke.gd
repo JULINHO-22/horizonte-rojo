@@ -21,6 +21,7 @@ var registro := ErroresDeScript.new()
 
 
 func _initialize() -> void:
+	I18n.set_idioma("es", false)
 	OS.add_logger(registro)
 	call_deferred("_probar")
 

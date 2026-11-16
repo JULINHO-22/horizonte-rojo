@@ -4,6 +4,7 @@ const Reglas := preload("res://scenes/dias/tramo_final/reglas.gd")
 const Tramo := preload("res://scenes/dias/tramo_final/tramo_final.gd")
 
 func _initialize() -> void:
+	I18n.set_idioma("es", false)
 	call_deferred("_probar")
 
 func _captura(nombre: String) -> void:

@@ -2,6 +2,7 @@ extends Control
 ## Tarjeta discreta de divulgación científica ("¿Sabías que...?") con enlace oficial clicable.
 
 const AccionEscena := preload("res://scripts/accion_escena.gd")
+const ControlesTactiles := preload("res://scripts/controles_tactiles.gd")
 const ANCHO := 472.0
 const DURACION := 20.0
 const TEMAS := {
@@ -208,10 +209,14 @@ func _reubicar() -> void:
 		Vector2(1256.0 - ancho, 102.0),
 		Vector2(24.0, 148.0),
 	]
+	var zonas: Array[Rect2] = _zonas_evitar.duplicate()
+	var zona_pad := ControlesTactiles.zona_stick()
+	if zona_pad.size.x > 0.0:
+		zonas.append(zona_pad)
 	for pos: Vector2 in candidatos:
 		var rect := Rect2(pos, Vector2(ancho, alto)).grow(6.0)
 		var choca := false
-		for zona: Rect2 in _zonas_evitar:
+		for zona: Rect2 in zonas:
 			if zona.size.x > 0.0 and zona.size.y > 0.0 and rect.intersects(zona):
 				choca = true
 				break

@@ -604,6 +604,7 @@ const TEXTOS := {
 	"final.btn.ir_llegada": "Ir a la llegada",
 	"final.btn.salir_menu": "Salir al menú",
 	"final.pista.avanzar": "Espacio · Avanzar",
+	"final.pista.tocar": "Toca · Avanzar",
 	"final.btn.omitir_viaje": "Omitir viaje · Esc",
 	"final.tit.de_vuelta": "De vuelta en la Tierra",
 	"final.btn.omitir_llegada": "Omitir llegada",
