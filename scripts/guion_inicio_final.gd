@@ -9,6 +9,7 @@ const Laboratorio := preload("res://scripts/laboratorio_umbra.gd")
 const AccionSostenida := preload("res://scripts/mecanicas/accion_sostenida.gd")
 const DerrotaUmbra := preload("res://scripts/derrota_umbra.gd")
 const SabiasQue := preload("res://scripts/sabias_que.gd")
+const ControlesTactiles := preload("res://scripts/controles_tactiles.gd")
 const VISTAS_FINALES := {
 	"--final-recursos": "res://scenes/pruebas/banco_recursos.tscn",
 	"--final-incompleta": "res://scenes/final_incompleta.tscn",
@@ -78,6 +79,8 @@ var segundos_guardado := 0.0
 var restaurado := {}
 var sabias_que: SabiasQue
 var _ciencia_pendiente := ""
+var pad_tactil: ControlesTactiles
+var boton_plano: Button
 
 func _ready() -> void:
 	get_window().min_size = Vector2i(800, 450)
@@ -101,6 +104,7 @@ func _ready() -> void:
 		_mostrar()
 
 func _process(delta: float) -> void:
+	_actualizar_pad_tactil()
 	if is_instance_valid(menu_soles) or is_instance_valid(interfaz_tablet) or is_instance_valid(anuncio_sol):
 		return
 	if is_instance_valid(nivel_activo):
@@ -246,10 +250,7 @@ func _unhandled_key_input(event: InputEvent) -> void:
 		if not _iniciar_taladro(&"teclado"):
 			_accion()
 	elif event.physical_keycode == KEY_M and fase == "base":
-		plano = not plano
-		puesto.plano = plano
-		if plano and is_instance_valid(sabias_que):
-			sabias_que.ocultar()
+		_alternar_plano()
 	elif event.physical_keycode == KEY_ESCAPE and fase in ["ida", "aterrizaje"]:
 		_iniciar_caminata()
 
@@ -258,9 +259,10 @@ func _notification(que: int) -> void:
 		_soltar_taladro(&"")
 
 func _direccion() -> Vector2:
-	return Vector2(
+	var dir := Vector2(
 		int(Input.is_physical_key_pressed(KEY_D) or Input.is_action_pressed("ui_right")) - int(Input.is_physical_key_pressed(KEY_A) or Input.is_action_pressed("ui_left")),
-		int(Input.is_physical_key_pressed(KEY_S) or Input.is_action_pressed("ui_down")) - int(Input.is_physical_key_pressed(KEY_W) or Input.is_action_pressed("ui_up"))).normalized()
+		int(Input.is_physical_key_pressed(KEY_S) or Input.is_action_pressed("ui_down")) - int(Input.is_physical_key_pressed(KEY_W) or Input.is_action_pressed("ui_up")))
+	return (dir + ControlesTactiles.direccion()).limit_length(1.0)
 
 func _caminar(delta: float) -> void:
 	puesto.avanzar(_direccion(), minf(delta, 0.05))
@@ -375,6 +377,12 @@ func _actualizar_guia() -> void:
 		if is_instance_valid(pista) and not pista.text.is_empty():
 			zonas.append(Rect2(pista.position, pista.size))
 		sabias_que.evitar(zonas)
+	if is_instance_valid(pista):
+		pista.position.x = 204.0 if _pad_habilitado() and ControlesTactiles.activo() else 34.0
+	if is_instance_valid(boton_plano):
+		boton_plano.text = I18n.t("ui.m_cerrar_plano" if plano else "ui.m_plano")
+		var libre := _sol_uno() and fase == "base" and not is_instance_valid(panel_control) and not is_instance_valid(huerto) and not is_instance_valid(laboratorio) and not is_instance_valid(interfaz_tablet) and not is_instance_valid(marco_nucleo) and not is_instance_valid(nivel_activo)
+		boton_plano.visible = libre and (ControlesTactiles.activo() or plano)
 
 func _actualizar_guia_cuerpo() -> void:
 	if fase == "expedicion_sol_1":
@@ -856,6 +864,12 @@ func _mostrar_accesos_sol() -> void:
 	boton_tablet.pressed.connect(_alternar_tablet)
 	boton_tablet.z_index = 10
 	capa.add_child(boton_tablet)
+	if _sol_uno() and fase == "base":
+		boton_plano = _boton(I18n.t("ui.m_cerrar_plano" if plano else "ui.m_plano"), Rect2(1096, 62, 150, 36), _alternar_plano)
+		boton_plano.focus_mode = Control.FOCUS_NONE
+		boton_plano.add_theme_font_size_override("font_size", 16)
+		boton_plano.z_index = 10
+		boton_plano.visible = ControlesTactiles.activo() or plano
 	if fase != "base" or sol_anunciado == campana.sol or campana.listo_para_regresar():
 		return
 	sol_anunciado = campana.sol
@@ -1087,6 +1101,32 @@ func _mostrar_ciencia(tema: String) -> void:
 func _ocultar_ciencia() -> void:
 	if is_instance_valid(sabias_que):
 		sabias_que.ocultar()
+
+func _alternar_plano() -> void:
+	if fase != "base" or is_instance_valid(panel_control) or is_instance_valid(huerto) or is_instance_valid(laboratorio) or is_instance_valid(marco_nucleo):
+		return
+	plano = not plano
+	if puesto != null:
+		puesto.plano = plano
+	if plano:
+		_ocultar_ciencia()
+	_actualizar_guia()
+
+func _pad_habilitado() -> bool:
+	if is_instance_valid(nivel_activo) or is_instance_valid(menu_soles) or is_instance_valid(interfaz_tablet) or is_instance_valid(anuncio_sol):
+		return false
+	if is_instance_valid(panel_control) or is_instance_valid(huerto) or is_instance_valid(laboratorio) or plano:
+		return false
+	return is_instance_valid(visita_nucleo) or fase in ["camino_base", "base", "expedicion_sol_1", "camino_nave"]
+
+func _actualizar_pad_tactil() -> void:
+	var habilitado := _pad_habilitado()
+	if not is_instance_valid(pad_tactil):
+		if not habilitado:
+			return
+		pad_tactil = ControlesTactiles.new()
+		add_child(pad_tactil)
+	pad_tactil.establecer_habilitado(habilitado)
 
 func _crear_mapa(interior: bool) -> void:
 	var marco := Control.new()

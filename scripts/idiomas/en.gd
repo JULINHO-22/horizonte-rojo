@@ -604,6 +604,7 @@ const TEXTOS := {
 	"final.btn.ir_llegada": "Skip to arrival",
 	"final.btn.salir_menu": "Back to menu",
 	"final.pista.avanzar": "Space · Next",
+	"final.pista.tocar": "Tap · Next",
 	"final.btn.omitir_viaje": "Skip flight · Esc",
 	"final.tit.de_vuelta": "Back on Earth",
 	"final.btn.omitir_llegada": "Skip arrival",

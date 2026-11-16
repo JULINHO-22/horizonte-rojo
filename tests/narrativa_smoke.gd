@@ -1,6 +1,7 @@
 extends SceneTree
 ## Ejecutar con perfil temporal para no tocar la partida del jugador.
 func _initialize() -> void:
+	I18n.set_idioma("es", false)
 	call_deferred("_probar")
 
 func _captura(nombre: String) -> void:

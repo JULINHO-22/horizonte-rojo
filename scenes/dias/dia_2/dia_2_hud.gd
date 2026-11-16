@@ -2,6 +2,7 @@ extends Control
 
 const DialogoEscena := preload("res://scripts/dialogo_escena.gd")
 const AccionEscena := preload("res://scripts/accion_escena.gd")
+const ControlesTactiles := preload("res://scripts/controles_tactiles.gd")
 
 const ANCHO_GUIA := 460.0
 const TINTA := Color("#211716")
@@ -141,11 +142,18 @@ func _ubicar_guia(punto: Vector2, nora: Vector2, interior: bool) -> void:
 		if nora.x < 580.0:
 			guia.position = Vector2(1280.0 - ANCHO_GUIA - 24.0, 700.0 - guia.size.y)
 		else:
-			guia.position = Vector2(24.0, 700.0 - guia.size.y)
+			var y_ext := 700.0 - guia.size.y
+			var zona_pad := ControlesTactiles.zona_stick()
+			if zona_pad.size.x > 0.0:
+				y_ext = zona_pad.position.y - guia.size.y - 14.0
+			guia.position = Vector2(24.0, y_ext)
 		return
 
 	if opciones == 0:
-		guia.position = Vector2(24, 570)
+		var y_int := 570.0
+		if ControlesTactiles.activo() and punto.x >= 500.0:
+			y_int = ControlesTactiles.zona_stick().position.y - guia.size.y - 14.0
+		guia.position = Vector2(24, y_int)
 		if punto.x < 500 and punto.y > 550:
 			guia.position.x = 780
 		return
@@ -165,6 +173,9 @@ func _ubicar_guia(punto: Vector2, nora: Vector2, interior: bool) -> void:
 			y = minf(700.0 - guia.size.y, nora.y + 40.0)
 
 	guia.position = Vector2(clampf(x, 24.0, 1256.0 - ANCHO_GUIA), clampf(y, 184.0, 705.0 - guia.size.y))
+	var zona_pad := ControlesTactiles.zona_stick()
+	if zona_pad.size.x > 0.0 and Rect2(guia.position, guia.size).intersects(zona_pad.grow(10.0)):
+		guia.position.y = maxf(184.0, zona_pad.position.y - guia.size.y - 14.0)
 
 func presentar(encabezado: String, mensaje: String, avance: String) -> void:
 	logro.hide()

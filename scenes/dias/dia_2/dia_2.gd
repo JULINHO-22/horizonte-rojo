@@ -9,8 +9,10 @@ const Laboratorio := preload("res://scripts/laboratorio_umbra.gd")
 const HUD := preload("res://scenes/dias/dia_2/dia_2_hud.gd")
 const PanelControl := preload("res://scripts/panel_control.gd")
 const SabiasQue := preload("res://scripts/sabias_que.gd")
+const ControlesTactiles := preload("res://scripts/controles_tactiles.gd")
 var panel_control: PanelControl
 var sabias_que: SabiasQue
+var pad_tactil: ControlesTactiles
 var _ciencia_pendiente := ""
 const Taller := preload("res://scenes/dias/dia_2/taller_dia_2.gd")
 const AudioDia2 := preload("res://scenes/dias/dia_2/dia_2_audio.gd")
@@ -111,6 +113,8 @@ func _ready() -> void:
 	add_child(interfaz)
 	sabias_que = SabiasQue.new()
 	add_child(sabias_que)
+	pad_tactil = ControlesTactiles.new()
+	add_child(pad_tactil)
 	interfaz.accion.pressed.connect(_actuar)
 	interfaz.alternativa.pressed.connect(_alternativa)
 	interfaz.mapa.pressed.connect(_mapa)
@@ -216,7 +220,7 @@ func _process(delta: float) -> void:
 				float((Input.is_physical_key_pressed(KEY_D) or Input.is_key_pressed(KEY_D)) or Input.is_action_pressed("ui_right")) - float((Input.is_physical_key_pressed(KEY_A) or Input.is_key_pressed(KEY_A)) or Input.is_action_pressed("ui_left")),
 				float((Input.is_physical_key_pressed(KEY_S) or Input.is_key_pressed(KEY_S)) or Input.is_action_pressed("ui_down")) - float((Input.is_physical_key_pressed(KEY_W) or Input.is_key_pressed(KEY_W)) or Input.is_action_pressed("ui_up")))
 			if not taller.visible and not is_instance_valid(huerto):
-				puesto.avanzar(direccion.normalized(), minf(delta, 0.05))
+				puesto.avanzar((direccion + ControlesTactiles.direccion()).limit_length(1.0), minf(delta, 0.05))
 			taller.avanzar(delta)
 			puesto.tiempo += delta
 			while not ruta.is_empty() and puesto.punto.distance_to(ruta.front()) < 9.0:
@@ -615,6 +619,8 @@ func _actualizar() -> void:
 	interfaz.actualizar(lugar, detalle, accion, opcion, cerca and juego_activo(),
 		puede_elegir and juego_activo(), puesto.interior, puesto.plano,
 		puesto.proyectar_suelo(destino) - Vector2(0, 18), puesto.proyectar_suelo(puesto.punto))
+	if is_instance_valid(pad_tactil):
+		pad_tactil.establecer_habilitado(juego_activo() and not taller.visible and not is_instance_valid(huerto) and not puesto.plano)
 	if is_instance_valid(sabias_que):
 		if not juego_activo() or taller.visible or is_instance_valid(huerto) or puesto.plano:
 			sabias_que.ocultar()

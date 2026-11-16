@@ -604,6 +604,7 @@ const TEXTOS := {
 	"final.btn.ir_llegada": "К посадке",
 	"final.btn.salir_menu": "В меню",
 	"final.pista.avanzar": "Пробел · Далее",
+	"final.pista.tocar": "Касание · Далее",
 	"final.btn.omitir_viaje": "Пропустить · Esc",
 	"final.tit.de_vuelta": "Снова на Земле",
 	"final.btn.omitir_llegada": "Пропустить",

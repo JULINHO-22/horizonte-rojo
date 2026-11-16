@@ -1,12 +1,12 @@
 <!doctype html>
-<html lang="es">
+<html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
   <meta name="theme-color" content="#19131e">
   <link rel="preload" href="portada-umbra.webp" as="image">
   <link rel="preload" href="barlow-condensed-bold-latin.woff2" as="font" type="font/woff2" crossorigin>
-  <title>Red Horizon · Cinco días en Marte</title>
+  <title>Red Horizon · Five Days on Mars</title>
   <style>
     @font-face { font-family: Barlow; src: url("barlow-latin.woff2") format("woff2"); font-display: swap; }
     @font-face { font-family: "Barlow Condensed"; src: url("barlow-condensed-bold-latin.woff2") format("woff2"); font-weight: 700; font-display: swap; }
@@ -19,10 +19,10 @@
       --separacion: clamp(1.35rem, 6vw, 7.5rem);
       --acento: #ffc198;
     }
-    body { margin: 0; }
+    body { margin: 0; overscroll-behavior: none; }
     [hidden] { display: none !important; }
-    #stage { position: relative; min-height: 100dvh; display: grid; place-items: center; background: #100d14; }
-    canvas { grid-area: 1 / 1; display: block; width: min(100vw, 177.778dvh); height: min(100dvh, 56.25vw); outline: 0; }
+    #stage { position: relative; min-height: 100dvh; display: grid; place-items: center; background: #100d14; touch-action: none; }
+    canvas { grid-area: 1 / 1; display: block; width: min(100vw, 177.778dvh); height: min(100dvh, 56.25vw); outline: 0; touch-action: none; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
     #launch {
       grid-area: 1 / 1; align-self: stretch; justify-self: stretch;
       position: relative; isolation: isolate; overflow: hidden;
@@ -109,46 +109,50 @@
       .expedicion { padding-block: .4rem 1rem; }
       h1 { font-size: clamp(3.5rem, 8.3vw, 5.9rem); }
     }
+    @media (pointer: coarse) {
+      .idiomas button { min-height: 40px; padding: .42rem .72rem; }
+      .extras summary { min-height: 42px; display: inline-flex; align-items: center; }
+    }
   </style>
   $GODOT_HEAD_INCLUDE
 </head>
 <body>
-<main id="stage" aria-label="Juego Red Horizon">
-  <canvas id="canvas" tabindex="0" inert>Abre el juego en un navegador con gráficos 3D habilitados.</canvas>
+<main id="stage" aria-label="Red Horizon Game">
+  <canvas id="canvas" tabindex="0" inert>Open the game in a browser with 3D graphics enabled.</canvas>
   <section id="launch" aria-labelledby="titulo-juego">
     <img class="paisaje" src="portada-umbra.webp" alt="" fetchpriority="high">
-    <div class="idiomas" role="group" aria-label="Idioma" dir="ltr">
-      <span id="idioma-label">Idioma</span>
-      <button type="button" data-lang="es" aria-pressed="true">Español</button>
-      <button type="button" data-lang="en" aria-pressed="false">English</button>
+    <div class="idiomas" role="group" aria-label="Language" dir="ltr">
+      <span id="idioma-label">Language</span>
+      <button type="button" data-lang="es" aria-pressed="false">Español</button>
+      <button type="button" data-lang="en" aria-pressed="true">English</button>
       <button type="button" data-lang="fr" aria-pressed="false">Français</button>
       <button type="button" data-lang="ru" aria-pressed="false">Русский</button>
       <button type="button" data-lang="ar" aria-pressed="false">العربية</button>
       <button type="button" data-lang="zh" aria-pressed="false">简体中文</button>
     </div>
     <div class="expedicion">
-      <p class="bienvenida">Cinco días en Marte</p>
+      <p class="bienvenida">Five Days on Mars</p>
       <h1 id="titulo-juego" dir="ltr"><span>Red</span> Horizon</h1>
-      <p class="historia">Acompaña a Nora, Iris y Teo. Cuida el refugio Umbra y prepara el regreso a la Tierra.</p>
-      <button id="play" type="button"><span id="play-texto">Entrar al recorrido</span><span aria-hidden="true">↗</span></button>
+      <p class="historia">Travel with Nora, Iris, and Teo. Keep the Umbra shelter running and prepare the return to Earth.</p>
+      <button id="play" type="button"><span id="play-texto">Enter expedition</span><span aria-hidden="true">↗</span></button>
       <div class="estado">
-        <p id="status" role="status">Preparando la descarga…</p>
+        <p id="status" role="status">Preparing download…</p>
         <div class="carga" hidden>
-          <progress id="progreso" max="1" aria-label="Descarga del juego"></progress>
+          <progress id="progreso" max="1" aria-label="Game download"></progress>
           <span id="porcentaje" aria-hidden="true"></span>
         </div>
       </div>
     </div>
     <details class="extras">
-      <summary>Escenas extra</summary>
+      <summary>Extra scenes</summary>
       <div class="finales">
-        <button type="button" data-final="recursos">Probar mecánicas</button>
-        <button type="button" data-final="incompleta">Misión incompleta</button>
-        <button type="button" data-final="cumplida">Misión cumplida</button>
+        <button type="button" data-final="recursos">Test mechanics</button>
+        <button type="button" data-final="incompleta">Incomplete mission</button>
+        <button type="button" data-final="cumplida">Mission accomplished</button>
       </div>
     </details>
   </section>
-  <button id="fullscreen" type="button" aria-label="Pantalla completa" title="Pantalla completa" hidden>⛶</button>
+  <button id="fullscreen" type="button" aria-label="Fullscreen" title="Fullscreen" hidden>⛶</button>
 </main>
 <script src="$GODOT_URL"></script>
 <script>
@@ -259,12 +263,12 @@
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved && TEXTOS[saved]) return saved;
     } catch {}
-    return "es";
+    return "en";
   })();
   let estadoClave = "preparando";
   let playClave = "jugar";
   function aplicarIdioma(codigo, guardar = true) {
-    if (!TEXTOS[codigo]) codigo = "es";
+    if (!TEXTOS[codigo]) codigo = "en";
     lang = codigo;
     if (guardar) {
       try { localStorage.setItem(STORAGE_KEY, lang); } catch {}
@@ -381,6 +385,9 @@
       estadoClave = "abriendoEst";
       status.textContent = TEXTOS[lang][estadoClave];
       const args = ["--main-pack", pack, "--", "--lang=" + lang];
+      if (window.matchMedia("(pointer: coarse)").matches || navigator.maxTouchPoints > 0) {
+        args.push("--touch");
+      }
       if (final) args.push("--final-" + final);
       canvas.inert = false;
       inicioInvocado = true;

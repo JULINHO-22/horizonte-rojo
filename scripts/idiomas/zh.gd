@@ -604,6 +604,7 @@ const TEXTOS := {
 	"final.btn.ir_llegada": "跳至着陆",
 	"final.btn.salir_menu": "返回菜单",
 	"final.pista.avanzar": "空格 · 继续",
+	"final.pista.tocar": "点击 · 继续",
 	"final.btn.omitir_viaje": "跳过航程 · Esc",
 	"final.tit.de_vuelta": "重返地球",
 	"final.btn.omitir_llegada": "跳过着陆画面",
